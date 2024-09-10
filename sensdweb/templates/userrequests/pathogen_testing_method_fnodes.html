@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<header class="bg-primary text-white text-center py-4 mb-4">
+    <div class="container">
+        <h2 class="fw-light">Pathogen Testing Methods FNodes</h2>
+    </div>
+</header>
+
+<div class="container mt-5">
+    <form method="post" action="{% url 'PTMFNodesForm' requestid %}">
+        {% csrf_token %}
+        {{ formset.management_form }}
+        {% for form in formset %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    {% for field in form %}
+                        <div class="mb-3">
+                            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.errors %}
+                                <div class="text-danger">
+                                    {{ field.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+        <div class="text-right">
+            <button type="submit" class="btn btn-primary">Add</button>
+        </div>
+    </form>
+    <div class="card-footer text-end">
+        <a href="{% url 'PTMForm' requestid %}" class="col-md-2 btn btn-lg btn-primary align-items-center justify-content-center gap-2">           
+            Previous Step
+        </a>
+        <a href="{% url 'generate_excel' requestid %}" class="col-md-2 btn btn-lg btn-primary align-items-center justify-content-center gap-2">          
+            Generate Excel
+        </a>
+    </div>
+</div>
+
+<div class="container mt-5">
+    <h3>Entered Pathogen Testing Methods FNodes</h3>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Node ID</th>
+                <th>Pathogen Testing Method ID</th>
+                <th>Sensitivity</th>
+                <th>Direct Cost</th>
+                <th>Lead Time</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for fnodes in pathogen_testing_method_fnodes %}
+                <tr>
+                    <td>{{ fnodes.node_id }}</td>
+                    <td>{{ fnodes.pathogen_testing_method_id }}</td>
+                    <td>{{ fnodes.sensitivity }}</td>
+                    <td>{{ fnodes.direct_cost }}</td>
+                    <td>{{ fnodes.lead_time }}</td>
+                    <td>
+                        <a href="#" class="btn btn-warning btn-sm">Edit</a>
+                        <a href="#" class="btn btn-danger btn-sm">Delete</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock content %}

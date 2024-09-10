@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<header class="bg-primary text-white text-center py-4 mb-4">
+    <div class="container">
+        <h2 class="fw-light">SENSD USER-PROFILE</h2>
+    </div>
+</header>
+
+<div class="container">
+    
+    {% csrf_token %}
+
+    {% include 'partials/_messages.html' %}
+    <div class="container">
+        <div class="row mb-4">
+        </div>
+    </div>
+    <div class="container mt-5">
+        {% if user %}
+            <div class="row">
+                <div class="col-lg-8 offset-lg-2">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">{{ user.fullname }}</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <strong>Email:</strong>
+                                </div>
+                                <div class="col-md-8">
+                                    {{ user.email }}
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <strong>Phone:</strong>
+                                </div>
+                                <div class="col-md-8">
+                                    {{ user.phonenumber }}
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <strong>Role:</strong>
+                                </div>
+                                <div class="col-md-8">
+                                    {{ user.get_role_display }}
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <strong>Address:</strong>
+                                </div>
+                                <div class="col-md-8">
+                                    {{ user.address }}
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <strong>City:</strong>
+                                </div>
+                                <div class="col-md-8">
+                                    {{ user.city }}
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <strong>State:</strong>
+                                </div>
+                                <div class="col-md-8">
+                                    {{ user.state }}
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <strong>Pincode:</strong>
+                                </div>
+                                <div class="col-md-8">
+                                    {{ user.pincode }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer text-right">
+                            <a href="{% url 'edit_profile_redirect' user.pk %}" class="btn btn-primary">Edit Profile</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="row">
+                <div class="col-lg-8 offset-lg-2 text-center">
+                    <div class="alert alert-warning" role="alert">
+                        Sorry, no profile found. Please create one.
+                    </div>
+                    <a href="" class="btn btn-primary">Create Profile</a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock content%}

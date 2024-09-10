@@ -1,0 +1,85 @@
+{% extends 'admin_base_auth.html'%} {% block content %}
+
+<div class="container my-5 mt-4">
+  <nav aria-label="breadcrumb">
+    <ol
+      class="breadcrumb breadcrumb-custom overflow-hidden text-center bg-body-tertiary border rounded-3"
+    >
+      {% comment %}
+      <li class="breadcrumb-item">
+        <a class="link-body-emphasis fw-semibold text-decoration-none" href="#">
+          <svg class="bi" width="16" height="16">
+            <use xlink:href="#house-door-fill"></use>
+          </svg>
+          Home
+        </a>
+      </li>
+      {% endcomment %}
+      <li class="breadcrumb-item">
+        <a class="link-body-emphasis fw-semibold text-decoration-none" href="#"
+          >Users</a
+        >
+      </li>
+      <li class="breadcrumb-item active" aria-current="page">
+        <a class="link-body-emphasis fw-semibold text-decoration-none" href="#"
+          >Add User</a
+        >
+      </li>
+    </ol>
+  </nav>
+
+  <div class="card">
+    <div class="card-body">
+      <form action="{% url 'sensadmin'%}" method="post">
+        {% include 'partials/_messages.html'%} {% csrf_token %}
+        <div class="form-group">
+          <label for="">User</label>
+          <input
+            type="text"
+            class="form-control form-control-sm"
+            name="amount"
+            value="{{values.amount}}"
+          />
+        </div>
+        <div class="form-group">
+          <label for="">Description</label>
+          <input
+            type="text"
+            class="form-control form-control-sm"
+            name="description"
+            value="{{values.description}}"
+          />
+        </div>
+        <div class="form-group">
+          <label for="">Category</label>
+          <select class="form-control" name="category">
+            {% for category in categories%}
+            <option name="category" value="{{category.name}}"
+              >{{category.name}}</option
+            >
+
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="">Date of Expense</label>
+          <input
+            type="date"
+            class="form-control form-control-sm"
+            name="expense_date"
+          />
+        </div>
+
+        <input
+          type="submit"
+          value="Submit"
+          class="btn btn-primary btn-primary-sm"
+        />
+      </form>
+    </div>
+  </div>
+
+
+</div>
+
+{% endblock%}

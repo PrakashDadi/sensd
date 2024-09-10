@@ -1,0 +1,128 @@
+{% extends 'base.html' %} {% block content %}
+<header class="bg-primary text-white text-center py-4 mb-4">
+  <div class="container">
+    <h2 class="fw-light">SENSD USER PROFILE</h2>
+  </div>
+</header>
+{% csrf_token %} {% include 'partials/_messages.html' %}
+<div class="container mt-5">
+  <div class="row">
+    <div class="col-lg-8 offset-lg-2">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">
+            {% if user_details %} 
+            Edit Profile 
+            {% else %} 
+            Create Profile 
+            {% endif %}
+          </h2>
+        </div>
+        <div class="card-body">
+          <form
+            action="{% if user_details %}{% url 'edit_profile' session_pk %}{% else %}{% url 'create_profile' encoded_email %}{% endif %}"
+            method="post"
+          >
+            {% csrf_token %}
+            <div class="form-group">
+              <label for="firstname">First Name</label>
+              <input
+                type="text"
+                class="form-control"
+                id="firstname"
+                name="firstname"
+                value="{{ form.firstname.value|default_if_none:'' }}"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="lastname">Last Name</label>
+              <input
+                type="text"
+                class="form-control"
+                id="lastname"
+                name="lastname"
+                value="{{ form.lastname.value|default_if_none:'' }}"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="email">Email Address</label>
+              <input
+                type="text"
+                class="form-control"
+                id="email"
+                name="email"
+                value="{{ form.email.value|default_if_none:'' }}"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="phonenumber">Phone Number</label>
+              <input
+                type="text"
+                class="form-control"
+                id="phonenumber"
+                name="phonenumber"
+                value="{{ form.phonenumber.value|default_if_none:'' }}"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="address">Address</label>
+              <input
+                type="text"
+                class="form-control"
+                id="address"
+                name="address"
+                value="{{ form.address.value|default_if_none:'' }}"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="city">City</label>
+              <input
+                type="text"
+                class="form-control"
+                id="city"
+                name="city"
+                value="{{ form.city.value|default_if_none:'' }}"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="state">State</label>
+              <input
+                type="text"
+                class="form-control"
+                id="state"
+                name="state"
+                value="{{ form.state.value|default_if_none:'' }}"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="pincode">Pincode</label>
+              <input
+                type="text"
+                class="form-control"
+                id="pincode"
+                name="pincode"
+                value="{{ form.pincode.value|default_if_none:'' }}"
+                required
+              />
+            </div>
+            <button type="submit" class="btn btn-primary">
+              {% if user_details %} 
+              Update Profile 
+              {% else %} 
+              Create Profile 
+              {%endif %}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container">
+    <header class="bg-primary text-white text-center py-4 mb-4">
+        <div class="container">
+            <h2 class="fw-light">Upload Excel File for Optimization</h2>
+        </div>
+    </header>
+    {% include 'partials/_messages.html' %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4>Upload Excel</h4>
+        </div>
+        <div class="card-body">
+            <form id="uploadexcel" method="POST" enctype="multipart/form-data" action="{% url 'view_exceldata' %}">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="file" class="form-label">Select Excel File</label>
+                    <input class="form-control" type="file" name="file" id="file" accept=".xlsx, .xls" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+        </div>
+    </div>
+
+      <!-- Hidden form for submitting the file to the solution view -->
+      <form id="solutionForm" method="POST" enctype="multipart/form-data" action="{% url 'optimize_model' %}" style="display: none;">
+        {% csrf_token %}
+        <input type="file" name="file" id="solutionFile">
+    </form>
+     <!-- JSON Data Modal -->
+     <div class="modal fade" id="jsonModal" tabindex="-1" aria-labelledby="jsonModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="jsonModalLabel">JSON Data Preview</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="jsonTableContainer"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" onclick="submitSolution()">Solution</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    
+</div>
+
+<script>
+    document.getElementById('uploadexcel').onsubmit = function(event) {
+        event.preventDefault();
+        
+        var formData = new FormData(this);
+        fetch("{% url 'view_exceldata' %}", {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                renderTables(data.preview_data);
+                var jsonModal = new bootstrap.Modal(document.getElementById('jsonModal'));
+                jsonModal.show();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    };
+
+    function renderTables(previewData) {
+        const container = document.getElementById('jsonTableContainer');
+        container.innerHTML = ''; // Clear previous content if any
+
+        // Loop over each key (e.g., "All Nodes", "Initial Nodes", etc.) in the preview_data
+        for (const [sectionName, sectionData] of Object.entries(previewData)) {
+            // Add a caption with the section name
+            const caption = document.createElement('h4');
+            caption.textContent = sectionName;
+            container.appendChild(caption);
+            
+            
+            // Create a table for each section
+            const table = document.createElement('table');
+            table.className = 'table table-bordered table-striped mb-4';
+
+            
+
+            // Create table headers based on the keys of the first item in the section data
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            Object.keys(sectionData).forEach(key => {
+                const th = document.createElement('th');
+                th.textContent = key;
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+
+            // Create table body
+            const tbody = document.createElement('tbody');
+            const numRows = Object.keys(sectionData[Object.keys(sectionData)[0]]).length;
+
+            for (let i = 0; i < numRows; i++) {
+                const row = document.createElement('tr');
+                Object.keys(sectionData).forEach(key => {
+                    const cell = document.createElement('td');
+                    cell.textContent = sectionData[key][i];
+                    row.appendChild(cell);
+                });
+                tbody.appendChild(row);
+            }
+            table.appendChild(tbody);
+
+            // Append the table to the container
+            container.appendChild(table);
+        }
+    }
+
+    function submitSolution() {
+        const fileInput = document.getElementById('file');
+        const solutionFileInput = document.getElementById('solutionFile');
+        solutionFileInput.files = fileInput.files;
+
+        document.getElementById('solutionForm').submit();
+    }
+</script>
+
+{% endblock content %}

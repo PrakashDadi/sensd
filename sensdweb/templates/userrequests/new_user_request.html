@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container">
+    
+    <header class="bg-primary text-white text-center py-4 mb-4">
+        <div class="container">
+            <h2 class="fw-light">SENSD DASHBOARD</h2>
+        </div>
+    </header>
+    {% include 'partials/_messages.html' %}
+    <div class="container">
+        <div class="row mb-4">
+           
+        </div>
+        </div>
+    
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>New Request</h4>
+            </div>
+            <div class="card-body">
+                <form id="multi-step-form" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+    
+                    <!-- Step 1 -->
+                    <div id="step-1" class="step">
+                        <div class="mb-3">
+                            <label for="node_id" class="form-label">Node ID</label>
+                            <input type="text" class="form-control" id="node_id" name="node_id" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="probability" class="form-label">Probability</label>
+                            <input type="number" class="form-control" id="probability" name="probability" step="any" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="cumulative_cost" class="form-label">Cumulative Cost</label>
+                            <input type="number" class="form-control" id="cumulative_cost" name="cumulative_cost" step="any" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="demand_rate" class="form-label">Demand Rate</label>
+                            <input type="number" class="form-control" id="demand_rate" name="demand_rate" step="any" required>
+                        </div>
+                        <button type="button" class="btn btn-primary" onclick="nextStep(1)">Next</button>
+                    </div>
+    
+                    <!-- Step 2 -->
+                    <div id="step-2" class="step" style="display: none;">
+                        <div class="mb-3">
+                            <label for="file" class="form-label">Upload Excel File</label>
+                            <input type="file" class="form-control" id="file" name="file" required>
+                        </div>
+                        <button type="button" class="btn btn-secondary" onclick="prevStep(2)">Previous</button>
+                        <button type="button" class="btn btn-primary" onclick="nextStep(2)">Next</button>
+                    </div>
+    
+                    <!-- Step 3 -->
+                    <div id="step-3" class="step" style="display: none;">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Node ID</th>
+                                    <th>Probability</th>
+                                    <th>Cumulative Cost</th>
+                                    <th>Demand Rate</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr>
+                                    <td>1</td>
+                                    <td id="review-node-id"></td>
+                                    <td id="review-probability"></td>
+                                    <td id="review-cumulative-cost"></td>
+                                    <td id="review-demand-rate"></td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <button type="button" class="btn btn-secondary" onclick="prevStep(3)">Previous</button>
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </div>
+    
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function nextStep(currentStep) {
+        document.getElementById('step-' + currentStep).style.display = 'none';
+        document.getElementById('step-' + (currentStep + 1)).style.display = 'block';
+
+        // Update review data if going to step 3
+        if (currentStep === 2) {
+            document.getElementById('review-node-id').innerText = document.getElementById('node_id').value;
+            document.getElementById('review-probability').innerText = document.getElementById('probability').value;
+            document.getElementById('review-cumulative-cost').innerText = document.getElementById('cumulative_cost').value;
+            document.getElementById('review-demand-rate').innerText = document.getElementById('demand_rate').value;
+        }
+    }
+
+    function prevStep(currentStep) {
+        document.getElementById('step-' + currentStep).style.display = 'none';
+        document.getElementById('step-' + (currentStep - 1)).style.display = 'block';
+    }
+</script>
+
+{% endblock content%}

@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<header class="bg-primary text-white text-center py-4 mb-4">
+    <div class="container">
+        <h2 class="fw-light">Arcs</h2>
+    </div>
+</header>
+
+<div class="container mt-5">
+    <form method="post" action="{% url 'ARCForm' requestid %}" >
+        {% csrf_token %}
+        {{ formset.management_form }}
+        {% for form in formset %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    {% for field in form %}
+                        <div class="mb-3">
+                            <label class="form-label">{{ field.label_tag }}</label>
+                            {{ field }}
+                            {% if field.errors %}
+                                <div class="text-danger">
+                                    {{ field.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+        <div class="text-right">
+            <button type="submit" class="btn btn-primary">Add</button>
+        </div>
+    </form>
+    <div class="card-footer text-end">
+        <a href="{% url 'FinishedGoods' requestid %}" class="col-md-2 btn btn-lg btn-primary align-items-center justify-content-center gap-2">           
+            Previous Step
+          </a>
+          <a href="{% url 'PTMForm' requestid %}" class="col-md-2 btn btn-lg btn-primary align-items-center justify-content-center gap-2">          
+            Next Step
+          </a>
+    </div>
+</div>
+
+<div class="container mt-5">
+    <h3>Entered Arcs</h3>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>From Node ID</th>
+                <th>From Node Name</th>
+                <th>To Node ID</th>
+                <th>To Node Name</th>
+                <th>Multiplier</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for arc in arcs %}
+                <tr>
+                    <td>{{ arc.Arc_id }}</td>
+                    <td>{{ arc.from_node_id }}</td>
+                    <td>{{ arc.from_node_name }}</td>
+                    <td>{{ arc.to_node_id }}</td>
+                    <td>{{ arc.to_node_name }}</td>
+                    <td>{{ arc.multiplier }}</td>
+                    <td>
+                        <a href="#" class="btn btn-warning btn-sm">Edit</a>
+                        <a href="#" class="btn btn-danger btn-sm">Delete</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock content %}
