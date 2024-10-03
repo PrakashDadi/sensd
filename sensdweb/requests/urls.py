@@ -17,7 +17,13 @@ urlpatterns = [
       path('new_request/<str:requestid>/ARCForm', views.arcform, name='ARCForm'), 
       path('new_request/<str:requestid>/PTMForm', views.pathtestmethodform, name='PTMForm'), 
       path('new_request/<str:requestid>/PTMFNodesForm', views.pathtestmethodFnodesform, name='PTMFNodesForm'), 
-      path('node/<int:pk>/<str:requestid>/edit/', views.edit_allnode, name='edit_allnode'),
+      path('new_request/<str:requestid>/DynamicParameterForm', views.dynamicparametersform, name='DynamicParameterForm'),
+      path('allNode/<int:pk>/<str:requestid>/edit/', views.edit_allnode, name='edit_allnode'),
+      path('initialNode/<int:pk>/<str:requestid>/edit_initialnode/', views.edit_initialNodes, name='edit_initialnode'),
+      path('finishedGoods/<int:pk>/<str:requestid>/edit_finishedGoods/', views.edit_finishedGoods, name='edit_finishedgood'),
+      path('arcs/<int:pk>/<str:requestid>/edit_arcs/', views.edit_arcform, name='edit_arc'),
+      path('ptmform/<int:pk>/<str:requestid>/edit_ptmform/', views.edit_pathtestmethodform, name='edit_ptmform'),
+      path('ptmfnodesform/<int:pk>/<str:requestid>/edit_ptmfn' , views.edit_pathtestmethodFnodesform, name='edit_ptmfnodesform')
 ]
 
 if settings.DEBUG:

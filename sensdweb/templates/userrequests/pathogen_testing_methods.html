@@ -54,16 +54,76 @@
         </thead>
         <tbody>
             {% for ptm in pathogen_testing_methods %}
-                <tr>
-                    <td>{{ ptm.ptm_id }}</td>
-                    <td>{{ ptm.pathogen_testing_method }}</td>
-                    <td>
-                        <a href="#" class="btn btn-warning btn-sm">Edit</a>
-                        <a href="#" class="btn btn-danger btn-sm">Delete</a>
-                    </td>
-                </tr>
-            {% endfor %}
+    <tr id="ptm-{{ ptm.pk }}">
+        <form method="post" action="{% url 'edit_ptmform' pk=ptm.pk requestid=requestid %}">
+            {% csrf_token %}
+            <input type="hidden" name="Model" value="PathogenTestingMethods">
+            <input type="hidden" name="ModelForm" value="PathogenTestingMethodForm">
+            <td>
+                <span class="display">{{ ptm.ptm_id }}</span>
+                <input type="text" name="ptm_id" value="{{ ptm.ptm_id }}" class="form-control edit d-none">
+            </td>
+            <td>
+                <span class="display">{{ ptm.pathogen_testing_method }}</span>
+                <input type="text" name="pathogen_testing_method" value="{{ ptm.pathogen_testing_method }}" class="form-control edit d-none">
+            </td>
+            <td>
+                <button type="button" class="btn btn-warning btn-sm edit-btn">Edit</button>
+                <button type="submit" class="btn btn-primary btn-sm save-btn d-none">Save</button>
+                <a href="{% url 'edit_ptmform' pk=ptm.pk requestid=requestid %}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this testing method?');">Delete</a>
+                <button type="button" class="btn btn-secondary btn-sm cancel-btn d-none">Cancel</button>
+            </td>
+        </form>
+    </tr>
+{% endfor %}
+
         </tbody>
     </table>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const editButtons = document.querySelectorAll('.edit-btn');
+        const cancelButtons = document.querySelectorAll('.cancel-btn');
+    
+        editButtons.forEach((button) => {
+            button.addEventListener('click', function () {
+                const row = button.closest('tr');
+                toggleEditMode(row, true);
+            });
+        });
+    
+        cancelButtons.forEach((button) => {
+            button.addEventListener('click', function () {
+                const row = button.closest('tr');
+                toggleEditMode(row, false);
+            });
+        });
+    
+        function toggleEditMode(row, editMode) {
+            const displayElements = row.querySelectorAll('.display');
+            const editElements = row.querySelectorAll('.edit');
+            const editButton = row.querySelector('.edit-btn');
+            const deleteButton = row.querySelector('.delete-btn');
+            const saveButton = row.querySelector('.save-btn');
+            const cancelButton = row.querySelector('.cancel-btn');
+    
+            if (editMode) {
+                displayElements.forEach(el => el.classList.add('d-none'));
+                editElements.forEach(el => el.classList.remove('d-none'));
+                editButton.classList.add('d-none');
+                saveButton.classList.remove('d-none');
+                cancelButton.classList.remove('d-none');
+            } else {
+                displayElements.forEach(el => el.classList.remove('d-none'));
+                editElements.forEach(el => el.classList.add('d-none'));
+                editButton.classList.remove('d-none');
+                saveButton.classList.add('d-none');
+                cancelButton.classList.add('d-none');
+            }
+        }
+    
+       
+    });
+    </script>
 {% endblock content %}

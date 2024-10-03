@@ -49,7 +49,7 @@
                                 <td>{{ req.created_on }}</td>
                                 <td>{{ req.updated_on }}</td>
                                 <td>
-                                    <a  class="btn btn-warning btn-sm">Edit</a>
+                                    <a href="{% url 'AllNodes' requestid=req.user_request_id%}" class="btn btn-warning btn-sm">Edit</a>
                                     <a  class="btn btn-danger btn-sm">Delete</a>
                                 </td>
                             </tr>

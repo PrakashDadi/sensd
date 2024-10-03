@@ -95,7 +95,7 @@ class RegistrationView(View):
                 confirmation_mail = EmailMessage(
                     email_subject,
                     'Hi '+user.username + ', Please the link below to activate your account \n'+activate_url,
-                    "noreply@semycolon.com",
+                    "dadiprakash4422@gmail.com",
                     [email],
                 )
                 confirmation_mail.send(fail_silently=False)

@@ -137,3 +137,35 @@
   .breadcrumb-custom .breadcrumb-item:last-child::after {
     display: none;
   }
+
+  /* Sidebar container */
+.sidebar {
+  position: fixed;
+  top: 30;
+  left: 0;
+  height: 100vh; /* Full height */
+  width: 250px;  /* Width of sidebar */
+  padding-top: 20px;
+  z-index: 1000; /* Keep it on top */
+  overflow-x: hidden; /* Disable horizontal scrolling */
+  overflow-y: auto; /* Allow vertical scrolling if content overflows */
+}
+
+/* Main content */
+.main-content {
+  padding: 20px;
+  height: 100vh; /* Full height */
+  overflow-y: scroll; /* Enable scrolling for the main content */
+}
+
+/* Style for the sidebar links */
+.sidebar a {
+  padding: 15px 10px;
+  text-decoration: none;
+  font-size: 18px;
+  display: block;
+}
+
+
+
+
