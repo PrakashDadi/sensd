@@ -15,15 +15,23 @@ from django.utils import timezone
 
 from django.http import HttpResponse , JsonResponse
 
-from .models import Request as RequestModel, AllNodes, InitialNodes, FinishedGoods, Arc, PathogenTestingMethod , PathogenTestingMethodFNodes
-from .forms import AllNodeForm, InitialNodeForm, FinishedGoodsForm, ArcForm, PathogenTestingMethodForm , PathogenTestingMethodFNodesForm
+from .models import Request as RequestModel, AllNodes, InitialNodes, FinishedGoods, Arc, PathogenTestingMethod , PathogenTestingMethodFNodes, DynamicParameters, ResultModel , NodeResult, VariableResult
+from .forms import AllNodeForm, InitialNodeForm, FinishedGoodsForm, ArcForm, PathogenTestingMethodForm , PathogenTestingMethodFNodesForm, DynamicParametersForm
 
 from django.core.files.storage import FileSystemStorage
+
+from django.conf import settings
+
 
 import gurobipy as gp
 from gurobipy import GRB
 import pandas as pd
 from collections import defaultdict, deque #Used to create dictionaries with default values and double-ended queues
+
+from django.forms import formset_factory
+from .forms import DynamicParametersForm
+
+from io import BytesIO
 # Create your views here.
 
 def newRequest(request):
@@ -80,15 +88,13 @@ def allNodes(request, requestid):
     })
 
 
+
 def edit_allnode(request, pk, requestid):
 
-    print("this is pk", pk)
-    print("this is requestid", request.body)
-    Model = request.POST.get('Model')
-    ModelForm = request.POST.get('ModelForm')
-    node = get_object_or_404(Model, id=pk, user_request_id=requestid)
+
+    node = get_object_or_404(AllNodes, id=pk, user_request_id=requestid)
     if request.method == 'POST':
-        form = ModelForm(request.POST , instance=node)
+        form = AllNodeForm(request.POST , instance=node)
         if form.is_valid():
             # Update the object with form data
             node = form.save(commit=False)
@@ -98,15 +104,16 @@ def edit_allnode(request, pk, requestid):
             # Redirect to the same page or any other page
             return redirect('AllNodes', requestid=requestid)
     else:
-        form = ModelForm(instance=node)
+        form = AllNodeForm(instance=node)
     # Retrieve all nodes associated with the request ID
-    nodes = Model.objects.filter(user_request_id=requestid, is_deleted=False)
+    nodes = AllNodes.objects.filter(user_request_id=requestid, is_deleted=False)
     
     return render(request, 'userrequests/all_nodes.html', {
         'requestid': requestid,
         'form': form,
         'nodes': nodes,
     })
+
 
 
 
@@ -138,6 +145,69 @@ def initialNodes(request, requestid):
     
     return render(request, 'userrequests/initial_nodes.html', {'uservalues': uservalues, 'formset': initial_node_form, 'initial_nodes': initialnodes, 'requestid': requestid})
 
+def edit_initialNodes(request, pk, requestid):
+
+    node = get_object_or_404(InitialNodes, id=pk, user_request_id=requestid)
+    if request.method == 'POST':
+        form = InitialNodeForm(request.POST , instance=node)
+        if form.is_valid():
+            # Update the object with form data
+            node = form.save(commit=False)
+            node.updated_by = request.user.email  # Set the user who updated this
+            node.save()  # Save the updated object to the database
+            
+            # Redirect to the same page or any other page
+            return redirect('InitialNodes', requestid=requestid)
+    else:
+        form = InitialNodeForm(instance=node)
+    # Retrieve all nodes associated with the request ID
+    nodes = InitialNodes.objects.filter(user_request_id=requestid, is_deleted=False)
+    uservalues =  request.session.get('uservalues', None)
+    
+    return render(request, 'userrequests/initial_nodes.html', {
+        'uservalues': uservalues,
+        'requestid': requestid,
+        'formset': form,
+        'initial_nodes': nodes,
+    })
+
+
+
+def dynamicparametersform(request, requestid):
+    # Use formset_factory with your form
+    DynamicParametersFormSet = formset_factory(DynamicParametersForm, extra=1)
+
+    if request.method == 'POST':
+        # Bind the formset with POST data
+        formset = DynamicParametersFormSet(request.POST)
+        
+        if formset.is_valid():
+            # Save the form data to the database
+            for form in formset:
+                new_node = form.save(commit=False)  # Don't save immediately
+                new_node.user_request_id = requestid
+                new_node.created_by = request.user.email
+                new_node.updated_by = request.user.email
+                new_node.save()  # Now save the instance to the database
+
+            # Redirect to the same page to display the new data
+            return redirect('DynamicParameterForm', requestid=requestid)
+        else:
+            print("Formset errors:", formset.errors)  # This will print formset errors for debugging
+    
+    else:
+        # Empty formset on GET request
+        formset = DynamicParametersFormSet()
+
+    # Retrieve all nodes associated with the request ID
+    dynamicparameter = DynamicParameters.objects.filter(user_request_id=requestid)
+
+    return render(request, 'userrequests/dynamic_parameters.html', {
+        'requestid': requestid,
+        'formset': formset,
+        'nodes': dynamicparameter,
+    })
+
 
 
 def finishedGoods(request, requestid):
@@ -168,7 +238,31 @@ def finishedGoods(request, requestid):
     
     return render(request, 'userrequests/finishedgoods.html', {'uservalues': uservalues, 'formset': finished_goods_formset, 'finished_goods': finished_goods, 'requestid': requestid})
 
+def edit_finishedGoods(request, pk, requestid):
 
+    node = get_object_or_404(FinishedGoods, id=pk, user_request_id=requestid)
+    if request.method == 'POST':
+        form = FinishedGoodsForm(request.POST , instance=node)
+        if form.is_valid():
+            # Update the object with form data
+            node = form.save(commit=False)
+            node.updated_by = request.user.email  # Set the user who updated this
+            node.save()  # Save the updated object to the database
+            
+            # Redirect to the same page or any other page
+            return redirect('FinishedGoods', requestid=requestid)
+    else:
+        form = FinishedGoodsForm(instance=node)
+    # Retrieve all nodes associated with the request ID
+    nodes = FinishedGoods.objects.filter(user_request_id=requestid, is_deleted=False)
+    uservalues =  request.session.get('uservalues', None)
+    
+    return render(request, 'userrequests/finishedgoods.html', {
+        'uservalues': uservalues,
+        'requestid': requestid,
+        'formset': form,
+        'finished_goods': nodes,
+    })
 
 def arcform(request, requestid):
 
@@ -197,7 +291,31 @@ def arcform(request, requestid):
     arcs = Arc.objects.filter(user_request_id=requestid)   
     return render(request, 'userrequests/arcs.html', {'formset': arc_formset, 'arcs': arcs , 'requestid': requestid })
 
+def edit_arcform(request, pk, requestid):
 
+    node = get_object_or_404(Arc, id=pk, user_request_id=requestid)
+    if request.method == 'POST':
+        form = ArcForm(request.POST , instance=node)
+        if form.is_valid():
+            # Update the object with form data
+            node = form.save(commit=False)
+            node.updated_by = request.user.email  # Set the user who updated this
+            node.save()  # Save the updated object to the database
+            
+            # Redirect to the same page or any other page
+            return redirect('ARCForm', requestid=requestid)
+    else:
+        form = ArcForm(instance=node)
+    # Retrieve all nodes associated with the request ID
+    nodes = Arc.objects.filter(user_request_id=requestid, is_deleted=False)
+    uservalues =  request.session.get('uservalues', None)
+    
+    return render(request, 'userrequests/arcs.html', {
+        'uservalues': uservalues,
+        'requestid': requestid,
+        'formset': form,
+        'arcs': nodes,
+    })
 
 def pathtestmethodform(request, requestid):
 
@@ -228,6 +346,33 @@ def pathtestmethodform(request, requestid):
     
     return render(request, 'userrequests/pathogen_testing_methods.html', {'uservalues': uservalues, 'formset': ptm_formset, 'pathogen_testing_methods': ptmNodeFormValues,  'requestid': requestid })
 
+def edit_pathtestmethodform(request, pk, requestid):
+
+    node = get_object_or_404(PathogenTestingMethod, id=pk, user_request_id=requestid)
+    if request.method == 'POST':
+        form = PathogenTestingMethodForm(request.POST , instance=node)
+        if form.is_valid():
+            # Update the object with form data
+            node = form.save(commit=False)
+            node.updated_by = request.user.email  # Set the user who updated this
+            node.save()  # Save the updated object to the database
+            
+            # Redirect to the same page or any other page
+            return redirect('PTMForm', requestid=requestid)
+    else:
+        form = PathogenTestingMethodForm(instance=node)
+    # Retrieve all nodes associated with the request ID
+    nodes = PathogenTestingMethod.objects.filter(user_request_id=requestid, is_deleted=False)
+    uservalues =  request.session.get('uservalues', None)
+    
+    return render(request, 'userrequests/pathogen_testing_methods.html', {
+        'uservalues': uservalues,
+        'requestid': requestid,
+        'formset': form,
+        'pathogen_testing_methods': nodes,
+    })
+
+
 def pathtestmethodFnodesform(request , requestid):
 
     ptm_fnode_formset = formset_factory(PathogenTestingMethodFNodesForm, extra=1)
@@ -254,7 +399,38 @@ def pathtestmethodFnodesform(request , requestid):
 
     uservalues =  request.session.get('uservalues', None)
     
-    return render(request, 'userrequests/pathogen_testing_method_fnodes.html', {'uservalues': uservalues, 'formset': ptm_fnode_form_set, 'pathogen_testing_method_fnodes': ptmFNodeValues, 'requestid': requestid })
+    return render(request, 'userrequests/pathogen_testing_method_fnodes.html', {
+        'uservalues': uservalues, 
+        'formset': ptm_fnode_form_set, 
+        'pathogen_testing_method_fnodes': ptmFNodeValues, 
+        'requestid': requestid 
+        })
+
+def edit_pathtestmethodFnodesform(request, pk, requestid):
+
+    node = get_object_or_404(PathogenTestingMethodFNodes, id=pk, user_request_id=requestid)
+    if request.method == 'POST':
+        form = PathogenTestingMethodFNodesForm(request.POST , instance=node)
+        if form.is_valid():
+            # Update the object with form data
+            node = form.save(commit=False)
+            node.updated_by = request.user.email  # Set the user who updated this
+            node.save()  # Save the updated object to the database
+            
+            # Redirect to the same page or any other page
+            return redirect('PTMFNodesForm', requestid=requestid)
+    else:
+        form = PathogenTestingMethodFNodesForm(instance=node)
+    # Retrieve all nodes associated with the request ID
+    nodes = PathogenTestingMethodFNodes.objects.filter(user_request_id=requestid, is_deleted=False)
+    uservalues =  request.session.get('uservalues', None)
+    
+    return render(request, 'userrequests/pathogen_testing_method_fnodes.html', {
+        'uservalues': uservalues,
+        'requestid': requestid,
+        'formset': form,
+        'pathogen_testing_method_fnodes': nodes,
+    })
 
 def generate_excel(request, requestid):
     user_request_id = requestid
@@ -298,6 +474,12 @@ def generate_excel(request, requestid):
         'direct_cost':'Direct Cost',
         'lead_time': 'Lead Time'
     }
+    dynamic_parameters_feilds = {
+        'dynamic_parameter_id' : 'ID',
+        'maxsteps_k' : 'Max Steps (K)',
+        'maxpercentage_alpha' : 'Max Percentage (Alpha)',
+        'maxbudget_B' : 'Max Budget (B)',
+    }
     
     # Collect data from each model and rename columns
     all_nodes = AllNodes.objects.filter(user_request_id=user_request_id).values(*all_nodes_fields.keys())
@@ -306,6 +488,7 @@ def generate_excel(request, requestid):
     arcs = Arc.objects.filter(user_request_id=user_request_id).values(*arcs_fields.keys())
     pathogen_testing_methods = PathogenTestingMethod.objects.filter(user_request_id=user_request_id).values(*ptm_fields.keys())
     pathogen_testing_method_f_nodes = PathogenTestingMethodFNodes.objects.filter(user_request_id=user_request_id).values(*ptm_f_nodes_fields.keys())
+    dynamic_parameters = DynamicParameters.objects.filter(user_request_id=user_request_id).values(*dynamic_parameters_feilds.keys())
     
     # Create a Pandas Excel writer using Openpyxl
     output_file_path = f"media/excels/{user_request_id}_data.xlsx"
@@ -341,6 +524,11 @@ def generate_excel(request, requestid):
         ptm_f_nodes_df = pd.DataFrame(list(pathogen_testing_method_f_nodes))
         ptm_f_nodes_df.rename(columns=ptm_f_nodes_fields, inplace=True)
         ptm_f_nodes_df.to_excel(writer, sheet_name='Pathogen Testing Methods F Node', index=False)
+
+    if dynamic_parameters:
+        dynamic_parameters_df = pd.DataFrame(list(dynamic_parameters))
+        dynamic_parameters_df.rename(columns=dynamic_parameters_feilds, inplace=True)
+        dynamic_parameters_df.to_excel(writer, sheet_name='Dynamic Parameters', index=False)
     
     # Save the Excel file
     writer.close()
@@ -412,12 +600,13 @@ def optimize_model(request):
                         # Run the Gurobi optimization logic
             try:
                 # Assuming your Gurobi logic is in a separate function for reusability
-                run_optimization(os.path.join(fs.location, filename))
+                response = run_optimization(os.path.join(fs.location, filename), request)
+                return response
                 messages.success(request, 'Optimization ran successfully and the request has been created.')
             except Exception as e:
                 messages.error(request, f'An error occurred: {e}')
 
-            return redirect('user_requests')  # Redirect to the request history page after success
+            # Redirect to the request history page after success
     
     return render(request, 'userrequests/requests_list_history.html')
 
@@ -448,9 +637,32 @@ def compute_reachability_matrix(nodes, arcs, max_steps):
     return reachability
 
 
-def run_optimization(file_name):
+def run_optimization(file_name, request):
+
+     # Extract request_id from file name
+    request_id = os.path.basename(file_name).split('_data')[0]
         # Create a new optimization model for SEFSCCP
     m = gp.Model("Sensor Placement Project")
+
+    uservalues =  request.session.get('uservalues', None)
+
+    if uservalues is None:
+        messages.error(request,'Something went wrong, Cant Raise a request')
+        return redirect('sensd')
+    
+    username = urlsafe_base64_encode(force_bytes(uservalues['username']))
+    new_result = ResultModel(
+        user_request_id = request_id,  # Generate or assign a unique value
+        created_by=request.user.email,  # Assuming user is authenticated
+        updated_by=request.user.email,
+        created_on=timezone.now(),
+        updated_on=timezone.now(),
+        is_deleted=False
+    )
+    new_result.save()
+    
+    new_result.user_result_id = f"Req{uservalues['pk']}{username}{request_id}{new_result.result_id}"
+    new_result.save()
 
     # Sets and Parameters
     # Load All Excel Data
@@ -461,6 +673,7 @@ def run_optimization(file_name):
     arcs_sheet = "Arcs"
     pathogen_testing_method_sheet = "Pathogen Testing Methods"
     pathogen_testing_method_f_node_sheet = "Pathogen Testing Methods F Node"
+    dynamic_parameters_sheet = "Dynamic Parameters"
 
     # All Nodes Data Pull
     df_all_nodes = pd.read_excel(io=file_name, sheet_name=all_nodes_sheet)
@@ -512,9 +725,13 @@ def run_optimization(file_name):
         direct_cost[node][method] = row["Direct Cost"]
         lead_time[node][method] = row["Lead Time"]
 
-    k = 3              # are these constants or will change 
-    B = 30000
-    alpha = 0.5
+    # k = 3              # are these constants or will change 
+    # B = 30000
+    # alpha = 0.5
+    df_dynamic_parameters = pd.read_excel(io=file_name, sheet_name=dynamic_parameters_sheet)
+    k = df_dynamic_parameters["Max Steps (K)"].values[0]
+    alpha = df_dynamic_parameters["Max Percentage (Alpha)"].values[0]
+    B = df_dynamic_parameters["Max Budget (B)"].values[0]
 
     # Call function compute_reachability_matrix and pass the respective parameters for the dictionary reachability_matrix
     reachability_matrix = compute_reachability_matrix(all_nodes, arcs, k)
@@ -585,9 +802,81 @@ def run_optimization(file_name):
             print(f'  Demand Rate for node {i}: {sum_demand}')
             print(f'  Lead Time for node {i}: {sum_leadtime}')
 
+            NodeResult.objects.create(
+                request_id = request_id,
+                result_id = new_result.user_result_id,
+                node_id=i,
+                direct_cost=c[i].X,
+                cumulative_cost=cum_cost[i],
+                demand_rate=demand_rate[i],
+                lead_time=l[i].X
+            )
+
         for v in m.getVars():
             print(f'{v.varName}: {v.x}')
+
+            VariableResult.objects.create(
+                request_id = request_id,
+                result_id = new_result.user_result_id,
+                variable_name=v.varName,
+                value=v.x
+            )
 
         print(f'Objective Value: {m.objVal}')
     else:
         print('No optimal solution found')
+
+    node_feilds = {
+        'direct_cost':'Direct Cost for node',
+        'cumulative_cost':'Cumulative Cost for node',
+        'demand_rate':'Demand Rate for node',
+        'lead_time':'Lead Time for node'
+    }
+    Variable_feilds = {
+        'variable_name':'Variable Name',
+        'value':'Value'
+    }
+
+    Nodes_list = NodeResult.objects.filter(result_id = new_result.user_result_id).values(*node_feilds.keys())
+    Variables_list = VariableResult.objects.filter(result_id = new_result.user_result_id).values(*Variable_feilds.keys())
+    
+    print("this is nodes list", Nodes_list)
+
+    output_file = f"media/excels/{request_id}_optimization_results.xlsx"
+
+    # Create an in-memory BytesIO object
+    output = BytesIO()
+    
+    # Create the Excel writer using the in-memory buffer
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:  
+        # Write DataFrame to Excel
+        Node_feilds = {
+        'direct_cost':'Direct Cost for node',
+        'cumulative_cost':'Cumulative Cost for node',
+        'demand_rate':'Demand Rate for node',
+        'lead_time':'Lead Time for node'
+        }
+        Variable_feilds = {
+            'variable_name':'Variable Name',
+            'value':'Value'
+        }
+        if Nodes_list:
+            df_node_results = pd.DataFrame(list(Nodes_list))
+            df_node_results.rename(columns=Node_feilds, inplace=True)
+            df_node_results.to_excel(writer, sheet_name='Node Results', index=False)
+
+        if Variables_list:
+            df_variable_results = pd.DataFrame(list(Variables_list))
+            df_variable_results.rename(columns=Variable_feilds, inplace=True)
+            df_variable_results.to_excel(writer, sheet_name='Variable Results', index=False)
+
+    # Make sure the BytesIO buffer is at the beginning
+    output.seek(0)
+
+    # Serve the file as an HTTP response for download
+    response = HttpResponse(output, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename={request_id}_optimization_results.xlsx'
+    
+    print("this is response", response)
+    return response
+

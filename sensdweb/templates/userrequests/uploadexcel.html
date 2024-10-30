@@ -35,14 +35,16 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="jsonModalLabel">JSON Data Preview</h5>
+                    <h5 class="modal-title" id="jsonModalLabel">Input Data Preview</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div id="jsonTableContainer"></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-success" onclick="submitSolution()">Solution</button>
+                    <!-- Hidden iframe for file download -->    
+                    <iframe id="hidden_iframe" name="hidden_iframe" style="display:none;"></iframe>
+                    <button type="button" class="btn btn-success" onclick="submitSolution('{% url 'optimize_model' %}','{% url 'user_requests'%}')">Solution</button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
@@ -126,12 +128,17 @@
         }
     }
 
-    function submitSolution() {
+    function submitSolution(downloadUrl , redirecturl) {
         const fileInput = document.getElementById('file');
         const solutionFileInput = document.getElementById('solutionFile');
         solutionFileInput.files = fileInput.files;
 
+        // Trigger the file download
         document.getElementById('solutionForm').submit();
+        // After a short delay, perform the redirection
+         setTimeout(function() {
+            window.open(redirectUrl, '_self');  // '_self' opens it in the same window
+        }, 10000);       
     }
 </script>
 

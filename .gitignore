@@ -1,0 +1,39 @@
+
+# Environment and virtual environment files
+*.env
+myenv/
+*.pyc
+__pycache__/
+
+# System files
+*.DS_Store
+Thumbs.db
+
+# SQLite database
+*.sqlite3
+
+# Media files and uploads (usually ignored to keep the repository clean)
+media/
+media/*
+
+# Static files
+staticfiles/
+sensdweb/static/*
+
+# Django migrations (optional to ignore __pycache__ and pyc files within migrations)
+**/migrations/*.pyc
+**/migrations/__pycache__/
+**/__pycache__
+
+# Ignore git folder (in case you want to reinitialize)
+.git/
+
+# IDE configurations (optional, depending on your setup)
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Log files
+*.log
+logs/

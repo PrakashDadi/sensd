@@ -2,7 +2,7 @@
 
 
 from django import forms
-from .models import Request, AllNodes, InitialNodes, FinishedGoods, Arc , PathogenTestingMethod, PathogenTestingMethodFNodes 
+from .models import Request, AllNodes, InitialNodes, FinishedGoods, Arc , PathogenTestingMethod, PathogenTestingMethodFNodes, DynamicParameters
 
 
 class AllNodeForm(forms.ModelForm):
@@ -103,4 +103,22 @@ class PathogenTestingMethodFNodesForm(forms.ModelForm):
             'sensitivity': 'Sensitivity',
             'direct_cost': 'Direct Cost',
             'lead_time': 'Lead time',
+        }
+
+class DynamicParametersForm(forms.ModelForm):
+    class Meta:
+        model = DynamicParameters
+        fields = ['dynamic_parameter_id', 'maxsteps_k', 'maxpercentage_alpha', 'maxbudget_B']       
+        # Optional: You can also customize the form fields by using widgets or setting labels.
+        widgets = {
+            'dynamic_parameter_id': forms.NumberInput(attrs={'class': 'form-control'}),
+            'maxsteps_k': forms.NumberInput(attrs={'class': 'form-control'}),
+            'maxpercentage_alpha': forms.NumberInput(attrs={'class': 'form-control'}),
+            'maxbudget_B': forms.NumberInput(attrs={'class': 'form-control'}),
+        }
+        labels = {
+            'dynamic_parameter_id': 'Dynamic Parameter ID',
+            'maxsteps_k': 'Max Steps (k)',
+            'maxpercentage_alpha': 'Max Percentage (Alpha)',
+            'maxbudget_B': 'Max Budget (B)',
         }

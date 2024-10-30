@@ -6,8 +6,13 @@ import json
 from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.contrib import messages
+
+from requests.models import Request as RequestModel , ResultModel
+
+
 from .models import UserDetails
 from .forms import UserDetailsForm
+
 
 from django.utils.encoding import force_bytes , DjangoUnicodeDecodeError , force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
@@ -34,7 +39,17 @@ def adminindex(request):
     return render(request, 'dashboard/adminindex.html', {'uservalues': uservalues})
 
 def home(request):
-    return render(request, 'dashboard/index.html')
+    uservalues =  request.session.get('uservalues', None)
+
+    requestlists = RequestModel.objects.filter(created_by = uservalues['email'])
+    resultlists = ResultModel.objects.filter(created_by = uservalues['email'])
+
+    print(resultlists)
+    return render(request, 'dashboard/index.html',{
+        'uservalues': uservalues,
+        'requests': requestlists,
+        'results': resultlists
+    })
 
 def add_user(request):
     return render(request, 'dashboard/add_users.html')
