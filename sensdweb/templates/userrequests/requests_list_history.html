@@ -19,8 +19,35 @@
         <div class="card mb-4">
             <div class="card-header">
                 <h4>Request History</h4>
-            </div>
-            <div class="container mt-5">
+                <div class="container mt-5">
+                
+                
+                    <table class="table table-bordered table-striped">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th scope="col">Request ID</th>
+                                <th scope="col">User Request ID</th>
+                                <th scope="col">Created On</th>
+                                <th scope="col">Updated On</th>
+                                <th scope="col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for req in requests %}
+                                <tr>
+                                    <td>{{ req.request_id }}</td>
+                                    <td>{{ req.user_request_id }}</td>
+                                    <td>{{ req.created_on }}</td>
+                                    <td>{{ req.updated_on }}</td>
+                                    <td>
+                                        <a href="{% url 'AllNodes' requestid=req.user_request_id%}" class="btn btn-warning btn-sm">Edit</a>
+                                        <a  class="btn btn-danger btn-sm">Delete</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
                 <div class="card-footer text-end">
                     <a href="{% url 'new_request'%}" class="col-md-2 btn btn-lg btn-primary align-items-center justify-content-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-square" viewBox="0 0 16 16">
@@ -30,33 +57,9 @@
                         Add Request
                       </a>
                 </div>
-                
-                <table class="table table-bordered table-striped">
-                    <thead class="thead-dark">
-                        <tr>
-                            <th scope="col">Request ID</th>
-                            <th scope="col">User Request ID</th>
-                            <th scope="col">Created On</th>
-                            <th scope="col">Updated On</th>
-                            <th scope="col">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for req in requests %}
-                            <tr>
-                                <td>{{ req.request_id }}</td>
-                                <td>{{ req.user_request_id }}</td>
-                                <td>{{ req.created_on }}</td>
-                                <td>{{ req.updated_on }}</td>
-                                <td>
-                                    <a href="{% url 'AllNodes' requestid=req.user_request_id%}" class="btn btn-warning btn-sm">Edit</a>
-                                    <a  class="btn btn-danger btn-sm">Delete</a>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
             </div>
+            
+           
             
         </div>
     </div>

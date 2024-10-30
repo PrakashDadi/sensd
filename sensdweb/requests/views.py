@@ -600,13 +600,13 @@ def optimize_model(request):
                         # Run the Gurobi optimization logic
             try:
                 # Assuming your Gurobi logic is in a separate function for reusability
-                run_optimization(os.path.join(fs.location, filename), request)
-        
+                response = run_optimization(os.path.join(fs.location, filename), request)
+                return response
                 messages.success(request, 'Optimization ran successfully and the request has been created.')
             except Exception as e:
                 messages.error(request, f'An error occurred: {e}')
 
-            return redirect('user_requests')  # Redirect to the request history page after success
+            # Redirect to the request history page after success
     
     return render(request, 'userrequests/requests_list_history.html')
 
