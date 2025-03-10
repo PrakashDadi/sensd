@@ -134,10 +134,49 @@
         solutionFileInput.files = fileInput.files;
 
         // Trigger the file download
+        // For Saving the data to request model logic
+        const fileInput = document.getElementById('file');
+        const formData = new FormData();
+        formData.append("file", fileInput.files[0]);
+fetch("{% url 'save_excel_data' %}", {
+    method: "POST",
+    body: formData,
+    headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+        "Content-Type": "multipart/form-data"
+    }
+})
+.then(response => response.json())
+.then(data => {
+    if (data.status === "success") {
+        alert("Data saved successfully!");
+        setTimeout(function () {
+            window.open("{% url 'user_requests'%}", "_self");
+        }, 10000);
+    } else {
+        alert("Error: " + data.message);
+    }
+})
+.catch(error => console.error("Error:", error));
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === "success") {
+                alert("Data saved successfully!");
+                setTimeout(function () {
+                    window.open(redirecturl, "_self");
+                }, 10000);
+            } else {
+                alert("Error: " + data.message);
+            }
+        })
+        .catch(error => console.error("Error:", error));
+        //End of Logic
         document.getElementById('solutionForm').submit();
         // After a short delay, perform the redirection
+
+
          setTimeout(function() {
-            window.open(redirectUrl, '_self');  // '_self' opens it in the same window
+            window.open(redirecturl, '_self');  // '_self' opens it in the same window
         }, 10000);       
     }
 </script>

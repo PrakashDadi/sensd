@@ -16,6 +16,10 @@ Thumbs.db
 media/
 media/*
 
+#my env
+myenv/
+myenv/*
+
 # Static files
 staticfiles/
 sensdweb/static/*
@@ -37,3 +41,7 @@ sensdweb/static/*
 # Log files
 *.log
 logs/
+
+#Nginix files
+nginx-1.26.2/
+

@@ -41,7 +41,7 @@
                                     <td>{{ req.updated_on }}</td>
                                     <td>
                                         <a href="{% url 'AllNodes' requestid=req.user_request_id%}" class="btn btn-warning btn-sm">Edit</a>
-                                        <a  class="btn btn-danger btn-sm">Delete</a>
+                                        <a href="{% url 'delete_request' requestid=req.user_request_id%}" class="btn btn-danger btn-sm">Delete</a>
                                     </td>
                                 </tr>
                             {% endfor %}

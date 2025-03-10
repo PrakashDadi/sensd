@@ -22,6 +22,8 @@ from django.core.files.storage import FileSystemStorage
 
 from django.conf import settings
 
+from datetime import datetime
+
 
 import gurobipy as gp
 from gurobipy import GRB
@@ -32,7 +34,13 @@ from django.forms import formset_factory
 from .forms import DynamicParametersForm
 
 from io import BytesIO
+import re
 # Create your views here.
+
+import matplotlib.pyplot as plt
+import base64
+
+import json
 
 def newRequest(request):
     uservalues =  request.session.get('uservalues', None)
@@ -42,8 +50,9 @@ def newRequest(request):
         return redirect('sensd')
     
     username = urlsafe_base64_encode(force_bytes(uservalues['username']))
+    requested_date = uservalues.get('requested_date', datetime.now().strftime('%Y%m%d'))
     new_request = RequestModel(
-        user_request_id = f"Req{uservalues['pk']}{username}",  # Generate or assign a unique value
+        user_request_id = f"Request{requested_date}",  # Generate or assign a unique value
         created_by=request.user.email,  # Assuming user is authenticated
         updated_by=request.user.email,
         created_on=timezone.now(),
@@ -52,7 +61,7 @@ def newRequest(request):
     )
     new_request.save()
     
-    new_request.user_request_id = f"Req{uservalues['pk']}{username}{new_request.request_id}"
+    new_request.user_request_id = f"Request{requested_date}{new_request.request_id}"
     new_request.save()
 
     messages.success(request, 'New Request Initiated')
@@ -651,6 +660,7 @@ def run_optimization(file_name, request):
         return redirect('sensd')
     
     username = urlsafe_base64_encode(force_bytes(uservalues['username']))
+    requested_date = uservalues.get('requested_date', datetime.now().strftime('%Y%m%d')) 
     new_result = ResultModel(
         user_request_id = request_id,  # Generate or assign a unique value
         created_by=request.user.email,  # Assuming user is authenticated
@@ -661,7 +671,7 @@ def run_optimization(file_name, request):
     )
     new_result.save()
     
-    new_result.user_result_id = f"Req{uservalues['pk']}{username}{request_id}{new_result.result_id}"
+    new_result.user_result_id = f"Result-{request_id}{new_result.result_id}"
     new_result.save()
 
     # Sets and Parameters
@@ -796,11 +806,11 @@ def run_optimization(file_name, request):
             sum_demand = demand_rate[i]
             sum_leadtime = l[i].X    
 
-            print(f'Node {i}:')
-            print(f'  Direct Cost for node [{i}]: {sum_c}')
-            print(f'  Cumulative Cost for node [{i}] : {sum_cumcost}')
-            print(f'  Demand Rate for node {i}: {sum_demand}')
-            print(f'  Lead Time for node {i}: {sum_leadtime}')
+            print(f'Node {i}: {i}')
+            print(f'  Direct Cost for Node [{i}]: {sum_c}')
+            print(f'  Cumulative Cost for Node [{i}] : {sum_cumcost}')
+            print(f'  Demand Rate for Node {i}: {sum_demand}')
+            print(f'  Lead Time for Node {i}: {sum_leadtime}')
 
             NodeResult.objects.create(
                 request_id = request_id,
@@ -827,10 +837,11 @@ def run_optimization(file_name, request):
         print('No optimal solution found')
 
     node_feilds = {
-        'direct_cost':'Direct Cost for node',
-        'cumulative_cost':'Cumulative Cost for node',
-        'demand_rate':'Demand Rate for node',
-        'lead_time':'Lead Time for node'
+        'node_id': 'Node ID',
+        'direct_cost':'Direct Cost for Node',
+        'cumulative_cost':'Cumulative Cost for Node',
+        'demand_rate':'Demand Rate for Node',
+        'lead_time':'Lead Time for Node'
     }
     Variable_feilds = {
         'variable_name':'Variable Name',
@@ -839,6 +850,8 @@ def run_optimization(file_name, request):
 
     Nodes_list = NodeResult.objects.filter(result_id = new_result.user_result_id).values(*node_feilds.keys())
     Variables_list = VariableResult.objects.filter(result_id = new_result.user_result_id).values(*Variable_feilds.keys())
+
+    
     
     print("this is nodes list", Nodes_list)
 
@@ -851,15 +864,31 @@ def run_optimization(file_name, request):
     with pd.ExcelWriter(output, engine='openpyxl') as writer:  
         # Write DataFrame to Excel
         Node_feilds = {
-        'direct_cost':'Direct Cost for node',
-        'cumulative_cost':'Cumulative Cost for node',
-        'demand_rate':'Demand Rate for node',
-        'lead_time':'Lead Time for node'
+        'node_id': 'Node ID',
+        'direct_cost':'Direct Cost for Node',
+        'cumulative_cost':'Cumulative Cost for Node',
+        'demand_rate':'Demand Rate for Node',
+        'lead_time':'Lead Time for Node'
         }
         Variable_feilds = {
-            'variable_name':'Variable Name',
-            'value':'Value'
+        'y': 'Pathogen Testing',
+        'z': 'Node Controllability',
+        'x': 'Testing Method Selection',
+        'c': 'Direct Cost',
+        'l': 'Lead Time',
+        's': 'Sensitivity',
+        'r': 'Reliability',
+        'ir': 'Inbound Reliability',
+        'W': 'System-wide Reliability',
+        'value':'Value'
         }
+
+        def rename_variable(variable_name, Variable_fields):
+            for key, value in Variable_fields.items():
+                if re.match(rf'^{key}\[.*\]$', variable_name):
+                    return variable_name.replace(key, value)
+            return variable_name
+    
         if Nodes_list:
             df_node_results = pd.DataFrame(list(Nodes_list))
             df_node_results.rename(columns=Node_feilds, inplace=True)
@@ -867,7 +896,8 @@ def run_optimization(file_name, request):
 
         if Variables_list:
             df_variable_results = pd.DataFrame(list(Variables_list))
-            df_variable_results.rename(columns=Variable_feilds, inplace=True)
+            # df_variable_results.rename(columns=Variable_feilds, inplace=True)
+            df_variable_results['variable_name'] = df_variable_results['variable_name'].apply(lambda x: rename_variable(x, Variable_feilds))
             df_variable_results.to_excel(writer, sheet_name='Variable Results', index=False)
 
     # Make sure the BytesIO buffer is at the beginning
@@ -879,4 +909,252 @@ def run_optimization(file_name, request):
     
     print("this is response", response)
     return response
+
+
+
+def delete_request(request, requestid):
+    # Get the request instance based on user_request_id (since request_id is a string)
+    request_instance = get_object_or_404(RequestModel, user_request_id=requestid)
+
+    # Delete related records
+    AllNodes.objects.filter(user_request_id=requestid).delete()
+    InitialNodes.objects.filter(user_request_id=requestid).delete()
+    FinishedGoods.objects.filter(user_request_id=requestid).delete()
+    Arc.objects.filter(user_request_id=requestid).delete()
+    PathogenTestingMethod.objects.filter(user_request_id=requestid).delete()
+    PathogenTestingMethodFNodes.objects.filter(user_request_id=requestid).delete()
+    DynamicParameters.objects.filter(user_request_id=requestid).delete()
+
+    # Delete the request itself
+    request_instance.delete()
+
+    messages.success(request, "Request and related records deleted successfully.")
+    return redirect(request.META.get('HTTP_REFERER', '/'))
+
+
+
+
+import json
+from django.shortcuts import render
+from .models import NodeResult, VariableResult
+
+def generate_visualization(result_id):
+    """
+    Prepares structured data for tables (Node and Variable Results).
+    """
+    # Fetch data from models
+    node_results = NodeResult.objects.filter(result_id=result_id)
+    variable_results = VariableResult.objects.filter(result_id=result_id)
+
+    # Node Fields and Labels
+    node_field_labels = {
+        "node_id": "Node ID",
+        "direct_cost": "Direct Cost",
+        "cumulative_cost": "Cumulative Cost",
+        "demand_rate": "Demand Rate",
+        "lead_time": "Lead Time"
+    }
+
+    # Variable Fields and Labels
+    variable_labels = {
+        'y': 'Pathogen Testing',
+        'x': 'Testing Method Selection',
+        'z': 'Node Controllability',
+        'c': 'Direct Cost',
+        'l': 'Lead Time',
+        's': 'Sensitivity',
+        'r': 'Reliability',
+        'ir': 'Inbound Reliability',
+        'w': 'System-wide Reliability'
+    }
+
+    # Prepare node data for table
+    node_data = []
+    for node in node_results:
+        node_data.append({
+            "Node ID": node.node_id,
+            "Direct Cost": node.direct_cost,
+            "Cumulative Cost": node.cumulative_cost,
+            "Demand Rate": node.demand_rate,
+            "Lead Time": node.lead_time
+        })
+
+    # Prepare variable data for table
+    variable_data = {}
+    for var in variable_results:
+        renamed_var = var.variable_name
+        for key, value in variable_labels.items():
+            if var.variable_name.startswith(key):
+                renamed_var = var.variable_name.replace(key, value)
+        if renamed_var not in variable_data:
+            variable_data[renamed_var] = []
+        variable_data[renamed_var].append({"Variable Name": renamed_var, "Value": var.value})
+
+    return {"nodes": node_data, "variables": variable_data}
+
+
+def view_results(request, result_id):
+    """
+    Renders the visualization page with structured table data.
+    """
+    table_data = generate_visualization(result_id)
+
+    return render(request, 'userrequests/results_visualization.html', {
+        "table_data": json.dumps(table_data),
+        "result_id": result_id
+    })
+
+#This code is for saving the data from Excel to the Request Models # Test Code 
+
+import pandas as pd
+import uuid
+from django.shortcuts import render, redirect
+from django.http import JsonResponse
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+from .models import (
+    Request, AllNodes, InitialNodes, FinishedGoods, Arc,
+    PathogenTestingMethod, PathogenTestingMethodFNodes, DynamicParameters
+)
+
+def save_excel_data(request):
+    if request.method == "POST" and request.FILES.get('file'):
+        uploaded_file = request.FILES['file']
+
+        # Generate a unique user_request_id
+        user_request_id = str(uuid.uuid4())
+
+        # Save the file to the "excels/" directory
+        file_path = default_storage.save(f"excels/{uploaded_file.name}", ContentFile(uploaded_file.read()))
+
+        # Create a new Request entry
+        new_request = Request.objects.create(
+            user_request_id=user_request_id,
+            final_excel=file_path,
+            created_by=request.user.username if request.user.is_authenticated else "Anonymous"
+        )
+
+        try:
+            # Load Excel file
+            excel_data = pd.ExcelFile(uploaded_file)
+
+            # Save AllNodes data
+            if "All Nodes" in excel_data.sheet_names:
+                df_nodes = pd.read_excel(excel_data, sheet_name="All Nodes")
+                all_nodes_objects = [
+                    AllNodes(
+                        user_request_id=user_request_id,
+                        node_id=row['Node ID'],
+                        node_name=row['Node Name'],
+                        probability=row['Probability'],
+                        cumulative_cost=row['Cumulative Cost'],
+                        demand_rate=row['Demand Rate'],
+                        created_by=request.user.username if request.user.is_authenticated else "Anonymous"
+                    )
+                    for _, row in df_nodes.iterrows()
+                ]
+                AllNodes.objects.bulk_create(all_nodes_objects)
+
+            # Save InitialNodes data
+            if "Initial Nodes" in excel_data.sheet_names:
+                df_initial = pd.read_excel(excel_data, sheet_name="Initial Nodes")
+                initial_nodes_objects = [
+                    InitialNodes(
+                        user_request_id=user_request_id,
+                        node_id=row['Node ID'],
+                        node_name=row['Node Name'],
+                        created_by=request.user.username if request.user.is_authenticated else "Anonymous"
+                    )
+                    for _, row in df_initial.iterrows()
+                ]
+                InitialNodes.objects.bulk_create(initial_nodes_objects)
+
+            # Save FinishedGoods data
+            if "Finished Goods" in excel_data.sheet_names:
+                df_goods = pd.read_excel(excel_data, sheet_name="Finished Goods")
+                finished_goods_objects = [
+                    FinishedGoods(
+                        user_request_id=user_request_id,
+                        node_id=row['Node ID'],
+                        node_name=row['Node Name'],
+                        demand_rate=row['Demand Rate'],
+                        created_by=request.user.username if request.user.is_authenticated else "Anonymous"
+                    )
+                    for _, row in df_goods.iterrows()
+                ]
+                FinishedGoods.objects.bulk_create(finished_goods_objects)
+
+            # Save Arc data
+            if "Arcs" in excel_data.sheet_names:
+                df_arcs = pd.read_excel(excel_data, sheet_name="Arcs")
+                arc_objects = [
+                    Arc(
+                        user_request_id=user_request_id,
+                        Arc_id=row['Arc ID'],
+                        from_node_id=row['From Node ID'],
+                        from_node_name=row['From Node Name'],
+                        to_node_id=row['To Node ID'],
+                        to_node_name=row['To Node Name'],
+                        multiplier=row['Multiplier'],
+                        created_by=request.user.username if request.user.is_authenticated else "Anonymous"
+                    )
+                    for _, row in df_arcs.iterrows()
+                ]
+                Arc.objects.bulk_create(arc_objects)
+
+            # Save PathogenTestingMethod data
+            if "Pathogen Testing Methods" in excel_data.sheet_names:
+                df_pathogen = pd.read_excel(excel_data, sheet_name="Pathogen Testing Methods")
+                pathogen_objects = [
+                    PathogenTestingMethod(
+                        user_request_id=user_request_id,
+                        ptm_id=row['PTM ID'],
+                        pathogen_testing_method=row['Pathogen Testing Method'],
+                        created_by=request.user.username if request.user.is_authenticated else "Anonymous"
+                    )
+                    for _, row in df_pathogen.iterrows()
+                ]
+                PathogenTestingMethod.objects.bulk_create(pathogen_objects)
+
+            # Save PathogenTestingMethodFNodes data
+            if "PTM FNodes" in excel_data.sheet_names:
+                df_ptm_fnodes = pd.read_excel(excel_data, sheet_name="PTM FNodes")
+                ptm_fnode_objects = [
+                    PathogenTestingMethodFNodes(
+                        user_request_id=user_request_id,
+                        node_id=row['Node ID'],
+                        pathogen_testing_method_id=row['PTM ID'],
+                        sensitivity=row['Sensitivity'],
+                        direct_cost=row['Direct Cost'],
+                        lead_time=row['Lead Time'],
+                        created_by=request.user.username if request.user.is_authenticated else "Anonymous"
+                    )
+                    for _, row in df_ptm_fnodes.iterrows()
+                ]
+                PathogenTestingMethodFNodes.objects.bulk_create(ptm_fnode_objects)
+
+            # Save DynamicParameters data
+            if "Dynamic Parameters" in excel_data.sheet_names:
+                df_dynamic = pd.read_excel(excel_data, sheet_name="Dynamic Parameters")
+                dynamic_parameters_objects = [
+                    DynamicParameters(
+                        user_request_id=user_request_id,
+                        dynamic_parameter_id=row['Dynamic Parameter ID'],
+                        maxsteps_k=row['Max Steps K'],
+                        maxpercentage_alpha=row['Max Percentage Alpha'],
+                        maxbudget_B=row['Max Budget B'],
+                        created_by=request.user.username if request.user.is_authenticated else "Anonymous"
+                    )
+                    for _, row in df_dynamic.iterrows()
+                ]
+                DynamicParameters.objects.bulk_create(dynamic_parameters_objects)
+
+            return JsonResponse({"status": "success", "message": "Data saved successfully", "user_request_id": user_request_id})
+
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)})
+
+    return JsonResponse({"status": "error", "message": "Invalid request"})
+
+
 

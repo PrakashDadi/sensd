@@ -69,6 +69,7 @@
             </td>
             <td>
                 <button type="button" class="btn btn-warning btn-sm edit-btn">Edit</button>
+                <button type="button" class="btn btn-danger btn-sm delete-btn" onclick="if(confirm('Are you sure you want to delete this item?')) { window.location.href = '{% url 'edit_initialnode' pk=initial_node.pk requestid=requestid %}'; }">Delete </button>                
                 <button type="submit" class="btn btn-primary btn-sm save-btn d-none">Save</button>
                 <button type="button" class="btn btn-secondary btn-sm cancel-btn d-none">Cancel</button>
             </td>
@@ -111,12 +112,14 @@
                 displayElements.forEach(el => el.classList.add('d-none'));
                 editElements.forEach(el => el.classList.remove('d-none'));
                 editButton.classList.add('d-none');
+                deleteButton.classList.add('d-none');
                 saveButton.classList.remove('d-none');
                 cancelButton.classList.remove('d-none');
             } else {
                 displayElements.forEach(el => el.classList.remove('d-none'));
                 editElements.forEach(el => el.classList.add('d-none'));
                 editButton.classList.remove('d-none');
+                deleteButton.classList.remove('d-none');
                 saveButton.classList.add('d-none');
                 cancelButton.classList.add('d-none');
             }

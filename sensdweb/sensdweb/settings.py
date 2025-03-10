@@ -142,7 +142,7 @@ MESSAGE_TAGS = {
 }
 
 #email stuff
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = os.environ.get('EMAIL_HOST')
 EMAIL_PORT = 587
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
@@ -152,3 +152,14 @@ DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_HOST_USER')
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+#SSl settings
+# ALLOWED_HOSTS = ['134.124.243.144']
+ALLOWED_HOSTS = ['sensdweb.com', '127.0.0.1', 'localhost', '134.124.26.19']
+# Redirect all traffic to HTTPS
+SECURE_SSL_REDIRECT = True  # Forces HTTPS
+SESSION_COOKIE_SECURE = True  # Ensures cookies are sent over HTTPS
+CSRF_COOKIE_SECURE = True     # Ensures CSRF cookies are sent over HTTPS
+
+# Trust the Nginx reverse proxy for HTTPS
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
