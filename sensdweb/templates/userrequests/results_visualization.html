@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <header class="bg-primary text-white text-center py-4 mb-4">
+        <div class="container">
+            <h2 class="fw-light">SENSD Results Dashboard</h2>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>Results for Request ID: {{ result_id }}</h4>
+            </div>
+            <div class="card-body">
+
+                <!-- Node Data Table -->
+                <h3 class="text-center mb-4">Node Values Table</h3>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead class="table-primary">
+                            <tr>
+                                <th>Node ID</th>
+                                <th>Direct Cost</th>
+                                <th>Cumulative Cost</th>
+                                <th>Demand Rate</th>
+                                <th>Lead Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="node-table-body"></tbody>
+                    </table>
+                </div>
+
+                <!-- Variable Data Tables -->
+                <h3 class="text-center mb-4">Variable Results Table</h3>
+                <div id="variable-tables"></div>
+
+                <div class="text-center mt-4">
+                    <a href="{% url 'sensd' %}" class="btn btn-primary">Back to Dashboard</a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JSON Data for Tables -->
+<script type="application/json" id="table-data">
+    {{ table_data|safe }}
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        let rawData = document.getElementById("table-data").textContent;
+        let tableData = JSON.parse(rawData); // Parse JSON safely
+        console.log("Parsed Table Data:", tableData); // Debugging
+
+        // Populate Node Table
+        let nodeTableBody = document.getElementById("node-table-body");
+        tableData.nodes.forEach(node => {
+            let row = `<tr>
+                <td>${node["Node ID"]}</td>
+                <td>${node["Direct Cost"]}</td>
+                <td>${node["Cumulative Cost"]}</td>
+                <td>${node["Demand Rate"]}</td>
+                <td>${node["Lead Time"]}</td>
+            </tr>`;
+            nodeTableBody.innerHTML += row;
+        });
+
+        // Define color codes for variable groups
+        let groupColors = {
+            "Pathogen Testing": "table-primary",
+            "Testing Method Selection": "table-success",
+            "Node Controllability": "table-warning",
+            "Direct Cost": "table-danger",
+            "Lead Time": "table-info",
+            "Sensitivity": "table-secondary",
+            "Reliability": "table-light",
+            "Inbound Reliability": "table-dark",
+            "System-wide Reliability": "table-primary"
+        };
+
+        // Function to determine the group from variable name
+        function getGroupName(variableName) {
+            if (variableName.includes("Pathogen Testing")) return "Pathogen Testing";
+            if (variableName.includes("Testing Method Selection")) return "Testing Method Selection";
+            if (variableName.includes("Node Controllability")) return "Node Controllability";
+            if (variableName.includes("Direct Cost")) return "Direct Cost";
+            if (variableName.includes("Lead Time")) return "Lead Time";
+            if (variableName.includes("Sensitivity")) return "Sensitivity";
+            if (variableName.includes("Reliability")) return "Reliability";
+            if (variableName.includes("Inbound Reliability")) return "Inbound Reliability";
+            if (variableName.includes("System-wide Reliability")) return "System-wide Reliability";
+            return "Other";
+        }
+
+        // Group variables by type
+        let groupedVariables = {};
+        for (let variable in tableData.variables) {
+            let group = getGroupName(variable);
+            if (!(group in groupedVariables)) {
+                groupedVariables[group] = [];
+            }
+            groupedVariables[group].push(...tableData.variables[variable]);
+        }
+
+        // Populate Variable Tables with grouped data
+        let variableTables = document.getElementById("variable-tables");
+        for (let group in groupedVariables) {
+            let colorClass = groupColors[group] || "table-primary"; // Default color if group not found
+            let tableHTML = `
+                <h4 class="mt-4">${group}</h4>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead class="${colorClass}">
+                            <tr>
+                                <th>Variable Name</th>
+                                <th>Value</th>
+                                {% comment %} <th>Bar Chart</th> {% endcomment %}
+                            </tr>
+                        </thead>
+                        <tbody>`;
+
+            groupedVariables[group].forEach(entry => {
+                let value = entry["Value"];
+                let barStyle = `width: ${Math.min(value * 10, 100)}%;`; // Scale bar width
+                let barClass = "bg-success"; // Default to green bars
+
+                // Handle binary values (True/False representation)
+                if (value === 1 || value === 0) {
+                    barClass = value === 1 ? "bg-success" : "bg-danger";
+                    barStyle = "width: 100%; text-align: center;";
+                    value = value === 1 ? "✅" : "❌";
+                }
+
+                tableHTML += `
+                    <tr>
+                        <td>${entry["Variable Name"]}</td>
+                        <td>${value}</td>
+                        {% comment %} <td>
+                            <div class="progress">
+                                <div class="progress-bar ${barClass}" role="progressbar" style="${barStyle}" aria-valuenow="${value}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </td> {% endcomment %}
+                    </tr>`;
+            });
+
+            tableHTML += `</tbody></table></div>`;
+            variableTables.innerHTML += tableHTML;
+        }
+    });
+</script>
+{% endblock content %}

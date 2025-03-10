@@ -38,7 +38,8 @@
                                 <td>{{ req.created_on }}</td>
                                 <td>{{ req.updated_on }}</td>
                                 <td>
-                                    {% comment %} <a href="{% url 'view_request_details' req.request_id %}" class="btn btn-info btn-sm">View</a> {% endcomment %}
+                                    <a href="{% url 'AllNodes' requestid=req.user_request_id%}" class="btn btn-warning btn-sm">Edit</a>
+                                    <a href="{% url 'delete_request' requestid=req.user_request_id%}" class="btn btn-danger btn-sm">Delete</a>
                                 </td>
                             </tr>
                         {% endfor %}
@@ -82,7 +83,7 @@
                                 <td>{{ result.user_request_id }}</td>
                                 <td>{{ result.created_on }}</td>
                                 <td>
-                                    {% comment %} <a href="{% url 'view_result_details' result.result_id %}" class="btn btn-info btn-sm">View</a> {% endcomment %}
+                                    <a href="{% url 'view_results' result.user_result_id %}" class="btn btn-info btn-sm">View Results</a>
                                 </td>
                             </tr>
                         {% endfor %}

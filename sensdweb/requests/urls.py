@@ -23,7 +23,10 @@ urlpatterns = [
       path('finishedGoods/<int:pk>/<str:requestid>/edit_finishedGoods/', views.edit_finishedGoods, name='edit_finishedgood'),
       path('arcs/<int:pk>/<str:requestid>/edit_arcs/', views.edit_arcform, name='edit_arc'),
       path('ptmform/<int:pk>/<str:requestid>/edit_ptmform/', views.edit_pathtestmethodform, name='edit_ptmform'),
-      path('ptmfnodesform/<int:pk>/<str:requestid>/edit_ptmfn' , views.edit_pathtestmethodFnodesform, name='edit_ptmfnodesform')
+      path('ptmfnodesform/<int:pk>/<str:requestid>/edit_ptmfn' , views.edit_pathtestmethodFnodesform, name='edit_ptmfnodesform'),
+      path('delete_request/<str:requestid>/', views.delete_request, name='delete_request'),
+      path('results/<str:result_id>/', views.view_results, name='view_results'),
+      path('save-excel-data/', views.save_excel_data, name='save_excel_data'),
 ]
 
 if settings.DEBUG:
