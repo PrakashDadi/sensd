@@ -1,6 +1,6 @@
 
 # Environment and virtual environment files
-*.env
+# *.env
 myenv/
 *.pyc
 __pycache__/
@@ -17,8 +17,8 @@ media/
 media/*
 
 #my env
-myenv/
-myenv/*
+# myenv/
+# myenv/*
 
 # Static files
 staticfiles/
