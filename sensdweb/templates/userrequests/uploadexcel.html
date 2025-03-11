@@ -131,54 +131,54 @@
     function submitSolution(downloadUrl , redirecturl) {
         const fileInput = document.getElementById('file');
         const solutionFileInput = document.getElementById('solutionFile');
+
+        if (fileInput.files.length === 0) {
+            alert("Please select a file before submitting.");
+            return;
+        }
+        
         solutionFileInput.files = fileInput.files;
 
-        // Trigger the file download
-        // For Saving the data to request model logic
-        const fileInput = document.getElementById('file');
         const formData = new FormData();
         formData.append("file", fileInput.files[0]);
-fetch("{% url 'save_excel_data' %}", {
-    method: "POST",
-    body: formData,
-    headers: {
-        "X-CSRFToken": "{{ csrf_token }}",
-        "Content-Type": "multipart/form-data"
-    }
-})
-.then(response => response.json())
-.then(data => {
-    if (data.status === "success") {
-        alert("Data saved successfully!");
-        setTimeout(function () {
-            window.open("{% url 'user_requests'%}", "_self");
-        }, 10000);
-    } else {
-        alert("Error: " + data.message);
-    }
-})
-.catch(error => console.error("Error:", error));
-        .then(response => response.json())
+
+        fetch("{% url 'save_excel_data' %}", {
+            method: "POST",
+            body: formData,
+            headers: {
+                "X-CSRFToken": "{{ csrf_token }}"
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.status === "success") {
                 alert("Data saved successfully!");
                 setTimeout(function () {
-                    window.open(redirecturl, "_self");
+                    window.open(redirectUrl, "_self");
                 }, 10000);
             } else {
                 alert("Error: " + data.message);
             }
         })
-        .catch(error => console.error("Error:", error));
-        //End of Logic
+        .catch(error => {
+            console.error("Error:", error);
+            alert("An error occurred while saving the data. Please try again.");
+        });
+
+       
+        // Trigger the file download
         document.getElementById('solutionForm').submit();
         // After a short delay, perform the redirection
-
-
          setTimeout(function() {
-            window.open(redirecturl, '_self');  // '_self' opens it in the same window
+            window.open(redirectUrl, '_self');  // '_self' opens it in the same window
         }, 10000);       
     }
 </script>
+
 
 {% endblock content %}
