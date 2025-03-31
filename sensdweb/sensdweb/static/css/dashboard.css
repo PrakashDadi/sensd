@@ -46,3 +46,15 @@
   .navbar .form-control {
     padding: .75rem 1rem;
   }
+
+  /* Hide scrollbar but allow scrolling */
+  body::-webkit-scrollbar {
+    width: 0px;
+    background: transparent; /* Optional */
+  }
+
+  body {
+    -ms-overflow-style: none; /* IE/Edge */
+    scrollbar-width: none; /* Firefox */
+    overflow-y: scroll; /* Keep scrollable even when hidden */
+  }
