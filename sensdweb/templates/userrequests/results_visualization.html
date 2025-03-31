@@ -1,155 +1,253 @@
 {% extends 'base.html' %}
-
 {% block content %}
+
+<!-- STYLES -->
+<style>
+    .table th,
+    .table td {
+        text-align: justify;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    .table thead th {
+        text-transform: uppercase;
+        font-size: 0.95rem;
+    }
+
+    {% comment %} td[rowspan] {
+        background-color: #2a2a2a;
+        color: white;
+        font-weight: bold;
+        word-break: break-word;
+        white-space: normal;
+    } {% endcomment %}
+
+    .section-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        text-align: center;
+        margin: 30px 0 15px 0;
+    }
+
+    .export-btn {
+        float: right;
+        margin-bottom: 10px;
+    }
+</style>
+
+<!-- PAGE HEADER -->
 <div class="container">
-    <header class="bg-primary text-white text-center py-4 mb-4">
+    <header class="theme-banner text-center py-5 mb-4 shadow-lg border-bottom border-success">
         <div class="container">
-            <h2 class="fw-light">SENSD Results Dashboard</h2>
+            <h1 class="display-4 fw-bold text-uppercase" style="letter-spacing: 2px;">SENSD Results Dashboard</h1>
+            <p class="lead subtext mt-2">Visualize & Explore Optimization Outputs with Confidence</p>
         </div>
     </header>
 
-    <div class="container">
-        <div class="card mb-4">
-            <div class="card-header">
-                <h4>Results for Request ID: {{ result_id }}</h4>
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+            <h5 class="mb-0 text-uppercase text-start fw-bold">Result - {{ result_id }}</h5>
+        
+            <div class="text-end">
+                <label class="text-muted small fw-semibold d-block">System-wide Reliability</label>
+                <div class="progress" style="height: 20px; width: 200px;">
+                    <div id="reliability-bar"
+                        class="progress-bar bg-success"
+                        role="progressbar"
+                        style="width: 0%"
+                        aria-valuenow="0"
+                        aria-valuemin="0"
+                        aria-valuemax="100">
+                    </div>
+                </div>
+                <span id="reliability-value" class="badge bg-success mt-1"></span>
             </div>
-            <div class="card-body">
+        </div>
+        <div class="card-body">
 
-                <!-- Node Data Table -->
-                <h3 class="text-center mb-4">Node Values Table</h3>
-                <div class="table-responsive">
-                    <table class="table table-bordered table-striped">
-                        <thead class="table-primary">
-                            <tr>
-                                <th>Node ID</th>
-                                <th>Direct Cost</th>
-                                <th>Cumulative Cost</th>
-                                <th>Demand Rate</th>
-                                <th>Lead Time</th>
-                            </tr>
-                        </thead>
-                        <tbody id="node-table-body"></tbody>
-                    </table>
-                </div>
+            <!-- NODE TABLE -->
+            <h3 class="section-title">Node Values Table</h3>
+            <div class="table-responsive mb-5">
+                <table id="node-table" class="table table-bordered table-striped">
+                    <thead class="table-success">
+                        <tr>
+                            <th style="width: 20%;">Node ID</th>
+                            <th style="width: 20%;">Direct Cost</th>
+                            <th style="width: 20%;">Cumulative Cost</th>
+                            <th style="width: 20%;">Demand Rate</th>
+                            <th style="width: 20%;">Lead Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="node-table-body"></tbody>
+                </table>
+            </div>
 
-                <!-- Variable Data Tables -->
-                <h3 class="text-center mb-4">Variable Results Table</h3>
-                <div id="variable-tables"></div>
+            <!-- VARIABLE TABLES -->
+            <h3 class="section-title">Variable Results Table</h3>
+            <div id="variable-tables"></div>
 
-                <div class="text-center mt-4">
-                    <a href="{% url 'sensd' %}" class="btn btn-primary">Back to Dashboard</a>
-                </div>
-
+            <div class="text-center mt-4">
+                <a href="{% url 'sensd' %}" class="btn btn-primary">Back to Dashboard</a>
             </div>
         </div>
     </div>
 </div>
 
-<!-- JSON Data for Tables -->
+<!-- JSON data -->
 <script type="application/json" id="table-data">
     {{ table_data|safe }}
 </script>
 
+<!-- SCRIPT -->
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        let rawData = document.getElementById("table-data").textContent;
-        let tableData = JSON.parse(rawData); // Parse JSON safely
-        console.log("Parsed Table Data:", tableData); // Debugging
+document.addEventListener("DOMContentLoaded", function () {
+    const rawData = document.getElementById("table-data").textContent;
+    const tableData = JSON.parse(rawData);
 
-        // Populate Node Table
-        let nodeTableBody = document.getElementById("node-table-body");
-        tableData.nodes.forEach(node => {
-            let row = `<tr>
+    let sysWideReliability = 0;
+
+if (tableData.variables["System-wide Reliability"]?.length > 0) {
+    sysWideReliability = parseFloat(tableData.variables["System-wide Reliability"][0]["Value"] || 0);
+}
+
+const relBar = document.getElementById("reliability-bar");
+const relValue = document.getElementById("reliability-value");
+
+if (relBar && relValue) {
+    const percent = Math.round(sysWideReliability * 100);
+    relBar.style.width = `${percent}%`;
+    relBar.setAttribute("aria-valuenow", percent);
+    relValue.innerText = `${percent}%`;
+}
+
+    // Node Table
+    const nodeBody = document.getElementById("node-table-body");
+    tableData.nodes.forEach(node => {
+        nodeBody.innerHTML += `
+            <tr>
                 <td>${node["Node ID"]}</td>
                 <td>${node["Direct Cost"]}</td>
                 <td>${node["Cumulative Cost"]}</td>
                 <td>${node["Demand Rate"]}</td>
                 <td>${node["Lead Time"]}</td>
             </tr>`;
-            nodeTableBody.innerHTML += row;
-        });
+    });
+    new DataTable('#node-table', {
+        dom: 'frtip',
+    });
 
-        // Define color codes for variable groups
-        let groupColors = {
-            "Pathogen Testing": "table-primary",
-            "Testing Method Selection": "table-success",
-            "Node Controllability": "table-warning",
-            "Direct Cost": "table-danger",
-            "Lead Time": "table-info",
-            "Sensitivity": "table-secondary",
-            "Reliability": "table-light",
-            "Inbound Reliability": "table-dark",
-            "System-wide Reliability": "table-primary"
-        };
+    const groupColors = {
+        "Pathogen Testing": "table-success",
+        "Testing Method Selection": "table-info",
+        "Node Controllability": "table-warning",
+        "Direct Cost": "table-danger",
+        "Lead Time": "table-primary",
+        "Sensitivity": "table-secondary",
+        "Reliability": "table-light",
+        "Inbound Reliability": "table-dark",
+        "System-wide Reliability": "table-success"
+    };
 
-        // Function to determine the group from variable name
-        function getGroupName(variableName) {
-            if (variableName.includes("Pathogen Testing")) return "Pathogen Testing";
-            if (variableName.includes("Testing Method Selection")) return "Testing Method Selection";
-            if (variableName.includes("Node Controllability")) return "Node Controllability";
-            if (variableName.includes("Direct Cost")) return "Direct Cost";
-            if (variableName.includes("Lead Time")) return "Lead Time";
-            if (variableName.includes("Sensitivity")) return "Sensitivity";
-            if (variableName.includes("Reliability")) return "Reliability";
-            if (variableName.includes("Inbound Reliability")) return "Inbound Reliability";
-            if (variableName.includes("System-wide Reliability")) return "System-wide Reliability";
-            return "Other";
-        }
+    const variableContainer = document.getElementById("variable-tables");
 
-        // Group variables by type
-        let groupedVariables = {};
-        for (let variable in tableData.variables) {
-            let group = getGroupName(variable);
-            if (!(group in groupedVariables)) {
-                groupedVariables[group] = [];
-            }
-            groupedVariables[group].push(...tableData.variables[variable]);
-        }
+    for (let group in tableData.variables) {
+        const entries = tableData.variables[group];
+        const isTestingMethodSelection = group === "Testing Method Selection";
+        const colorClass = groupColors[group] || "table-primary";
+        const tableId = `table-${group.replace(/\s+/g, '-').toLowerCase()}`;
 
-        // Populate Variable Tables with grouped data
-        let variableTables = document.getElementById("variable-tables");
-        for (let group in groupedVariables) {
-            let colorClass = groupColors[group] || "table-primary"; // Default color if group not found
-            let tableHTML = `
-                <h4 class="mt-4">${group}</h4>
-                <div class="table-responsive">
-                    <table class="table table-bordered table-striped">
-                        <thead class="${colorClass}">
-                            <tr>
-                                <th>Variable Name</th>
-                                <th>Value</th>
-                                {% comment %} <th>Bar Chart</th> {% endcomment %}
-                            </tr>
-                        </thead>
-                        <tbody>`;
+        let html = `
+            <div class="mt-4">
+                <button class="btn btn-outline-secondary mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${tableId}" aria-expanded="true">
+                    ${group.toUpperCase()}
+                </button>
+                <div class="collapse show" id="collapse-${tableId}">
+                    <div class="table-responsive">
+                        <table id="${tableId}" class="table table-bordered table-striped">
+                            <thead class="${colorClass}">`;
 
-            groupedVariables[group].forEach(entry => {
-                let value = entry["Value"];
-                let barStyle = `width: ${Math.min(value * 10, 100)}%;`; // Scale bar width
-                let barClass = "bg-success"; // Default to green bars
+        if (isTestingMethodSelection) {
+            html += `
+                <tr>
+                    <th style="width: 25%;">Node Name</th>
+                    <th style="width: 50%;">Pathogen Testing Method</th>
+                    <th style="width: 25%;">Value</th>
+                </tr>
+                </thead><tbody>`;
 
-                // Handle binary values (True/False representation)
-                if (value === 1 || value === 0) {
-                    barClass = value === 1 ? "bg-success" : "bg-danger";
-                    barStyle = "width: 100%; text-align: center;";
-                    value = value === 1 ? "✅" : "❌";
-                }
-
-                tableHTML += `
-                    <tr>
-                        <td>${entry["Variable Name"]}</td>
-                        <td>${value}</td>
-                        {% comment %} <td>
-                            <div class="progress">
-                                <div class="progress-bar ${barClass}" role="progressbar" style="${barStyle}" aria-valuenow="${value}" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                        </td> {% endcomment %}
-                    </tr>`;
+            const groupedByNode = {};
+            entries.forEach(entry => {
+                const node = entry["Node Name"];
+                if (!groupedByNode[node]) groupedByNode[node] = [];
+                groupedByNode[node].push(entry);
             });
 
-            tableHTML += `</tbody></table></div>`;
-            variableTables.innerHTML += tableHTML;
+            for (const node in groupedByNode) {
+                const rows = groupedByNode[node];
+                rows.forEach((entry, index) => {
+                    const method = entry["Pathogen Testing Method"];
+                    const rawValue = entry["Value"];
+                    const displayValue = rawValue === 1 ? "✅" : rawValue === 0 ? "❌" : rawValue;
+
+                    html += `<tr>`;
+                    if (index === 0) {
+                        html += `<td rowspan="${rows.length}">${node}</td>`;
+                    }
+                    html += `
+                        <td>${method}</td>
+                        <td>${displayValue}</td>
+                    </tr>`;
+                });
+            }
+
+        } else {
+            const hasNode = entries.some(e => e["Node Name"]);
+            const hasPTM = entries.some(e => e["Pathogen Testing Method"]);
+
+            html += `<tr>
+                <th style="width: 33%;">Variable Name</th>
+                ${hasNode ? "<th style='width: 33%;'>Node Name</th>" : ""}
+                ${hasPTM ? "<th style='width: 33%;'>Pathogen Testing Method</th>" : ""}
+                <th style="width: 33%;">Value</th>
+            </tr></thead><tbody>`;
+
+            entries.forEach(entry => {
+                const rawValue = entry["Value"];
+                const displayValue = rawValue === 1 ? "✅" : rawValue === 0 ? "❌" : rawValue;
+
+                html += `<tr>
+                    <td>${entry["Variable Name"]}</td>
+                    ${hasNode ? `<td>${entry["Node Name"] || ""}</td>` : ""}
+                    ${hasPTM ? `<td>${entry["Pathogen Testing Method"] || ""}</td>` : ""}
+                    <td>${displayValue}</td>
+                </tr>`;
+            });
         }
+
+        html += `</tbody></table></div></div></div>`;
+        variableContainer.innerHTML += html;
+
+        if (group !== "Testing Method Selection") {
+            setTimeout(() => {
+                new DataTable(`#${tableId}`, {
+                    dom: 'frtip',
+                    pageLength: 8
+                });
+            }, 100);
+        }
+        
+    }
+    if ($.fn.dataTable.isDataTable('#node-table')) {
+        $('#node-table').DataTable().destroy();
+    }
+    $('#node-table').DataTable({
+        dom: 'frtip',
+        pageLength: 8
     });
+    
+});
 </script>
-{% endblock content %}
+
+{% endblock %}

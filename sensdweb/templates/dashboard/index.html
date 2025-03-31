@@ -1,98 +1,84 @@
 {% extends 'base.html' %}
-
 {% block content %}
 
 <div class="container">
-    
     <header class="bg-primary text-white text-center py-4 mb-4">
-        <div class="container">
-            <h2 class="fw-light">SENSD DASHBOARD</h2>
-        </div>
+        <h2 class="fw-light">SENSD DASHBOARD</h2>
     </header>
+
     {% include 'partials/_messages.html' %}
-    <div class="container">
-        <!-- Request History -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h4>Request History</h4>
-            </div>
-            <div class="container mt-5">
-                
-                
-                <!-- Requests Table -->
-                <table class="table table-bordered table-striped">
-                    <thead class="thead-dark">
-                        <tr>
-                            <th scope="col">Request ID</th>
-                            <th scope="col">User Request ID</th>
-                            <th scope="col">Created On</th>
-                            <th scope="col">Updated On</th>
-                            <th scope="col">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for req in requests %}
-                            <tr>
-                                <td>{{ req.request_id }}</td>
-                                <td>{{ req.user_request_id }}</td>
-                                <td>{{ req.created_on }}</td>
-                                <td>{{ req.updated_on }}</td>
-                                <td>
-                                    <a href="{% url 'AllNodes' requestid=req.user_request_id%}" class="btn btn-warning btn-sm">Edit</a>
-                                    <a href="{% url 'delete_request' requestid=req.user_request_id%}" class="btn btn-danger btn-sm">Delete</a>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+
+    <!-- Request History -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4 class="text-uppercase text-center">Request History</h4>
+        </div>
+        <div class="card-body">
+            <table id="request-table" class="table table-bordered table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Request ID</th>
+                        <th>User Request ID</th>
+                        <th>Created On</th>
+                        <th>Updated On</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in requests %}
+                    <tr>
+                        <td>{{ req.request_id }}</td>
+                        <td>{{ req.user_request_id }}</td>
+                        <td>{{ req.created_on }}</td>
+                        <td>{{ req.updated_on }}</td>
+                        <td>
+                            <a href="{% url 'AllNodes' requestid=req.user_request_id %}" class="btn btn-warning btn-sm">Edit</a>
+                            <a href="{% url 'delete_request' requestid=req.user_request_id %}" class="btn btn-danger btn-sm">Delete</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
         <div class="card-footer text-end">
-            <a href="{% url 'new_request' %}" class="col-md-2 btn btn-lg btn-primary align-items-center justify-content-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-square" viewBox="0 0 16 16">
-                    <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/>
-                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
-                </svg>
-                Add Request
+            <a href="{% url 'new_request' %}" class="btn btn-outline-primary btn-sm text-uppercase fw-bold px-4 py-2">
+                <i class="bi bi-plus-circle me-1"></i> Add Request
             </a>
         </div>
-        <div>
+    </div>
+
+    <!-- Result History -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4 class="text-uppercase text-center">Result History</h4>
         </div>
-        <!-- Result History -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h4>Result History</h4>
-            </div>
-            <div class="container mt-5">
-                <!-- Results Table -->
-                <table class="table table-bordered table-striped">
-                    <thead class="thead-dark">
-                        <tr>
-                            <th scope="col">Result ID</th>
-                            <th scope="col">User Result ID</th>
-                            <th scope="col">User Request ID</th>
-                            <th scope="col">Created On</th>
-                            <th scope="col">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for result in results %}
-                            <tr>
-                                <td>{{ result.result_id }}</td>
-                                <td>{{ result.user_result_id }}</td>
-                                <td>{{ result.user_request_id }}</td>
-                                <td>{{ result.created_on }}</td>
-                                <td>
-                                    <a href="{% url 'view_results' result.user_result_id %}" class="btn btn-info btn-sm">View Results</a>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+        <div class="card-body">
+            <table id="result-table" class="table table-bordered table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Result ID</th>
+                        <th>User Result ID</th>
+                        <th>User Request ID</th>
+                        <th>Created On</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in results %}
+                    <tr>
+                        <td>{{ result.result_id }}</td>
+                        <td>{{ result.user_result_id }}</td>
+                        <td>{{ result.user_request_id }}</td>
+                        <td>{{ result.created_on }}</td>
+                        <td>
+                            <a href="{% url 'view_results' result.user_result_id %}" class="btn btn-info btn-sm">View Results</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
-    
 </div>
 
-{% endblock content%}
+{% endblock %}

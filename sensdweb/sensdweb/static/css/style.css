@@ -660,3 +660,16 @@ svg.DocSearch-Hit-Select-Icon {
     opacity: 1;
   }
 }
+
+
+/* Hide scrollbar but allow scrolling */
+body::-webkit-scrollbar {
+  width: 0px;
+  background: transparent; /* Optional */
+}
+
+body {
+  -ms-overflow-style: none; /* IE/Edge */
+  scrollbar-width: none; /* Firefox */
+  overflow-y: scroll; /* Keep scrollable even when hidden */
+}

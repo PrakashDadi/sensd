@@ -1,105 +1,146 @@
 {% extends 'base.html' %}
-
 {% block content %}
-<header class="bg-primary text-white text-center py-4 mb-4">
+
+<!-- Styles -->
+<style>
+    .table th, .table td {
+        text-align: justify;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    .table thead th {
+        text-transform: uppercase;
+        font-size: 0.9rem;
+    }
+
+    .section-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        text-align: justify;
+        margin: 30px 0 15px 0;
+    }
+
+    .edit-btns .btn {
+        margin-right: 5px;
+    }
+</style>
+
+<!-- Header Banner -->
+<header class="theme-banner text-center py-5 mb-4 shadow-lg border-bottom border-success">
     <div class="container">
-        <h2 class="fw-light">Initial Nodes</h2>
+        <h1 class="display-4 fw-bold text-uppercase" style="letter-spacing: 2px;">Initial Nodes</h1>
+        <p class="lead subtext mt-2">Add and Modify Entry Nodes for Your Network</p>
     </div>
 </header>
 
-<div class="container mt-5">
+<!-- Initial Node Form -->
+<div class="container mb-5">
     <form method="post" action="{% url 'InitialNodes' requestid %}">
         {% csrf_token %}
         {{ formset.management_form }}
         {% for form in formset %}
-            <div class="card mb-3">
+            <div class="card mb-3 shadow-sm">
                 <div class="card-body">
                     {% for field in form %}
                         <div class="mb-3">
                             <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
                             {{ field }}
                             {% if field.errors %}
-                                <div class="text-danger">
-                                    {{ field.errors }}
-                                </div>
+                                <div class="text-danger">{{ field.errors }}</div>
                             {% endif %}
                         </div>
                     {% endfor %}
                 </div>
             </div>
         {% endfor %} 
-        <div class="text-right">
-            <button type="submit" class="btn btn-primary">Add</button>
+        <div class="text-end">
+            <button type="submit" class="btn btn-success btn-sm">
+                <i class="bi bi-plus-circle me-1"></i> Add Node
+            </button>
         </div>
     </form>
-    <div class="card-footer text-end">
-        <a href="{% url 'AllNodes' requestid %}" class="col-md-2 btn btn-lg btn-primary align-items-center justify-content-center gap-2">           
-            Previous Step
-          </a>
-          <a href="{% url 'FinishedGoods' requestid %}" class="col-md-2 btn btn-lg btn-primary align-items-center justify-content-center gap-2">          
-            Next Step
-          </a>
+
+    <div class="card-footer text-end mt-4">
+        <a href="{% url 'AllNodes' requestid %}" class="btn btn-outline-secondary btn-sm me-2">
+            <i class="bi bi-arrow-left-circle me-1"></i> Previous Step
+        </a>
+        <a href="{% url 'FinishedGoods' requestid %}" class="btn btn-primary btn-sm">
+            Next Step <i class="bi bi-arrow-right-circle ms-1"></i>
+        </a>
     </div>
 </div>
 
-<div class="container mt-5">
-    <h3>Entered Initial Nodes</h3>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Node ID</th>
-                <th>Node Name</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for initial_node in initial_nodes %}
-    <tr id="initial-node-{{ initial_node.pk }}">
-        <form method="post" action="{% url 'edit_initialnode' pk=initial_node.pk requestid=requestid %}">
-            {% csrf_token %}
-            <input type="hidden" name="Model" value="InitialNodes">
-            <input type="hidden" name="ModelForm" value="InitialNodeForm">
-            <td>
-                <span class="display">{{ initial_node.node_id }}</span>
-                <input type="text" name="node_id" value="{{ initial_node.node_id }}" class="form-control edit d-none">
-            </td>
-            <td>
-                <span class="display">{{ initial_node.node_name }}</span>
-                <input type="text" name="node_name" value="{{ initial_node.node_name }}" class="form-control edit d-none">
-            </td>
-            <td>
-                <button type="button" class="btn btn-warning btn-sm edit-btn">Edit</button>
-                <button type="button" class="btn btn-danger btn-sm delete-btn" onclick="if(confirm('Are you sure you want to delete this item?')) { window.location.href = '{% url 'edit_initialnode' pk=initial_node.pk requestid=requestid %}'; }">Delete </button>                
-                <button type="submit" class="btn btn-primary btn-sm save-btn d-none">Save</button>
-                <button type="button" class="btn btn-secondary btn-sm cancel-btn d-none">Cancel</button>
-            </td>
-        </form>
-    </tr>
-{% endfor %}
-
-        </tbody>
-    </table>
+<!-- Entered Initial Nodes Table -->
+<div class="container mb-5">
+    <h3 class="section-title">Initial Nodes</h3>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped align-middle" id="initial-nodes-table">
+            <thead class="table-success">
+                <tr>
+                    <th>Node ID</th>
+                    <th>Node Name</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for initial_node in initial_nodes %}
+                <tr id="initial-node-{{ initial_node.pk }}">
+                    <form method="post" action="{% url 'edit_initialnode' pk=initial_node.pk requestid=requestid %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="Model" value="InitialNodes">
+                        <input type="hidden" name="ModelForm" value="InitialNodeForm">
+                        <td>
+                            <span class="display">{{ initial_node.node_id }}</span>
+                            <input type="text" name="node_id" value="{{ initial_node.node_id }}" class="form-control edit d-none">
+                        </td>
+                        <td>
+                            <span class="display">{{ initial_node.node_name }}</span>
+                            <input type="text" name="node_name" value="{{ initial_node.node_name }}" class="form-control edit d-none">
+                        </td>
+                        <td class="edit-btns">
+                            <button type="button" class="btn btn-warning btn-sm edit-btn">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button type="submit" class="btn btn-success btn-sm save-btn d-none">
+                                <i class="bi bi-check-circle"></i>
+                            </button>
+                            <button type="button" class="btn btn-secondary btn-sm cancel-btn d-none">
+                                <i class="bi bi-x-circle"></i>
+                            </button>
+                            <button type="button" class="btn btn-danger btn-sm delete-btn" onclick="if(confirm('Are you sure you want to delete this item?')) { window.location.href = '{% url 'edit_initialnode' pk=initial_node.pk requestid=requestid %}'; }">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </form>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 
+<!-- Script for edit/save/cancel and DataTable -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const editButtons = document.querySelectorAll('.edit-btn');
         const cancelButtons = document.querySelectorAll('.cancel-btn');
-    
-        editButtons.forEach((button) => {
+
+        editButtons.forEach(button => {
             button.addEventListener('click', function () {
                 const row = button.closest('tr');
                 toggleEditMode(row, true);
             });
         });
-    
-        cancelButtons.forEach((button) => {
+
+        cancelButtons.forEach(button => {
             button.addEventListener('click', function () {
                 const row = button.closest('tr');
                 toggleEditMode(row, false);
             });
         });
-    
+
         function toggleEditMode(row, editMode) {
             const displayElements = row.querySelectorAll('.display');
             const editElements = row.querySelectorAll('.edit');
@@ -107,7 +148,7 @@
             const deleteButton = row.querySelector('.delete-btn');
             const saveButton = row.querySelector('.save-btn');
             const cancelButton = row.querySelector('.cancel-btn');
-    
+
             if (editMode) {
                 displayElements.forEach(el => el.classList.add('d-none'));
                 editElements.forEach(el => el.classList.remove('d-none'));
@@ -124,9 +165,16 @@
                 cancelButton.classList.add('d-none');
             }
         }
-    
-       
+
+        if ($.fn.dataTable.isDataTable('#initial-nodes-table')) {
+            $('#initial-nodes-table').DataTable().destroy();
+        }
+
+        $('#initial-nodes-table').DataTable({
+            dom: 'frtip',
+            pageLength: 5
+        });
     });
-    </script>
-    
+</script>
+
 {% endblock content %}

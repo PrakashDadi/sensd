@@ -1,133 +1,176 @@
 {% extends 'base.html' %}
-
 {% block content %}
-<header class="bg-primary text-white text-center py-4 mb-4">
+
+<!-- Custom Styles -->
+<style>
+    .table th, .table td {
+        text-align: center;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    .table thead th {
+        text-transform: uppercase;
+        font-size: 0.9rem;
+    }
+
+    .section-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        text-align: center;
+        margin: 30px 0 15px 0;
+    }
+
+    .edit-btns .btn {
+        margin-right: 5px;
+    }
+</style>
+
+<!-- Themed Header -->
+<header class="theme-banner text-center py-5 mb-4 shadow-lg border-bottom border-success">
     <div class="container">
-        <h2 class="fw-light">Arcs</h2>
+        <h1 class="display-4 fw-bold text-uppercase" style="letter-spacing: 2px;">Arcs</h1>
+        <p class="lead subtext mt-2">Define and Manage Connections Between Nodes</p>
     </div>
 </header>
 
-<div class="container mt-5">
-    <form method="post" action="{% url 'ARCForm' requestid %}" >
+<!-- Arc Form Section -->
+<div class="container mb-5">
+    <form method="post" action="{% url 'ARCForm' requestid %}">
         {% csrf_token %}
         {{ formset.management_form }}
         {% for form in formset %}
-            <div class="card mb-3">
-                <div class="card-body">
-                    {% for field in form %}
-                        <div class="mb-3">
-                            <label class="form-label">{{ field.label_tag }}</label>
-                            {{ field }}
-                            {% if field.errors %}
-                                <div class="text-danger">
-                                    {{ field.errors }}
-                                </div>
-                            {% endif %}
-                        </div>
-                    {% endfor %}
+        <div class="card mb-3 shadow-sm">
+            <div class="card-body">
+                {% for field in form %}
+                <div class="mb-3">
+                    <label class="form-label">{{ field.label_tag }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                    <div class="text-danger">
+                        {{ field.errors }}
+                    </div>
+                    {% endif %}
                 </div>
+                {% endfor %}
             </div>
+        </div>
         {% endfor %}
-        <div class="text-right">
-            <button type="submit" class="btn btn-primary">Add</button>
+        <div class="text-end">
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-plus-circle me-1"></i> Add Arc
+            </button>
         </div>
     </form>
-    <div class="card-footer text-end">
-        <a href="{% url 'FinishedGoods' requestid %}" class="col-md-2 btn btn-lg btn-primary align-items-center justify-content-center gap-2">           
-            Previous Step
-          </a>
-          <a href="{% url 'PTMForm' requestid %}" class="col-md-2 btn btn-lg btn-primary align-items-center justify-content-center gap-2">          
-            Next Step
-          </a>
+
+    <!-- Navigation -->
+    <div class="card-footer text-end mt-4">
+        <a href="{% url 'FinishedGoods' requestid %}" class="btn btn-outline-secondary me-2">
+            <i class="bi bi-arrow-left-circle me-1"></i> Previous Step
+        </a>
+        <a href="{% url 'PTMForm' requestid %}" class="btn btn-primary">
+            Next Step <i class="bi bi-arrow-right-circle ms-1"></i>
+        </a>
     </div>
 </div>
 
-<div class="container mt-5">
-    <h3>Entered Arcs</h3>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>From Node ID</th>
-                <th>From Node Name</th>
-                <th>To Node ID</th>
-                <th>To Node Name</th>
-                <th>Multiplier</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for arc in arcs %}
-            <tr id="arc-{{ arc.pk }}">
-                <form method="post" action="{% url 'edit_arc' pk=arc.pk requestid=requestid %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="Model" value="Arcs">
-                    <input type="hidden" name="ModelForm" value="ArcForm">
-                    <td>
-                        <span class="display">{{ arc.Arc_id }}</span>
-                        <input type="text" name="Arc_id" value="{{ arc.Arc_id }}" class="form-control edit d-none">
-                    </td>
-                    <td>
-                        <span class="display">{{ arc.from_node_id }}</span>
-                        <input type="text" name="from_node_id" value="{{ arc.from_node_id }}" class="form-control edit d-none">
-                    </td>
-                    <td>
-                        <span class="display">{{ arc.from_node_name }}</span>
-                        <input type="text" name="from_node_name" value="{{ arc.from_node_name }}" class="form-control edit d-none">
-                    </td>
-                    <td>
-                        <span class="display">{{ arc.to_node_id }}</span>
-                        <input type="text" name="to_node_id" value="{{ arc.to_node_id }}" class="form-control edit d-none">
-                    </td>
-                    <td>
-                        <span class="display">{{ arc.to_node_name }}</span>
-                        <input type="text" name="to_node_name" value="{{ arc.to_node_name }}" class="form-control edit d-none">
-                    </td>
-                    <td>
-                        <span class="display">{{ arc.multiplier }}</span>
-                        <input type="text" name="multiplier" value="{{ arc.multiplier }}" class="form-control edit d-none">
-                    </td>
-                    <td>
-                        <button type="button" class="btn btn-warning btn-sm edit-btn">Edit</button>
-                        <button type="submit" class="btn btn-primary btn-sm save-btn d-none">Save</button>
-                        <a href="{% url 'edit_arc' pk=arc.pk  requestid=requestid %}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this arc?');">Delete</a>
-                        <button type="button" class="btn btn-secondary btn-sm cancel-btn d-none">Cancel</button>
-                    </td>
-                </form>
-            </tr>
-        {% endfor %}
-        
-        </tbody>
-    </table>
+<!-- Entered Arcs Table -->
+<div class="container mb-5">
+    <h3 class="section-title">Entered Arcs</h3>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped align-middle" id="arc-table">
+            <thead class="table-success">
+                <tr>
+                    <th>ID</th>
+                    <th>From Node ID</th>
+                    <th>From Node Name</th>
+                    <th>To Node ID</th>
+                    <th>To Node Name</th>
+                    <th>Multiplier</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for arc in arcs %}
+                <tr id="arc-{{ arc.pk }}">
+                    <form method="post" action="{% url 'edit_arc' pk=arc.pk requestid=requestid %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="Model" value="Arcs">
+                        <input type="hidden" name="ModelForm" value="ArcForm">
+                        <td>
+                            <span class="display">{{ arc.Arc_id }}</span>
+                            <input type="text" name="Arc_id" value="{{ arc.Arc_id }}" class="form-control edit d-none">
+                        </td>
+                        <td>
+                            <span class="display">{{ arc.from_node_id }}</span>
+                            <input type="text" name="from_node_id" value="{{ arc.from_node_id }}" class="form-control edit d-none">
+                        </td>
+                        <td>
+                            <span class="display">{{ arc.from_node_name }}</span>
+                            <input type="text" name="from_node_name" value="{{ arc.from_node_name }}" class="form-control edit d-none">
+                        </td>
+                        <td>
+                            <span class="display">{{ arc.to_node_id }}</span>
+                            <input type="text" name="to_node_id" value="{{ arc.to_node_id }}" class="form-control edit d-none">
+                        </td>
+                        <td>
+                            <span class="display">{{ arc.to_node_name }}</span>
+                            <input type="text" name="to_node_name" value="{{ arc.to_node_name }}" class="form-control edit d-none">
+                        </td>
+                        <td>
+                            <span class="display">{{ arc.multiplier }}</span>
+                            <input type="text" name="multiplier" value="{{ arc.multiplier }}" class="form-control edit d-none">
+                        </td>
+                        <td class="edit-btns">
+                            <button type="button" class="btn btn-warning btn-sm edit-btn">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button type="submit" class="btn btn-success btn-sm save-btn d-none">
+                                <i class="bi bi-check-circle"></i>
+                            </button>
+                            <button type="button" class="btn btn-secondary btn-sm cancel-btn d-none">
+                                <i class="bi bi-x-circle"></i>
+                            </button>
+                            <a href="{% url 'edit_arc' pk=arc.pk requestid=requestid %}" class="btn btn-danger btn-sm">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </td>
+                    </form>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 
+<!-- Script for edit/save/cancel + DataTable -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const editButtons = document.querySelectorAll('.edit-btn');
         const cancelButtons = document.querySelectorAll('.cancel-btn');
-    
-        editButtons.forEach((button) => {
+
+        editButtons.forEach(button => {
             button.addEventListener('click', function () {
                 const row = button.closest('tr');
                 toggleEditMode(row, true);
             });
         });
-    
-        cancelButtons.forEach((button) => {
+
+        cancelButtons.forEach(button => {
             button.addEventListener('click', function () {
                 const row = button.closest('tr');
                 toggleEditMode(row, false);
             });
         });
-    
+
         function toggleEditMode(row, editMode) {
             const displayElements = row.querySelectorAll('.display');
             const editElements = row.querySelectorAll('.edit');
             const editButton = row.querySelector('.edit-btn');
-            const deleteButton = row.querySelector('.delete-btn');
             const saveButton = row.querySelector('.save-btn');
             const cancelButton = row.querySelector('.cancel-btn');
-    
+
             if (editMode) {
                 displayElements.forEach(el => el.classList.add('d-none'));
                 editElements.forEach(el => el.classList.remove('d-none'));
@@ -142,8 +185,16 @@
                 cancelButton.classList.add('d-none');
             }
         }
-    
-       
+
+        if ($.fn.dataTable.isDataTable('#arc-table')) {
+            $('#arc-table').DataTable().destroy();
+        }
+
+        $('#arc-table').DataTable({
+            dom: 'frtip',
+            pageLength: 6
+        });
     });
-    </script>
+</script>
+
 {% endblock content %}

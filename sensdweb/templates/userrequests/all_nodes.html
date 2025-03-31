@@ -1,44 +1,81 @@
 {% extends 'base.html' %}
-
 {% block content %}
-<header class="bg-primary text-white text-center py-4 mb-4">
+
+<!-- Custom Styles -->
+<style>
+    .table th, .table td {
+        text-align: center;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    .table thead th {
+        text-transform: uppercase;
+        font-size: 0.9rem;
+    }
+
+    .section-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        text-align: center;
+        margin: 30px 0 15px 0;
+    }
+
+    .edit-btns .btn {
+        margin-right: 5px;
+    }
+</style>
+
+<!-- Page Banner -->
+<header class="theme-banner text-center py-4 mb-4 shadow-lg border-bottom border-success">
     <div class="container">
-        <h2 class="fw-light">All Nodes</h2>
+        <h1 class="display-4 fw-bold text-uppercase" style="letter-spacing: 2px;">All Nodes</h1>
+        <p class="lead subtext mt-2">View and manage all nodes for this request</p>
     </div>
 </header>
 
-<div class="container mt-5">
-    <form method="post" action="{% url 'AllNodes' requestid %}">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="btn btn-primary">Add</button>
-    </form>
-    <div class="card-footer text-end">
-        <a href="{% url 'InitialNodes' requestid %}" class="col-md-2 btn btn-lg btn-primary align-items-center justify-content-center gap-2">
-            Next Step
-        </a>
+<div class="container mb-4">
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form method="post" action="{% url 'AllNodes' requestid %}">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <div class="text-end">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-plus-circle me-1"></i> Add Nodes
+                    </button>
+                </div>
+            </form>
+        </div>
+        <div class="card-footer text-end">
+            <a href="{% url 'InitialNodes' requestid %}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-arrow-right-circle me-1"></i> Next Step
+            </a>
+        </div>
     </div>
 </div>
 
-<div class="container mt-5">
-    <h3>Entered Nodes</h3>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Node ID</th>
-                <th>Node Name</th>
-                <th>Probability</th>
-                <th>Cumulative Cost</th>
-                <th>Demand Rate</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for node in nodes %}
+<div class="container">
+    <h3 class="section-title">Nodes</h3>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped align-middle" id="node-table">
+            <thead class="table-success">
+                <tr>
+                    <th>Node ID</th>
+                    <th>Node Name</th>
+                    <th>Probability</th>
+                    <th>Cumulative Cost</th>
+                    <th>Demand Rate</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for node in nodes %}
                 <tr id="node-{{ node.pk }}">
                     <form method="post" action="{% url 'edit_allnode' pk=node.pk requestid=requestid %}">
                         {% csrf_token %}
-                        <input type="hidden" name="Model" value="AllNodes" >
+                        <input type="hidden" name="Model" value="AllNodes">
                         <input type="hidden" name="ModelForm" value="AllNodeForm">
                         <td>
                             <span class="display">{{ node.node_id }}</span>
@@ -60,44 +97,52 @@
                             <span class="display">{{ node.demand_rate }}</span>
                             <input type="text" name="demand_rate" value="{{ node.demand_rate }}" class="form-control edit d-none">
                         </td>
-                        <td>
-                            <button type="button" class="btn btn-warning btn-sm edit-btn">Edit</button>
-                            <button type="submit" class="btn btn-primary btn-sm save-btn d-none">Save</button>
-                            <button type="button" class="btn btn-secondary btn-sm cancel-btn d-none">Cancel</button>
+                        <td class="edit-btns">
+                            <button type="button" class="btn btn-warning btn-sm edit-btn">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button type="submit" class="btn btn-success btn-sm save-btn d-none">
+                                <i class="bi bi-check-circle"></i>
+                            </button>
+                            <button type="button" class="btn btn-secondary btn-sm cancel-btn d-none">
+                                <i class="bi bi-x-circle"></i>
+                            </button>
                         </td>
                     </form>
                 </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 
+<!-- JavaScript for Edit/Cancel -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const editButtons = document.querySelectorAll('.edit-btn');
         const cancelButtons = document.querySelectorAll('.cancel-btn');
-    
-        editButtons.forEach((button) => {
+
+        editButtons.forEach(button => {
             button.addEventListener('click', function () {
                 const row = button.closest('tr');
                 toggleEditMode(row, true);
             });
         });
-    
-        cancelButtons.forEach((button) => {
+
+        cancelButtons.forEach(button => {
             button.addEventListener('click', function () {
                 const row = button.closest('tr');
                 toggleEditMode(row, false);
             });
         });
-    
+
         function toggleEditMode(row, editMode) {
             const displayElements = row.querySelectorAll('.display');
             const editElements = row.querySelectorAll('.edit');
             const editButton = row.querySelector('.edit-btn');
             const saveButton = row.querySelector('.save-btn');
             const cancelButton = row.querySelector('.cancel-btn');
-    
+
             if (editMode) {
                 displayElements.forEach(el => el.classList.add('d-none'));
                 editElements.forEach(el => el.classList.remove('d-none'));
@@ -112,10 +157,17 @@
                 cancelButton.classList.add('d-none');
             }
         }
-    
-       
+
+        // ✅ Initialize DataTable for the node table (with destroy check)
+        if ($.fn.dataTable.isDataTable('#node-table')) {
+            $('#node-table').DataTable().destroy();
+        }
+
+        $('#node-table').DataTable({
+            dom: 'frtip',
+            pageLength: 6
+        });
     });
-    </script>
-    
+</script>
 
 {% endblock content %}
