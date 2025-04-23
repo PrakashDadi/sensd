@@ -1,54 +1,51 @@
-{% extends 'base_auth.html' %} 
-{% load static%}
+{% extends 'base_auth.html' %}
+{% load static %}
 
 {% block content %}
+<div class="container">
+    <header class="theme-banner text-center py-5 mb-4 shadow-lg border-bottom border-success">
+        <h1 class="display-5 fw-bold text-uppercase">Register</h1>
+        {% comment %} <p class="lead subtext mt-2">Create your account to get started</p> {% endcomment %}
+    </header>
 
-<div class="row min-vh-100">
-  <div class="col-md-4"></div>
-  <div class="col-md-4">
-    <div class="card mt-5">     
-      <div class="card-body">
-        <div class="card-title">
-            <h4 style="cursor: pointer">Register Your Account</h4>
-        </div>  
-        <form action="{% url 'register' %}" method="post" >
-          {% csrf_token %}
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    {% comment %} <h4 class="card-title mb-4 text-center">Register Your Account</h4> {% endcomment %}
+                    <form action="{% url 'register' %}" method="post">
+                        {% csrf_token %}
+                        {% include 'partials/_messages.html' %}
 
-          {% include 'partials/_messages.html' %}
-            <div class="form-floating py-2">
-                <input type="text" class="form-control" id="usernameFeild" placeholder="User Name" name="username" value={{feildValues.username}}>
-                <label for="usernameFeild" >User Name</label>
-              </div>
-              <div class="form-floating">
-                 <div class="invalid-feedback invalid_feedback" style="display:none"> 
-                 </div>
-              </div>
-              <p class="text-sm text-success usernamesuccess" style="display:none"></p>
-            <div class="form-floating py-2">
-              <input type="email" class="form-control" id="emailFeild" placeholder="name@example.com" name="email" value={{feildValues.email}}>
-              <label for="emailFeild">Email address</label>
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="usernameFeild" placeholder="User Name" name="username" value="{{ feildValues.username }}">
+                            <label for="usernameFeild">User Name</label>
+                        </div>
+                        <div class="invalid-feedback invalid_feedback" style="display:none"></div>
+                        <p class="text-sm text-success usernamesuccess" style="display:none"></p>
+
+                        <div class="form-floating mb-3">
+                            <input type="email" class="form-control" id="emailFeild" placeholder="name@example.com" name="email" value="{{ feildValues.email }}">
+                            <label for="emailFeild">Email address</label>
+                        </div>
+                        <div class="invalid-feedback invalid_emailfeedback" style="display:none"></div>
+                        <p class="text-sm text-success emailsuccess" style="display:none"></p>
+
+                        <div class="form-floating mb-3">
+                            <input type="password" class="form-control" id="floatingPasswordFeild" placeholder="Password" name="password" value="{{ feildValues.password }}">
+                            <label for="floatingPasswordFeild">Password</label>
+                        </div>
+
+                        <div class="mb-3">
+                          <span>Already have an account? <a href="{% url 'login' %}">Login</a></span>
+                        </div>
+
+                        <button class="btn btn-success w-100" type="submit">Register</button>
+                    </form>
+                </div>
             </div>
-            <div class="form-floating">
-              <div class="invalid-feedback invalid_emailfeedback" style="display:none">
-              </div>
-              <p class="text-sm text-success emailsuccess" style="display:none"></p>
-           </div>
-            <div class="form-floating py-2">
-              <input type="password" class="form-control" id="floatingPasswordFeild" placeholder="Password" name="password" value={{feildValues.password}}>
-              <label for="floatingPasswordFeild">Password</label>
-              {% comment %} <small class="float-end py-3 fs-8 showPasswordToggle">SHOW</small> {% endcomment %}
-            </div> 
-            <div class="form-floating py-2">
-              <span class="text-info">Have an account?</span> <a href="{% url "login" %}"> Login </a>      
-            </div>
-            <button class="btn btn-primary w-100 py-2 submit-btn" type="submit">Register</button>
-          </form>      
-      </div>
+        </div>
     </div>
-  </div>
-  <div class="col-md-4"></div>
 </div>
-
 <script src="{% static 'js/register.js' %}"></script>
-
-{% endblock content %}
+{% endblock %}

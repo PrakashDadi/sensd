@@ -42,19 +42,32 @@ import base64
 
 import json
 
+from authentication.models import UserKey
+from authentication.utils import encrypt_data, decrypt_data
+
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
+import json
+
 def newRequest(request):
     uservalues =  request.session.get('uservalues', None)
+    user_key = UserKey.objects.get(user=uservalues['pk'])
+    public_key = user_key.public_key
 
     if uservalues is None:
         messages.error(request,'Something went wrong, Cant Raise a request')
         return redirect('sensd')
     
+    encrypted_email = encrypt_data(public_key, uservalues['email'])
     username = urlsafe_base64_encode(force_bytes(uservalues['username']))
     requested_date = uservalues.get('requested_date', datetime.now().strftime('%Y%m%d'))
+
+    print("requested date", requested_date)
     new_request = RequestModel(
         user_request_id = f"Request{requested_date}",  # Generate or assign a unique value
-        created_by=request.user.email,  # Assuming user is authenticated
-        updated_by=request.user.email,
+        created_by=json.dumps(encrypted_email),  # Assuming user is authenticated
+        updated_by=json.dumps(encrypted_email),
         created_on=timezone.now(),
         updated_on=timezone.now(),
         is_deleted=False
@@ -70,6 +83,10 @@ def newRequest(request):
     
     
 def allNodes(request, requestid):
+    uservalues =  request.session.get('uservalues', None)
+    user_key = UserKey.objects.get(user=uservalues['pk'])
+    public_key = user_key.public_key
+    private_key = user_key.private_key
    # Initialize an empty form
     all_node_form = AllNodeForm()
 
@@ -502,43 +519,54 @@ def generate_excel(request, requestid):
     # Create a Pandas Excel writer using Openpyxl
     output_file_path = f"media/excels/{user_request_id}_data.xlsx"
     writer = pd.ExcelWriter(output_file_path, engine='openpyxl')
+
+    sheet_written = False
     
     # Convert QuerySets to DataFrames and rename columns
     if all_nodes:
         all_nodes_df = pd.DataFrame(list(all_nodes))
         all_nodes_df.rename(columns=all_nodes_fields, inplace=True)
         all_nodes_df.to_excel(writer, sheet_name='All Nodes', index=False)
+        sheet_written = True
     
     if initial_nodes:
         initial_nodes_df = pd.DataFrame(list(initial_nodes))
         initial_nodes_df.rename(columns=initial_nodes_fields, inplace=True)
         initial_nodes_df.to_excel(writer, sheet_name='Initial Nodes', index=False)
+        sheet_written = True
     
     if finished_goods:
         finished_goods_df = pd.DataFrame(list(finished_goods))
         finished_goods_df.rename(columns=finished_goods_fields, inplace=True)
         finished_goods_df.to_excel(writer, sheet_name='Finished Products', index=False)
+        sheet_written = True
     
     if arcs:
         arcs_df = pd.DataFrame(list(arcs))
         arcs_df.rename(columns=arcs_fields, inplace=True)
         arcs_df.to_excel(writer, sheet_name='Arcs', index=False)
+        sheet_written = True
     
     if pathogen_testing_methods:
         ptm_df = pd.DataFrame(list(pathogen_testing_methods))
         ptm_df.rename(columns=ptm_fields, inplace=True)
         ptm_df.to_excel(writer, sheet_name='Pathogen Testing Methods', index=False)
+        sheet_written = True
     
     if pathogen_testing_method_f_nodes:
         ptm_f_nodes_df = pd.DataFrame(list(pathogen_testing_method_f_nodes))
         ptm_f_nodes_df.rename(columns=ptm_f_nodes_fields, inplace=True)
         ptm_f_nodes_df.to_excel(writer, sheet_name='Pathogen Testing Methods F Node', index=False)
+        sheet_written = True
 
     if dynamic_parameters:
         dynamic_parameters_df = pd.DataFrame(list(dynamic_parameters))
         dynamic_parameters_df.rename(columns=dynamic_parameters_feilds, inplace=True)
         dynamic_parameters_df.to_excel(writer, sheet_name='Dynamic Parameters', index=False)
+        sheet_written = True
     
+    if not sheet_written:
+        pd.DataFrame([["No data available for this request."]]).to_excel(writer, sheet_name="No Data", index=False)
     # Save the Excel file
     writer.close()
     
@@ -559,9 +587,32 @@ def generate_excel(request, requestid):
 
 def user_requests(request):
     uservalues =  request.session.get('uservalues', None)
+    if uservalues is None:
+        messages.error(request, 'Session expired or invalid.')
+        return redirect('login')
+    
+    user_key = UserKey.objects.get(user=uservalues['pk'])
+    private_key = user_key.private_key
 
-    requestlists = RequestModel.objects.filter(created_by = uservalues['email'])
-    return render(request, 'userrequests/requests_list_history.html', {'uservalues': uservalues, 'requests' : requestlists })
+    print("Session uservalues retrieved:", uservalues)
+    print("Session uservalues retrieved:", uservalues['email'])
+
+    all_requests = RequestModel.objects.all()
+    user_requests = []
+
+    for req in all_requests:
+        try:
+            decrypted_created_by = decrypt_data(private_key, json.loads(req.created_by))
+            if decrypted_created_by == uservalues['email']:
+                req.created_by = decrypted_created_by  # Optional: for display
+                user_requests.append(req)
+        except Exception as e:
+            print("Decryption failed for a request:", e)
+
+    return render(request, 'userrequests/requests_list_history.html', {
+        'uservalues': uservalues, 
+        'requests' : user_requests 
+        })
 
 def uploadexcel(request):
     uservalues =  request.session.get('uservalues', None)
@@ -597,6 +648,8 @@ def viewexceldata(request):
 
 
 def optimize_model(request):
+    request_id = request.POST.get("user_request_id")
+
     if request.method == "POST":
         if 'file' in request.FILES:
             uploaded_file = request.FILES['file']
@@ -609,9 +662,9 @@ def optimize_model(request):
                         # Run the Gurobi optimization logic
             try:
                 # Assuming your Gurobi logic is in a separate function for reusability
-                response = run_optimization(os.path.join(fs.location, filename), request)
-                return response
+                response = run_optimization(os.path.join(fs.location, filename), request, request_id)
                 messages.success(request, 'Optimization ran successfully and the request has been created.')
+                return response               
             except Exception as e:
                 messages.error(request, f'An error occurred: {e}')
 
@@ -646,10 +699,9 @@ def compute_reachability_matrix(nodes, arcs, max_steps):
     return reachability
 
 
-def run_optimization(file_name, request):
-
+def run_optimization(file_name, request, request_id):
      # Extract request_id from file name
-    request_id = os.path.basename(file_name).split('_data')[0]
+    # request_id = os.path.basename(file_name).split('_data')[0]
         # Create a new optimization model for SEFSCCP
     m = gp.Model("Sensor Placement Project")
 
@@ -980,17 +1032,50 @@ def generate_visualization(result_id):
         })
 
     # Prepare variable data for table
-    variable_data = {}
-    for var in variable_results:
-        renamed_var = var.variable_name
-        for key, value in variable_labels.items():
-            if var.variable_name.startswith(key):
-                renamed_var = var.variable_name.replace(key, value)
-        if renamed_var not in variable_data:
-            variable_data[renamed_var] = []
-        variable_data[renamed_var].append({"Variable Name": renamed_var, "Value": var.value})
+    
+    request_id = ResultModel.objects.get(user_result_id=result_id).user_request_id
 
-    return {"nodes": node_data, "variables": variable_data}
+    print("this is request id", request_id)
+
+    variable_data = {}
+
+    for var in variable_results:
+        var_name = var.variable_name
+        base_key = var_name.split('[')[0]
+        label = variable_labels.get(base_key, base_key)
+        values = re.findall(r'\d+', var_name)
+
+        entry = {
+            "Variable Name": label,
+            "Value": var.value,
+        }
+
+        if len(values) == 1:
+            try:
+                node = AllNodes.objects.get(user_request_id=request_id, node_id=int(values[0]))
+                entry["Node Name"] = node.node_name
+            except AllNodes.DoesNotExist:
+                entry["Node Name"] = ""
+        elif len(values) == 2:
+            try:
+                node = AllNodes.objects.get(user_request_id=request_id, node_id=int(values[0]))
+                ptm = PathogenTestingMethod.objects.get(user_request_id=request_id, ptm_id=int(values[1]))
+                entry["Node Name"] = node.node_name
+                entry["Pathogen Testing Method"] = ptm.pathogen_testing_method
+            except Exception:
+                entry["Node Name"] = entry.get("Node Name", "")
+                entry["Pathogen Testing Method"] = entry.get("Pathogen Testing Method", "")
+
+        if label not in variable_data:
+            variable_data[label] = []
+
+        variable_data[label].append(entry)
+        
+
+    return {
+        "nodes": node_data,
+        "variables": variable_data
+    }
 
 
 def view_results(request, result_id):
@@ -1027,13 +1112,31 @@ def save_excel_data(request):
         # Save the file to the "excels/" directory
         file_path = default_storage.save(f"excels/{uploaded_file.name}", ContentFile(uploaded_file.read()))
 
+        uservalues =  request.session.get('uservalues', None)
+
+        if uservalues is None:
+            messages.error(request,'Something went wrong, Cant Raise a request')
+            return redirect('sensd')
+
         # Create a new Request entry
+        requested_date = uservalues.get('requested_date', datetime.now().strftime('%Y%m%d'))
         new_request = Request.objects.create(
-            user_request_id=user_request_id,
+            user_request_id=f"Request{requested_date}",
             final_excel=file_path,
-            created_by=request.user.username if request.user.is_authenticated else "Anonymous"
+            created_by=request.user.email,  # Assuming user is authenticated
+            updated_by=request.user.email,
+            created_on=timezone.now(),
+            updated_on=timezone.now(),
+            is_deleted=False
         )
 
+        new_request.save()
+    
+        new_request.user_request_id = f"Request{requested_date}{new_request.request_id}"
+        new_request.save()
+        
+        request.session['latest_request_id'] = new_request.user_request_id
+        user_request_id = new_request.user_request_id
         try:
             # Load Excel file
             excel_data = pd.ExcelFile(uploaded_file)
@@ -1044,12 +1147,12 @@ def save_excel_data(request):
                 all_nodes_objects = [
                     AllNodes(
                         user_request_id=user_request_id,
-                        node_id=row['Node ID'],
+                        node_id=row['ID'],
                         node_name=row['Node Name'],
                         probability=row['Probability'],
                         cumulative_cost=row['Cumulative Cost'],
                         demand_rate=row['Demand Rate'],
-                        created_by=request.user.username if request.user.is_authenticated else "Anonymous"
+                        created_by=request.user.email if request.user.is_authenticated else "Anonymous"
                     )
                     for _, row in df_nodes.iterrows()
                 ]
@@ -1063,22 +1166,22 @@ def save_excel_data(request):
                         user_request_id=user_request_id,
                         node_id=row['Node ID'],
                         node_name=row['Node Name'],
-                        created_by=request.user.username if request.user.is_authenticated else "Anonymous"
+                        created_by=request.user.email if request.user.is_authenticated else "Anonymous"
                     )
                     for _, row in df_initial.iterrows()
                 ]
                 InitialNodes.objects.bulk_create(initial_nodes_objects)
 
             # Save FinishedGoods data
-            if "Finished Goods" in excel_data.sheet_names:
-                df_goods = pd.read_excel(excel_data, sheet_name="Finished Goods")
+            if "Finished Products" in excel_data.sheet_names:
+                df_goods = pd.read_excel(excel_data, sheet_name="Finished Products")
                 finished_goods_objects = [
                     FinishedGoods(
                         user_request_id=user_request_id,
                         node_id=row['Node ID'],
                         node_name=row['Node Name'],
                         demand_rate=row['Demand Rate'],
-                        created_by=request.user.username if request.user.is_authenticated else "Anonymous"
+                        created_by=request.user.email if request.user.is_authenticated else "Anonymous"
                     )
                     for _, row in df_goods.iterrows()
                 ]
@@ -1090,13 +1193,13 @@ def save_excel_data(request):
                 arc_objects = [
                     Arc(
                         user_request_id=user_request_id,
-                        Arc_id=row['Arc ID'],
+                        Arc_id=row['ID'],
                         from_node_id=row['From Node ID'],
                         from_node_name=row['From Node Name'],
                         to_node_id=row['To Node ID'],
                         to_node_name=row['To Node Name'],
                         multiplier=row['Multiplier'],
-                        created_by=request.user.username if request.user.is_authenticated else "Anonymous"
+                        created_by=request.user.email if request.user.is_authenticated else "Anonymous"
                     )
                     for _, row in df_arcs.iterrows()
                 ]
@@ -1108,26 +1211,26 @@ def save_excel_data(request):
                 pathogen_objects = [
                     PathogenTestingMethod(
                         user_request_id=user_request_id,
-                        ptm_id=row['PTM ID'],
-                        pathogen_testing_method=row['Pathogen Testing Method'],
-                        created_by=request.user.username if request.user.is_authenticated else "Anonymous"
+                        ptm_id=row['ID'],
+                        pathogen_testing_method=row['Pathogen Testing Methods'],
+                        created_by=request.user.email if request.user.is_authenticated else "Anonymous"
                     )
                     for _, row in df_pathogen.iterrows()
                 ]
                 PathogenTestingMethod.objects.bulk_create(pathogen_objects)
 
             # Save PathogenTestingMethodFNodes data
-            if "PTM FNodes" in excel_data.sheet_names:
-                df_ptm_fnodes = pd.read_excel(excel_data, sheet_name="PTM FNodes")
+            if "Pathogen Testing Methods F Node" in excel_data.sheet_names:
+                df_ptm_fnodes = pd.read_excel(excel_data, sheet_name="Pathogen Testing Methods F Node")
                 ptm_fnode_objects = [
                     PathogenTestingMethodFNodes(
                         user_request_id=user_request_id,
                         node_id=row['Node ID'],
-                        pathogen_testing_method_id=row['PTM ID'],
+                        pathogen_testing_method_id=row['Pathogen Testing Method ID'],
                         sensitivity=row['Sensitivity'],
                         direct_cost=row['Direct Cost'],
                         lead_time=row['Lead Time'],
-                        created_by=request.user.username if request.user.is_authenticated else "Anonymous"
+                        created_by=request.user.email if request.user.is_authenticated else "Anonymous"
                     )
                     for _, row in df_ptm_fnodes.iterrows()
                 ]
@@ -1139,11 +1242,11 @@ def save_excel_data(request):
                 dynamic_parameters_objects = [
                     DynamicParameters(
                         user_request_id=user_request_id,
-                        dynamic_parameter_id=row['Dynamic Parameter ID'],
-                        maxsteps_k=row['Max Steps K'],
-                        maxpercentage_alpha=row['Max Percentage Alpha'],
-                        maxbudget_B=row['Max Budget B'],
-                        created_by=request.user.username if request.user.is_authenticated else "Anonymous"
+                        dynamic_parameter_id=row['ID'],
+                        maxsteps_k=row['Max Steps (K)'],
+                        maxpercentage_alpha=row['Max Percentage (Alpha)'],
+                        maxbudget_B=row['Max Budget (B)'],
+                        created_by=request.user.email if request.user.is_authenticated else "Anonymous"
                     )
                     for _, row in df_dynamic.iterrows()
                 ]
@@ -1154,7 +1257,7 @@ def save_excel_data(request):
         except Exception as e:
             return JsonResponse({"status": "error", "message": str(e)})
 
-    return JsonResponse({"status": "error", "message": "Invalid request"})
+    return JsonResponse({"status": "error", "message": "Invalid request", "user_request_id": user_request_id })
 
 
 

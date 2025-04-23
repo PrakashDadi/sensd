@@ -18,6 +18,12 @@ from django.utils.encoding import force_bytes , DjangoUnicodeDecodeError , force
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.urls import reverse
 
+from authentication.models import UserKey
+from authentication.utils import encrypt_data, decrypt_data
+
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
 import logging
 
 # Set up logging
@@ -40,15 +46,43 @@ def adminindex(request):
 
 def home(request):
     uservalues =  request.session.get('uservalues', None)
+    if uservalues is None:
+        messages.error(request, 'Session expired or invalid.')
+        return redirect('login')
+    
+    user_key = UserKey.objects.get(user_id=uservalues['pk'])
+    private_key = user_key.private_key
 
-    requestlists = RequestModel.objects.filter(created_by = uservalues['email'])
-    resultlists = ResultModel.objects.filter(created_by = uservalues['email'])
+    all_requests = RequestModel.objects.all()
+    user_requests = []
 
-    print(resultlists)
+    all_results = ResultModel.objects.all()
+    user_results = []
+    for req in all_requests:
+        try:
+            decrypted_created_by = decrypt_data(private_key, json.loads(req.created_by))
+            if decrypted_created_by == uservalues['email']:
+                req.created_by = decrypted_created_by  # Optional: for display
+                user_requests.append(req)
+        except Exception as e:
+            print("Decryption failed for a request:", e)
+
+    for res in all_results:
+        try:
+            decrypted_created_by = decrypt_data(private_key, json.loads(res.created_by))
+            if decrypted_created_by == uservalues['email']:
+                res.created_by = decrypted_created_by  # Optional: for display
+                user_results.append(res)
+        except Exception as e:
+            print("Decryption failed for a result:", e)
+
+    # requestlists = RequestModel.objects.filter(created_by = uservalues['email'])
+    # resultlists = ResultModel.objects.filter(created_by = uservalues['email'])
+
     return render(request, 'dashboard/index.html',{
         'uservalues': uservalues,
-        'requests': requestlists,
-        'results': resultlists
+        'requests': user_requests,
+        'results': user_results
     })
 
 def add_user(request):
