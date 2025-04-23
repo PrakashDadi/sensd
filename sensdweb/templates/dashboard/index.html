@@ -2,8 +2,11 @@
 {% block content %}
 
 <div class="container">
-    <header class="bg-primary text-white text-center py-4 mb-4">
-        <h2 class="fw-light">SENSD DASHBOARD</h2>
+    <header class="theme-banner text-center py-5 mb-4 shadow-lg border-bottom border-success">
+        <div class="container">
+            <h1 class="display-4 fw-bold text-uppercase" style="letter-spacing: 2px;">SENSD Dashboard</h1>
+            <p class="lead subtext mt-2">Visualize & Explore Optimization Outputs with Confidence</p>
+        </div>
     </header>
 
     {% include 'partials/_messages.html' %}
@@ -32,8 +35,8 @@
                         <td>{{ req.created_on }}</td>
                         <td>{{ req.updated_on }}</td>
                         <td>
-                            <a href="{% url 'AllNodes' requestid=req.user_request_id %}" class="btn btn-warning btn-sm">Edit</a>
-                            <a href="{% url 'delete_request' requestid=req.user_request_id %}" class="btn btn-danger btn-sm">Delete</a>
+                            <a href="{% url 'AllNodes' requestid=req.user_request_id %}" class="btn btn-warning btn-sm"><i class="bi bi-pencil"></i></a>
+                            <a href="{% url 'delete_request' requestid=req.user_request_id %}" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i></a>
                         </td>
                     </tr>
                     {% endfor %}

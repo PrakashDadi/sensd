@@ -1,184 +1,179 @@
 {% extends 'base.html' %}
-
 {% block content %}
 
+<style>
+    .section-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        text-align: center;
+        margin: 30px 0 15px 0;
+    }
+
+    .table th, .table td {
+        vertical-align: middle;
+        white-space: nowrap;
+        text-align: center;
+    }
+
+    .modal-body h4 {
+        margin-top: 20px;
+        font-weight: bold;
+        color: #1a6332;
+    }
+</style>
+
 <div class="container">
-    <header class="bg-primary text-white text-center py-4 mb-4">
+    <header class="theme-banner text-center py-5 mb-4 shadow-lg border-bottom border-success">
         <div class="container">
-            <h2 class="fw-light">Upload Excel File for Optimization</h2>
+            <h1 class="display-4 fw-bold text-uppercase" style="letter-spacing: 2px;">Upload Optimization Data</h1>
+            <p class="lead subtext mt-2">Preview and submit your Excel-based input for analysis</p>
         </div>
     </header>
+
     {% include 'partials/_messages.html' %}
-    <div class="card mb-4">
-        <div class="card-header">
-            <h4>Upload Excel</h4>
-        </div>
+
+    <div class="card shadow-sm border-success mb-4">
+        <div class="card-header bg-success text-white fw-semibold">Upload Excel File</div>
         <div class="card-body">
             <form id="uploadexcel" method="POST" enctype="multipart/form-data" action="{% url 'view_exceldata' %}">
                 {% csrf_token %}
                 <div class="mb-3">
-                    <label for="file" class="form-label">Select Excel File</label>
+                    <label for="file" class="form-label">Choose Excel File</label>
                     <input class="form-control" type="file" name="file" id="file" accept=".xlsx, .xls" required>
                 </div>
-                <button type="submit" class="btn btn-primary">Submit</button>
+                <button type="submit" class="btn btn-success px-4">Preview</button>
             </form>
         </div>
     </div>
 
-      <!-- Hidden form for submitting the file to the solution view -->
-      <form id="solutionForm" method="POST" enctype="multipart/form-data" action="{% url 'optimize_model' %}" style="display: none;">
+    <!-- Hidden solution form -->
+    <form id="solutionForm" method="POST" enctype="multipart/form-data" action="{% url 'optimize_model' %}" style="display: none;">
         {% csrf_token %}
         <input type="file" name="file" id="solutionFile">
+        <input type="hidden" name="user_request_id" id="user_request_id_field">
     </form>
-     <!-- JSON Data Modal -->
-     <div class="modal fade" id="jsonModal" tabindex="-1" aria-labelledby="jsonModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="jsonModalLabel">Input Data Preview</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+
+    <!-- Modal for preview -->
+    <div class="modal fade" id="jsonModal" tabindex="-1" aria-labelledby="jsonModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content border-success">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="jsonModalLabel">📊 Input Data Preview</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div id="jsonTableContainer"></div>
+                    <div id="jsonTableContainer" class="table-responsive"></div>
                 </div>
-                <div class="modal-footer">
-                    <!-- Hidden iframe for file download -->    
+                <div class="modal-footer bg-light">
                     <iframe id="hidden_iframe" name="hidden_iframe" style="display:none;"></iframe>
-                    <button type="button" class="btn btn-success" onclick="submitSolution('{% url 'optimize_model' %}','{% url 'user_requests'%}')">Solution</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success" onclick="submitSolution('{% url 'optimize_model' %}','{% url 'user_requests'%}')">Optimize</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                 </div>
             </div>
         </div>
     </div>
-    
-    
 </div>
 
+<!-- Script block -->
 <script>
-    document.getElementById('uploadexcel').onsubmit = function(event) {
-        event.preventDefault();
-        
-        var formData = new FormData(this);
-        fetch("{% url 'view_exceldata' %}", {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                renderTables(data.preview_data);
-                var jsonModal = new bootstrap.Modal(document.getElementById('jsonModal'));
-                jsonModal.show();
-            } else {
-                alert('Error: ' + data.message);
-            }
-        })
-        .catch(error => console.error('Error:', error));
-    };
+document.getElementById('uploadexcel').onsubmit = function(event) {
+    event.preventDefault();
+    const formData = new FormData(this);
 
-    function renderTables(previewData) {
-        const container = document.getElementById('jsonTableContainer');
-        container.innerHTML = ''; // Clear previous content if any
-
-        // Loop over each key (e.g., "All Nodes", "Initial Nodes", etc.) in the preview_data
-        for (const [sectionName, sectionData] of Object.entries(previewData)) {
-            // Add a caption with the section name
-            const caption = document.createElement('h4');
-            caption.textContent = sectionName;
-            container.appendChild(caption);
-            
-            
-            // Create a table for each section
-            const table = document.createElement('table');
-            table.className = 'table table-bordered table-striped mb-4';
-
-            
-
-            // Create table headers based on the keys of the first item in the section data
-            const thead = document.createElement('thead');
-            const headerRow = document.createElement('tr');
-            Object.keys(sectionData).forEach(key => {
-                const th = document.createElement('th');
-                th.textContent = key;
-                headerRow.appendChild(th);
-            });
-            thead.appendChild(headerRow);
-            table.appendChild(thead);
-
-            // Create table body
-            const tbody = document.createElement('tbody');
-            const numRows = Object.keys(sectionData[Object.keys(sectionData)[0]]).length;
-
-            for (let i = 0; i < numRows; i++) {
-                const row = document.createElement('tr');
-                Object.keys(sectionData).forEach(key => {
-                    const cell = document.createElement('td');
-                    cell.textContent = sectionData[key][i];
-                    row.appendChild(cell);
-                });
-                tbody.appendChild(row);
-            }
-            table.appendChild(tbody);
-
-            // Append the table to the container
-            container.appendChild(table);
+    fetch("{% url 'view_exceldata' %}", {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            renderTables(data.preview_data);
+            const jsonModal = new bootstrap.Modal(document.getElementById('jsonModal'));
+            jsonModal.show();
+        } else {
+            alert('Error: ' + data.message);
         }
-    }
+    })
+    .catch(error => console.error('Error:', error));
+};
 
-    function submitSolution(downloadUrl , redirecturl) {
-        const fileInput = document.getElementById('file');
-        const solutionFileInput = document.getElementById('solutionFile');
+function renderTables(previewData) {
+    const container = document.getElementById('jsonTableContainer');
+    container.innerHTML = '';
 
-        if (fileInput.files.length === 0) {
-            alert("Please select a file before submitting.");
-            return;
-        }
-        
-        solutionFileInput.files = fileInput.files;
+    for (const [sectionName, sectionData] of Object.entries(previewData)) {
+        const caption = document.createElement('h4');
+        caption.textContent = sectionName;
+        container.appendChild(caption);
 
-        const formData = new FormData();
-        formData.append("file", fileInput.files[0]);
+        const table = document.createElement('table');
+        table.className = 'table table-bordered table-striped mb-4';
 
-        fetch("{% url 'save_excel_data' %}", {
-            method: "POST",
-            body: formData,
-            headers: {
-                "X-CSRFToken": "{{ csrf_token }}"
-            }
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.status === "success") {
-                alert("Data saved successfully!");
-                setTimeout(function () {
-                    window.open(redirectUrl, "_self");
-                }, 10000);
-            } else {
-                alert("Error: " + data.message);
-            }
-        })
-        .catch(error => {
-            console.error("Error:", error);
-            alert("An error occurred while saving the data. Please try again.");
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        Object.keys(sectionData).forEach(key => {
+            const th = document.createElement('th');
+            th.textContent = key;
+            headerRow.appendChild(th);
         });
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
 
-       
-        // Trigger the file download
-        document.getElementById('solutionForm').submit();
-        // After a short delay, perform the redirection
-         setTimeout(function() {
-            window.open(redirectUrl, '_self');  // '_self' opens it in the same window
-        }, 10000);       
+        const tbody = document.createElement('tbody');
+        const numRows = Object.keys(sectionData[Object.keys(sectionData)[0]]).length;
+
+        for (let i = 0; i < numRows; i++) {
+            const row = document.createElement('tr');
+            Object.keys(sectionData).forEach(key => {
+                const cell = document.createElement('td');
+                cell.textContent = sectionData[key][i];
+                row.appendChild(cell);
+            });
+            tbody.appendChild(row);
+        }
+
+        table.appendChild(tbody);
+        container.appendChild(table);
     }
+}
+
+function submitSolution(downloadUrl, redirectUrl) {
+    const fileInput = document.getElementById('file');
+    const solutionFileInput = document.getElementById('solutionFile');
+
+    if (fileInput.files.length === 0) {
+        alert("Please select a file before submitting.");
+        return;
+    }
+
+    solutionFileInput.files = fileInput.files;
+
+    const formData = new FormData();
+    formData.append("file", fileInput.files[0]);
+
+    fetch("{% url 'save_excel_data' %}", {
+        method: "POST",
+        body: formData,
+        headers: { "X-CSRFToken": "{{ csrf_token }}" }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === "success") {
+            alert("Data saved successfully!");
+            document.getElementById("user_request_id_field").value = data.user_request_id;
+            document.getElementById('solutionForm').submit();
+            setTimeout(() => { window.open(redirectUrl, "_self"); }, 10000);
+        } else {
+            alert("Error: " + data.message);
+        }
+    })
+    .catch(error => {
+        console.error("Error:", error);
+        alert("An error occurred while saving the data. Please try again.");
+    });
+}
 </script>
 
-
-{% endblock content %}
+{% endblock %}
