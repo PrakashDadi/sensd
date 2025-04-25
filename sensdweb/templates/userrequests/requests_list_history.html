@@ -46,7 +46,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     $('#request-table').DataTable({
         dom: 'frtip',
-        pageLength: 10
+        pageLength: 10,
+        order: [[0, 'desc']],
+        ordering: true
     });
 });
 </script>
