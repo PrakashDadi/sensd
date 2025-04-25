@@ -79,25 +79,27 @@
 <script>
 document.getElementById('uploadexcel').onsubmit = function(event) {
     event.preventDefault();
-    const formData = new FormData(this);
+    var formData = new FormData(this);
 
     fetch("{% url 'view_exceldata' %}", {
-        method: 'POST',
-        body: formData,
-        headers: { 'X-CSRFToken': '{{ csrf_token }}' }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'success') {
-            renderTables(data.preview_data);
-            const jsonModal = new bootstrap.Modal(document.getElementById('jsonModal'));
-            jsonModal.show();
-        } else {
-            alert('Error: ' + data.message);
-        }
-    })
-    .catch(error => console.error('Error:', error));
-};
+    method: 'POST',
+    body: formData,
+    headers: {
+        'X-CSRFToken': '{{ csrf_token }}'
+    }
+})
+ .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                renderTables(data.preview_data);
+                var jsonModal = new bootstrap.Modal(document.getElementById('jsonModal'));
+                jsonModal.show();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    };
 
 function renderTables(previewData) {
     const container = document.getElementById('jsonTableContainer');
@@ -161,7 +163,7 @@ function submitSolution(downloadUrl, redirectUrl) {
     .then(response => response.json())
     .then(data => {
         if (data.status === "success") {
-            alert("Data saved successfully!");
+            //alert("Data saved successfully!");
             document.getElementById("user_request_id_field").value = data.user_request_id;
             document.getElementById('solutionForm').submit();
             setTimeout(() => { window.open(redirectUrl, "_self"); }, 10000);
