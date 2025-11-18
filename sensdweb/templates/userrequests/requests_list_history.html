@@ -37,6 +37,39 @@
             </table>
         </div>
     </div>
+
+    <!-- Result History -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4 class="text-uppercase text-center">Result History</h4>
+        </div>
+        <div class="card-body">
+            <table id="result-table" class="table table-bordered table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Result ID</th>
+                        <th>User Result ID</th>
+                        <th>User Request ID</th>
+                        <th>Created On</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in results %}
+                    <tr>
+                        <td>{{ result.result_id }}</td>
+                        <td>{{ result.user_result_id }}</td>
+                        <td>{{ result.user_request_id }}</td>
+                        <td>{{ result.created_on }}</td>
+                        <td>
+                            <a href="{% url 'view_results' result.user_result_id %}" class="btn btn-info btn-sm">View Results</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <script>

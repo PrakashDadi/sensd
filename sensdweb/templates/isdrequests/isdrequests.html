@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="theme-banner text-center py-4 mb-4 shadow-lg"><h2 class="mb-0">Your Requests</h2></header>
+{% include 'partials/_messages.html' %}
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-striped align-middle">
+        <thead><tr><th>#</th><th>Title</th><th>Status</th><th>Created</th><th>Updated</th><th>Results</th></tr></thead>
+        <tbody>
+        {% for r in rows %}
+          <tr>
+            <td>{{ r.id }}</td>
+            <td>{{ r.title }}</td>
+            <td><span class="badge {% if r.status == 'DONE' %}text-bg-success{% elif r.status == 'FAILED' %}text-bg-danger{% elif r.status == 'RUNNING' %}text-bg-warning{% else %}text-bg-secondary{% endif %}">{{ r.status }}</span></td>
+            <td>{{ r.created_at|date:"Y-m-d H:i" }}</td>
+            <td>{{ r.updated_at|date:"Y-m-d H:i" }}</td>
+            <td>{% if r.status == 'DONE' %}<a class="btn btn-sm btn-outline-success" href="{% url 'results_view' r.id %}">View</a>{% else %}<button class="btn btn-sm btn-outline-secondary" disabled>Not ready</button>{% endif %}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6" class="text-center text-muted">No requests yet.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

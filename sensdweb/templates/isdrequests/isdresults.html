@@ -1,0 +1,658 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-3">
+
+  <!-- Header -->
+  <header class="theme-banner text-center py-3 mb-4 shadow-sm rounded-3">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <h2 class="mb-0">Results for Request #{{ req.id }}</h2>
+      <a href="{% url 'results_download_excel' req.id %}" class="btn btn-outline-success btn-sm">
+        Download Excel
+      </a>
+    </div>
+  </header>
+
+  {% include 'partials/_messages.html' %}
+
+  {% if summary %}
+  <!-- TOP ROW: KPI CARDS + CHARTS -->
+  <div class="row g-3 mb-4">
+    <!-- KPIs -->
+    <div class="col-lg-5">
+      <div class="row g-3">
+        <div class="col-12">
+          <div class="card border-success h-100">
+            <div class="card-header bg-success text-white">Objective (Total Profit)</div>
+            <div class="card-body">
+              <h3 class="mb-0">{{ summary.objective_value|floatformat:2 }}</h3>
+              <small class="text-muted">Includes artificial terms &amp; in-transit penalties</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-6">
+          <div class="card h-100">
+            <div class="card-header">Real Profit (no artificial)</div>
+            <div class="card-body">
+              <h5 class="mb-0">{{ summary.total_profit|floatformat:2 }}</h5>
+              <small class="text-muted">Revenue − (Transport + Gap + Excess)</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-6">
+          <div class="card h-100">
+            <div class="card-header">Revenue</div>
+            <div class="card-body">
+              <h5 class="mb-0">{{ summary.total_revenue|floatformat:2 }}</h5>
+              <small class="text-muted">Total sales across all markets</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-6">
+          <div class="card h-100">
+            <div class="card-header">Transport Cost</div>
+            <div class="card-body">
+              <h5 class="mb-0">{{ summary.total_transport_cost|floatformat:2 }}</h5>
+              <small class="text-muted">Fixed + variable transportation</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-6">
+          <div class="card h-100">
+            <div class="card-header">Gap &amp; Excess Costs</div>
+            <div class="card-body">
+              <div><strong>Gap:</strong> {{ summary.total_gap_cost|floatformat:2 }}</div>
+              <div><strong>Excess:</strong> {{ summary.total_excess_cost|floatformat:2 }}</div>
+              <small class="text-muted">Service penalties</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-6">
+          <div class="card h-100">
+            <div class="card-header">In-Transit Penalty</div>
+            <div class="card-body">
+              <h5 class="mb-0">{{ summary.total_intransit_penalty|floatformat:2 }}</h5>
+              <small class="text-muted">Salmonella in-transit penalties</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-6">
+          <div class="card h-100">
+            <div class="card-header">Diversion Cost</div>
+            <div class="card-body">
+              <div><strong>Fixed:</strong> {{ summary.fixed_diversion_cost|floatformat:2 }}</div>
+              <div><strong>Variable:</strong> {{ summary.variable_diversion_cost|floatformat:2 }}</div>
+              <small class="text-muted">Only when product changes along an arc</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="col-lg-7">
+      <div class="card mb-3 h-50">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span>Profit vs Cost Breakdown</span>
+        </div>
+        <div class="card-body">
+          <canvas id="profitBreakdownChart" style="max-height: 260px;"></canvas>
+        </div>
+      </div>
+
+      <div class="card h-50">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span>Top 10 Flows by Quantity</span>
+          <small class="text-muted">Arc + mode, sorted by quantity</small>
+        </div>
+        <div class="card-body">
+          <canvas id="topFlowsChart" style="max-height: 260px;"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ACCORDION: DETAILED TABLES -->
+  <div class="accordion" id="resultsAccordion">
+
+    <!-- Y Modes -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingY">
+        <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapseY" aria-expanded="true" aria-controls="collapseY">
+          Mode Selections (Y = 1)
+        </button>
+      </h2>
+      <div id="collapseY" class="accordion-collapse collapse show"
+           aria-labelledby="headingY" data-bs-parent="#resultsAccordion">
+        <div class="accordion-body">
+          <div class="table-responsive">
+            <table class="table table-striped table-hover table-sm datatable" id="yTable">
+              <thead class="table-light">
+                <tr>
+                  <th>Product In</th>
+                  <th>Node i</th>
+                  <th>Product Out</th>
+                  <th>Node j</th>
+                  <th>Mode</th>
+                  <th>Selected</th>
+                </tr>
+              </thead>
+              <tbody>
+              {% for v in y_rows %}
+                <tr>
+                  <td>{{ v.product }}</td>
+                  <td>{{ v.node_i }}</td>
+                  <td>{{ v.product_div }}</td>
+                  <td>{{ v.node_j }}</td>
+                  <td>{{ v.mode }}</td>
+                  <td>{{ v.value }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="6" class="text-center text-muted">No mode selections</td></tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- X Flows -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingX">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapseX" aria-expanded="false" aria-controls="collapseX">
+          Flows (X &gt; 0)
+        </button>
+      </h2>
+      <div id="collapseX" class="accordion-collapse collapse"
+           aria-labelledby="headingX" data-bs-parent="#resultsAccordion">
+        <div class="accordion-body">
+          <div class="table-responsive">
+            <table class="table table-striped table-hover table-sm datatable" id="xTable">
+              <thead class="table-light">
+                <tr>
+                  <th>Product In</th>
+                  <th>Node i</th>
+                  <th>Product Out</th>
+                  <th>Node j</th>
+                  <th>Mode</th>
+                  <th>Quantity</th>
+                </tr>
+              </thead>
+              <tbody>
+              {% for v in x_rows %}
+                <tr>
+                  <td>{{ v.product }}</td>
+                  <td>{{ v.node_i }}</td>
+                  <td>{{ v.product_div }}</td>
+                  <td>{{ v.node_j }}</td>
+                  <td>{{ v.mode }}</td>
+                  <td>{{ v.quantity|floatformat:4 }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="6" class="text-center text-muted">No flows</td></tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gap / Excess -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingGap">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapseGap" aria-expanded="false" aria-controls="collapseGap">
+          Demand Balance (Gap &amp; Excess)
+        </button>
+      </h2>
+      <div id="collapseGap" class="accordion-collapse collapse"
+           aria-labelledby="headingGap" data-bs-parent="#resultsAccordion">
+        <div class="accordion-body">
+          <div class="row g-3">
+            <div class="col-lg-6">
+              <h6>Gap (Unmet Demand)</h6>
+              <div class="table-responsive">
+                <table class="table table-striped table-hover table-sm datatable" id="gapTable">
+                  <thead class="table-light">
+                    <tr><th>Product</th><th>Market</th><th>Gap</th></tr>
+                  </thead>
+                  <tbody>
+                  {% for g in gaps %}
+                    <tr>
+                      <td>{{ g.product }}</td>
+                      <td>{{ g.market }}</td>
+                      <td>{{ g.gap|floatformat:4 }}</td>
+                    </tr>
+                  {% empty %}
+                    <tr><td colspan="3" class="text-center text-muted">No gap (0 for all)</td></tr>
+                  {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="col-lg-6">
+              <h6>Excess (Overdelivery)</h6>
+              <div class="table-responsive">
+                <table class="table table-striped table-hover table-sm datatable" id="excessTable">
+                  <thead class="table-light">
+                    <tr><th>Product</th><th>Market</th><th>Excess</th></tr>
+                  </thead>
+                  <tbody>
+                  {% for e in excess %}
+                    <tr>
+                      <td>{{ e.product }}</td>
+                      <td>{{ e.market }}</td>
+                      <td>{{ e.excess|floatformat:4 }}</td>
+                    </tr>
+                  {% empty %}
+                    <tr><td colspan="3" class="text-center text-muted">No excess</td></tr>
+                  {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lead Time (W) -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingW">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapseW" aria-expanded="false" aria-controls="collapseW">
+          Lead Time per Arc (W)
+        </button>
+      </h2>
+      <div id="collapseW" class="accordion-collapse collapse"
+           aria-labelledby="headingW" data-bs-parent="#resultsAccordion">
+        <div class="accordion-body">
+          <div class="table-responsive">
+            <table class="table table-striped table-hover table-sm datatable" id="wTable">
+              <thead class="table-light">
+                <tr>
+                  <th>Product In</th>
+                  <th>Node i</th>
+                  <th>Product Out</th>
+                  <th>Node j</th>
+                  <th>Lead Time</th>
+                </tr>
+              </thead>
+              <tbody>
+              {% for w in lead_times %}
+                <tr>
+                  <td>{{ w.product_in }}</td>
+                  <td>{{ w.node_i }}</td>
+                  <td>{{ w.product_out }}</td>
+                  <td>{{ w.node_j }}</td>
+                  <td>{{ w.lead_time|floatformat:3 }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="5" class="text-center text-muted">No W results</td></tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cumulative Flow Time (F) -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingF">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapseF" aria-expanded="false" aria-controls="collapseF">
+          Cumulative Flow Time per Node (F)
+        </button>
+      </h2>
+      <div id="collapseF" class="accordion-collapse collapse"
+           aria-labelledby="headingF" data-bs-parent="#resultsAccordion">
+        <div class="accordion-body">
+          <div class="table-responsive">
+            <table class="table table-striped table-hover table-sm datatable" id="fTable">
+              <thead class="table-light">
+                <tr>
+                  <th>Product</th>
+                  <th>Node</th>
+                  <th>Flow Time</th>
+                </tr>
+              </thead>
+              <tbody>
+              {% for f in flow_times %}
+                <tr>
+                  <td>{{ f.product }}</td>
+                  <td>{{ f.node }}</td>
+                  <td>{{ f.flow_time|floatformat:3 }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="3" class="text-center text-muted">No F results</td></tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Shelf Time & Price -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingTPi">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapseTPi" aria-expanded="false" aria-controls="collapseTPi">
+          Shelf Time (T) &amp; Market Prices (π)
+        </button>
+      </h2>
+      <div id="collapseTPi" class="accordion-collapse collapse"
+           aria-labelledby="headingTPi" data-bs-parent="#resultsAccordion">
+        <div class="accordion-body">
+          <div class="row g-3">
+            <div class="col-lg-6">
+              <h6>Shelf Time at Markets (T)</h6>
+              <div class="table-responsive">
+                <table class="table table-striped table-hover table-sm datatable" id="tTable">
+                  <thead class="table-light">
+                    <tr><th>Product</th><th>Market</th><th>Shelf Time</th></tr>
+                  </thead>
+                  <tbody>
+                  {% for t in shelf_times %}
+                    <tr>
+                      <td>{{ t.product }}</td>
+                      <td>{{ t.market }}</td>
+                      <td>{{ t.shelf_time|floatformat:1 }}</td>
+                    </tr>
+                  {% empty %}
+                    <tr><td colspan="3" class="text-center text-muted">No T results</td></tr>
+                  {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="col-lg-6">
+              <h6>Market Prices (π)</h6>
+              <div class="table-responsive">
+                <table class="table table-striped table-hover table-sm datatable" id="piTable">
+                  <thead class="table-light">
+                    <tr><th>Product</th><th>Market</th><th>Price</th></tr>
+                  </thead>
+                  <tbody>
+                  {% for p in prices %}
+                    <tr>
+                      <td>{{ p.product }}</td>
+                      <td>{{ p.market }}</td>
+                      <td>{{ p.price|floatformat:2 }}</td>
+                    </tr>
+                  {% empty %}
+                    <tr><td colspan="3" class="text-center text-muted">No π results</td></tr>
+                  {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Salmonella -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingSal">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapseSal" aria-expanded="false" aria-controls="collapseSal">
+          Salmonella Estimates
+        </button>
+      </h2>
+      <div id="collapseSal" class="accordion-collapse collapse"
+           aria-labelledby="headingSal" data-bs-parent="#resultsAccordion">
+        <div class="accordion-body">
+          <div class="row g-3">
+            <div class="col-lg-6">
+              <h6>At Nodes (η)</h6>
+              <div class="table-responsive">
+                <table class="table table-striped table-hover table-sm datatable" id="salNodeTable">
+                  <thead class="table-light">
+                    <tr><th>Product</th><th>Node</th><th>Value</th></tr>
+                  </thead>
+                  <tbody>
+                  {% for s in salmonella_nodes %}
+                    <tr>
+                      <td>{{ s.product }}</td>
+                      <td>{{ s.node }}</td>
+                      <td>{{ s.value|floatformat:2 }}</td>
+                    </tr>
+                  {% empty %}
+                    <tr><td colspan="3" class="text-center text-muted">No salmonella values</td></tr>
+                  {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="col-lg-6">
+              <h6>In-Transit (S)</h6>
+              <div class="table-responsive">
+                <table class="table table-striped table-hover table-sm datatable" id="salTransitTable">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Product In</th>
+                      <th>Node i</th>
+                      <th>Product Out</th>
+                      <th>Node j</th>
+                      <th>Mode</th>
+                      <th>Value</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                  {% for s in salmonella_intransit %}
+                    <tr>
+                      <td>{{ s.product_in }}</td>
+                      <td>{{ s.node_i }}</td>
+                      <td>{{ s.product_out }}</td>
+                      <td>{{ s.node_j }}</td>
+                      <td>{{ s.mode }}</td>
+                      <td>{{ s.value|floatformat:2 }}</td>
+                    </tr>
+                  {% empty %}
+                    <tr><td colspan="6" class="text-center text-muted">No in-transit salmonella values</td></tr>
+                  {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div> <!-- /accordion -->
+
+</div> <!-- /container -->
+{% endblock %}
+
+{% block extra_js %}
+  {{ block.super|default:"" }}
+
+  <!-- If jQuery/DataTables already live in base.html, you can remove the first two lines -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    console.log("✅ results template script loaded");
+
+    document.addEventListener('DOMContentLoaded', function () {
+      console.log("✅ DOMContentLoaded for results page");
+
+      // --------- DataTables ----------
+      if (typeof $ !== 'undefined' && $.fn.DataTable) {
+        console.log("✅ Initializing DataTables");
+        $('.datatable').DataTable({
+          pageLength: 10,
+          lengthMenu: [5, 10, 25, 50, 100],
+          ordering: true,
+          searching: true,
+          info: true,
+          language: {
+            search: "Filter:",
+            lengthMenu: "Show _MENU_ rows"
+          }
+        });
+      } else {
+        console.warn("⚠️ jQuery/DataTables not available");
+      }
+
+      // Bail out if Chart.js didn't load
+      if (typeof Chart === 'undefined') {
+        console.error("❌ Chart.js is not loaded – charts will not render.");
+        return;
+      }
+
+      // --------- PROFIT VS COST BREAKDOWN ----------
+      {% if summary %}
+      (function () {
+        const canvas = document.getElementById('profitBreakdownChart');
+        console.log("profitBreakdownChart canvas:", canvas);
+        if (!canvas) return;
+
+        const revenue        = {{ summary.total_revenue|default:0 }};
+        const transportCost  = {{ summary.total_transport_cost|default:0 }};
+        const gapCost        = {{ summary.total_gap_cost|default:0 }};
+        const excessCost     = {{ summary.total_excess_cost|default:0 }};
+        const inTransitPen   = {{ summary.total_intransit_penalty|default:0 }};
+        const realProfit     = {{ summary.total_profit|default:0 }};
+
+        new Chart(canvas.getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: [
+              'Revenue',
+              'Transport Cost',
+              'Gap Cost',
+              'Excess Cost',
+              'In-Transit Penalty',
+              'Real Profit'
+            ],
+            datasets: [{
+              data: [
+                revenue,
+                transportCost,
+                gapCost,
+                excessCost,
+                inTransitPen,
+                realProfit
+              ],
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function (ctx) {
+                    return ctx.parsed.y.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2
+                    });
+                  }
+                }
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  callback: function (value) {
+                    return value.toLocaleString();
+                  }
+                }
+              }
+            }
+          }
+        });
+      })();
+      {% endif %}
+
+      // --------- TOP 10 FLOWS BY QUANTITY ----------
+      (function () {
+        const canvas = document.getElementById('topFlowsChart');
+        console.log("topFlowsChart canvas:", canvas);
+        if (!canvas) return;
+
+        const flows = [
+          {% for v in x_rows %}
+          {
+            label: "({{ v.product }} {{ v.node_i }} → {{ v.product_div }} {{ v.node_j }}, {{ v.mode }})",
+            qty: {{ v.quantity|default:0 }}
+          },
+          {% endfor %}
+        ].filter(f => f.qty > 0);
+
+        console.log("flows found:", flows.length);
+
+        if (!flows.length) {
+          console.warn("⚠️ No positive flows found for Top 10 flows chart.");
+          return;
+        }
+
+        flows.sort((a, b) => b.qty - a.qty);
+        const top = flows.slice(0, 10);
+        const labels = top.map(f => f.label);
+        const quantities = top.map(f => f.qty);
+
+        new Chart(canvas.getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              data: quantities,
+              borderWidth: 1
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function (ctx) {
+                    return ctx.parsed.x.toFixed(4);
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                beginAtZero: true,
+                ticks: {
+                  callback: function (value) {
+                    return Number(value).toFixed(2);
+                  }
+                }
+              }
+            }
+          }
+        });
+      })();
+    });
+  </script>
+{% endblock %}

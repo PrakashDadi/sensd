@@ -1,0 +1,11 @@
+{
+"type": "FeatureCollection",
+"name": "walmart",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "OBJECTID": 1, "Company": "Whole Foods Market", "Street": "SW Corner of Clayton and, 1160 Town and Country Crossing Dr, Wds Ml Plz", "City": "Town and Country", "State": "MO", "Zip": 63017, "Phone": "(636) 527-1160", "Latitude": 38.622218681385398, "Longitude": -90.515602317623603 }, "geometry": { "type": "Point", "coordinates": [ -90.515602317623603, 38.622218681385398 ] } },
+{ "type": "Feature", "properties": { "OBJECTID": 2, "Company": "Whole Foods Market", "Street": "1601 S Brentwood Blvd", "City": "St. Louis", "State": "MO", "Zip": 63144, "Phone": "(314) 968-7744", "Latitude": 38.627110962760703, "Longitude": -90.347883673033095 }, "geometry": { "type": "Point", "coordinates": [ -90.347883673033095, 38.627110962760703 ] } },
+{ "type": "Feature", "properties": { "OBJECTID": 3, "Company": "Whole Foods Market", "Street": "4577 W Pine Blvd", "City": "St. Louis", "State": "MO", "Zip": 63108, "Phone": "(314) 474-7300", "Latitude": 38.641925447488099, "Longitude": -90.261513459994205 }, "geometry": { "type": "Point", "coordinates": [ -90.261513459994205, 38.641925447488099 ] } },
+{ "type": "Feature", "properties": { "OBJECTID": 4, "Company": "Whole Foods Market", "Street": "301 E 51st St", "City": "Kansas City", "State": "MO", "Zip": 64112, "Phone": "(816) 708-3700", "Latitude": 39.034539341724901, "Longitude": -94.583588741084398 }, "geometry": { "type": "Point", "coordinates": [ -94.583588741084398, 39.034539341724901 ] } }
+]
+}
