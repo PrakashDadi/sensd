@@ -287,7 +287,7 @@ class LoginView(View):
                 return redirect('sensdadmin')
 
             messages.success(request, f'Welcome, {input_username}!')
-            return redirect('sensd')
+            return redirect('gis-home')
 
         # No user matched
         messages.error(request, 'Invalid credentials, try again.')

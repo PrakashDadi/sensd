@@ -7,7 +7,7 @@ from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.contrib import messages
 
-from requests.models import Request as RequestModel , ResultModel
+from sensdrequests.models import Request as RequestModel, ResultModel
 
 
 from .models import UserDetails
@@ -46,6 +46,7 @@ def adminindex(request):
 
 def home(request):
     uservalues =  request.session.get('uservalues', None)
+    print("Session uservalues at home retrieved:", uservalues)
     if uservalues is None:
         messages.error(request, 'Session expired or invalid.')
         return redirect('login')
@@ -54,13 +55,17 @@ def home(request):
     private_key = user_key.private_key
 
     all_requests = RequestModel.objects.all()
+    print("This are all requests", all_requests)
     user_requests = []
 
     all_results = ResultModel.objects.all()
     user_results = []
     for req in all_requests:
+        print("Encrypted created_by:", req.created_by)
         try:
             decrypted_created_by = decrypt_data(private_key, json.loads(req.created_by))
+            print("Decrypted created_by:", decrypted_created_by)
+            print("Decrypted created_by:", decrypted_created_by)
             if decrypted_created_by == uservalues['email']:
                 req.created_by = decrypted_created_by  # Optional: for display
                 user_requests.append(req)
@@ -70,6 +75,8 @@ def home(request):
     for res in all_results:
         try:
             decrypted_created_by = decrypt_data(private_key, json.loads(res.created_by))
+            print("Decrypted results created_by:", decrypted_created_by)
+            print("Decrypted results created_by:", decrypted_created_by)
             if decrypted_created_by == uservalues['email']:
                 res.created_by = decrypted_created_by  # Optional: for display
                 user_results.append(res)

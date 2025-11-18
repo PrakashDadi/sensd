@@ -22,7 +22,9 @@ from django.conf import settings
 urlpatterns = [
     path('', include('sensd.urls')),
     path('authentication/', include('authentication.urls')),
-    path('requests/', include('requests.urls')),
+    path('requests/', include('sensdrequests.urls')),
+    path('mapsapp/', include('mapsapp.urls')),
+    path('isdrequests/', include('isdrequests.urls')),
     path('admin/', admin.site.urls),
 ]
 

@@ -19,7 +19,12 @@ media/*
 #my env
 # myenv/
 # myenv/*
-
+testenv
+testenv/
+testenv/*
+venv
+venv/
+venv/*
 # Static files
 staticfiles/
 sensdweb/static/*

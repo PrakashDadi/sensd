@@ -366,17 +366,19 @@
       </ul>
     </header>
 
-    <div class="container-fluid min-vh-100">
-      <div class="row min-vh-100">
-        {% include 'partials/_sidebar.html'%}
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 vh-100">
-          <div class="main-content">{% block content %} {% endblock %}</div>
-        </main>
-      </div>
+    {% include 'partials/_titlebar.html' %}
+
+<div class="container-fluid px-4">
+  <main class="pt-4">
+    <div class="main-content">
+      {% block content %} {% endblock %}
     </div>
+  </main>
+</div>
     <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.2/dist/chart.umd.js"></script>
     <script src="{% static 'js/main.js' %}"></script>
+    {% block extra_js %}{% endblock %}
   </body>
 </html>

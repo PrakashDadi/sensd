@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+.section-title{font-size:1.3rem;font-weight:600;text-transform:uppercase;text-align:center;margin:30px 0 15px}
+.table th,.table td{vertical-align:middle;white-space:nowrap;text-align:center}
+.modal-body h4{margin-top:20px;font-weight:bold;color:#1a6332}
+</style>
+
+<header class="theme-banner text-center py-5 mb-4 shadow-lg border-bottom border-success">
+  <div class="container">
+    <h1 class="display-4 fw-bold text-uppercase" style="letter-spacing:2px">Upload Distribution Data</h1>
+    <p class="lead subtext mt-2">Preview and submit your Excel-based input for analysis</p>
+  </div>
+</header>
+
+{% include 'partials/_messages.html' %}
+
+<div class="card shadow-sm border-success mb-4">
+  <div class="card-header bg-success text-white fw-semibold">Upload Excel File</div>
+  <div class="card-body">
+    <form id="uploadexcel" method="POST" enctype="multipart/form-data" action="{% url 'preview_excel' %}">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label for="file" class="form-label">Choose Excel File</label>
+        <input class="form-control" type="file" name="file" id="file" accept=".xlsx,.xls" required>
+      </div>
+      <button type="submit" class="btn btn-success px-4">Preview</button>
+    </form>
+  </div>
+</div>
+
+<form id="solutionForm" method="POST" enctype="multipart/form-data" action="{% url 'run_isdoptimization' %}" style="display:none">
+  {% csrf_token %}
+  <input type="file" name="file" id="solutionFile">
+  <input type="hidden" name="request_id" id="request_id_field">
+</form>
+
+<div class="modal fade" id="jsonModal" tabindex="-1" aria-labelledby="jsonModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content border-success">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title" id="jsonModalLabel">📊 Input Data Preview</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body"><div id="jsonTableContainer" class="table-responsive"></div></div>
+      <div class="modal-footer bg-light">
+        <iframe id="hidden_iframe" name="hidden_iframe" style="display:none"></iframe>
+        <button type="button" class="btn btn-success" onclick="submitSolution('{% url 'run_isdoptimization' %}','{% url 'requests_list' %}')">Optimize</button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---- CSRF helpers ---- */
+function getCookie(name){
+  const v = document.cookie.split(';').map(c => c.trim());
+  for (const c of v) {
+    if (c.startsWith(name + '=')) return decodeURIComponent(c.slice(name.length + 1));
+  }
+  return null;
+}
+const csrftoken = getCookie('csrftoken');
+
+/* ---- Response helpers ---- */
+async function parseJsonOrText(res){
+  const ct = res.headers.get('content-type') || '';
+  if (ct.includes('application/json')) return { ok: res.ok, json: await res.json(), text: null };
+  return { ok: res.ok, json: null, text: await res.text() };
+}
+
+/* ---- Preview submit ---- */
+document.getElementById('uploadexcel').onsubmit = async function (e) {
+  e.preventDefault();
+  const fd = new FormData(this); // includes the hidden csrfmiddlewaretoken input
+  const res = await fetch("{% url 'preview_excel' %}", {
+    method: 'POST',
+    body: fd,
+    credentials: 'same-origin',                 // include cookies
+    headers: { 'X-CSRFToken': csrftoken || '' } // header + form token = safest
+  });
+  const parsed = await parseJsonOrText(res);
+  if (!parsed.ok) {
+    console.error(parsed.text || parsed.json);
+    alert('Preview failed.\n\n' + (parsed.text || JSON.stringify(parsed.json)));
+    return;
+  }
+  const data = parsed.json;
+  if (data.status === 'success') {
+    renderTables(data.preview_data);
+    new bootstrap.Modal('#jsonModal').show();
+  } else {
+    alert('Error: ' + data.message);
+  }
+};
+
+/* ---- Build preview tables (unchanged) ---- */
+function renderTables(previewData) {
+  const container = document.getElementById('jsonTableContainer');
+  container.innerHTML = '';
+  for (const [sectionName, sectionData] of Object.entries(previewData)) {
+    const caption = document.createElement('h4');
+    caption.textContent = sectionName;
+    container.appendChild(caption);
+
+    const table = document.createElement('table');
+    table.className = 'table table-bordered table-striped mb-4';
+
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    Object.keys(sectionData).forEach(key => {
+      const th = document.createElement('th');
+      th.textContent = key;
+      headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    const numRows = Object.keys(sectionData[Object.keys(sectionData)[0]] || {}).length;
+    for (let i = 0; i < numRows; i++) {
+      const row = document.createElement('tr');
+      Object.keys(sectionData).forEach(key => {
+        const cell = document.createElement('td');
+        cell.textContent = sectionData[key][i] ?? '';
+        row.appendChild(cell);
+      });
+      tbody.appendChild(row);
+    }
+    table.appendChild(tbody);
+    container.appendChild(table);
+  }
+}
+
+/* ---- Optimize: save JSON first, then POST standard form ---- */
+async function submitSolution(optUrl, redirectUrl) {
+  const fileInput = document.getElementById('file');
+  const solutionFileInput = document.getElementById('solutionFile');
+  if (fileInput.files.length === 0) {
+    alert("Please select a file before submitting.");
+    return;
+  }
+  solutionFileInput.files = fileInput.files;
+
+  const fd = new FormData();
+  fd.append('file', fileInput.files[0]);
+  // include csrf token field too (Django accepts either header or form field)
+  fd.append('csrfmiddlewaretoken', getCookie('csrftoken') || '');
+
+  const res = await fetch("{% url 'save_excel' %}", {
+    method: 'POST',
+    body: fd,
+    credentials: 'same-origin',
+    headers: { 'X-CSRFToken': csrftoken || '' }
+  });
+
+  const parsed = await parseJsonOrText(res);
+  if (!parsed.ok) {
+    console.error(parsed.text || parsed.json);
+    alert('Save failed.\n\n' + (parsed.text || JSON.stringify(parsed.json)));
+    return;
+  }
+  const data = parsed.json;
+  if (data.status !== 'success') {
+    alert('Error: ' + data.message);
+    return;
+  }
+  document.getElementById('request_id_field').value = data.request_id;
+
+  // Now submit the normal form to run the MILP (server returns HTML/redirect)
+  document.getElementById('solutionForm').submit();
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,111 @@
+<style>
+  .title-bar {
+    background-color: #f8f9fa;
+    color: #333;
+    padding: 0.75rem 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1050;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  .theme-dark .title-bar {
+    background-color: #1e1e1e;
+    color: white;
+  }
+
+  .title-bar-placeholder {
+    height: 64px;
+  }
+
+  .brand {
+    font-weight: 600;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .menu-group, .menu-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .title-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: inherit;
+    text-decoration: none;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    position: relative;
+  }
+
+  .title-link i {
+    font-size: 1.2rem;
+  }
+
+  {% comment %} .title-link span {
+    max-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    opacity: 0;
+    transition: max-width 0.4s ease, opacity 0.3s ease;
+  }
+
+  .title-link:hover span {
+    max-width: 200px;
+    opacity: 1;
+  } {% endcomment %}
+
+  .title-link.disabled {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+</style>
+
+<div class="title-bar theme-light">
+  <div class="brand">
+    <span>SENSD OPTIMIZATION</span>
+  </div>
+
+  <div class="menu-group justify-content-center flex-grow-1">
+    <a href="{% url 'sensd' %}" class="title-link {% if request.path == '/sensd/' %}disabled{% endif %}">
+      <i class="bi bi-speedometer2"></i><span>DASHBOARD</span>
+    </a>
+    <a href="{% url 'new_request' %}" class="title-link {% if request.path == '/new_request' %}disabled{% endif %}">
+      <i class="bi bi-file-earmark-plus"></i><span>SENSOR DATA</span>
+    </a>
+    <a href="{% url 'isdrequests_home' %}" class="title-link {% if request.path == '/isdrequests_home' %}disabled{% endif %}">
+      <i class="bi bi-file-earmark-plus"></i><span>INTELLGENT DISTRIBUTION</span>
+    </a>
+    <a href="{% url 'upload_excel' %}" class="title-link {% if request.path == '/upload_excel' %}disabled{% endif %}">
+      <i class="bi bi-upload"></i><span>UPLOAD DATA</span>
+    </a>
+    <a href="{% url 'user_requests' %}" class="title-link {% if request.path == '/sensd/request_history' %}disabled{% endif %}">
+      <i class="bi bi-journals"></i><span>ALL REQUESTS</span>
+    </a>
+  </div>
+
+  <div class="menu-right">
+    <a href="{% url 'gis-home' %}" class="title-link">
+      <i class="bi bi-house"></i><span>SENSD DSS</span>
+    </a>
+    <a href="{% url 'profile' %}" class="title-link {% if request.path == '/sensd/profile' %}disabled{% endif %}">
+      <i class="bi bi-person-circle"></i><span>Profile</span>
+    </a>
+    <a href="{% url 'logout' %}" class="title-link">
+      <i class="bi bi-box-arrow-right"></i><span>Logout</span>
+    </a>
+  </div>
+</div>
+
+<div class="title-bar-placeholder"></div>

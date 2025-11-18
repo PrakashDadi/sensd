@@ -4,6 +4,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives import serialization
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.conf import settings
+from django_cryptography.fields import encrypt
 
 
 class CustomUserManager(BaseUserManager):
@@ -24,13 +25,12 @@ class CustomUserManager(BaseUserManager):
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     id = models.AutoField(primary_key=True)
     username = models.TextField(unique=True)
-    password = models.TextField()
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
     last_login = models.DateTimeField(null=True, blank=True)
-    first_name = models.TextField()
+    first_name = models.TextField(null=True, blank=True)
     last_name = models.TextField(null=True, blank=True)
     email = models.TextField(unique=True)
 

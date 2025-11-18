@@ -9,14 +9,39 @@ https://docs.djangoproject.com/en/5.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
-import os
+
+import os,ctypes
+
 from pathlib import Path
 
 from dotenv import load_dotenv
 from django.contrib import messages
+
+try:
+    import osgeo
+    _osg = Path(osgeo.__file__).parent  # ...\site-packages\osgeo
+    # make sure Windows can resolve dependent DLLs from this folder
+    if hasattr(os, "add_dll_directory"):
+        os.add_dll_directory(str(_osg))
+    # set data dirs
+    os.environ.setdefault("GDAL_DATA", str(_osg / "data"))
+    os.environ.setdefault("PROJ_LIB",  str(_osg / "proj"))
+    os.environ["PROJ_LIB"] = r"C:\Program Files\PostgreSQL\16\share\contrib\postgis-3.4\proj"
+    # pick the installed GDAL dll (3.9/3.10/3.11 etc.)
+    _dll = next(iter(sorted(_osg.glob("gdal*.dll"), reverse=True)), None)
+    if _dll:
+        # preload and tell Django exactly which one to use
+        ctypes.CDLL(str(_dll))
+        GDAL_LIBRARY_PATH = str(_dll)
+except Exception as _e:
+    print("GDAL bootstrap warning:", _e)
+# --- end ---
+
+
 load_dotenv()
 
 AUTH_USER_MODEL = 'authentication.CustomUser'
+
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -29,6 +54,13 @@ print("base dir", BASE_DIR)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-)+-3_5&1x23bkhx#x86y-fqg^ay-iyskbs27n&a#=^9ht=huaz'
+
+SALT_KEY = SECRET_KEY
+
+# CRYPTOGRAPHY_KEY  = SECRET_KEY
+
+# CRYPTOGRAPHY_KEY  = os.getenv("CRYPTOGRAPHY_KEY")
+# CRYPTOGRAPHY_SALT = os.getenv('CRYPTOGRAPHY_SALT').encode() if os.getenv('CRYPTOGRAPHY_SALT') else None
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -45,9 +77,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    "django_cryptography",
     'sensd',
-    'authentication',
-    'requests'
+    'authentication', # login and registration
+    'sensdrequests.apps.RequestsConfig',
+    'isdrequests',
+    'mapsapp', # Maps Handling
+    'django.contrib.gis', # GIS support for maps
 ]
 
 MIDDLEWARE = [
@@ -86,10 +122,10 @@ WSGI_APPLICATION = 'sensdweb.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',   # name of the database used 'django.db.backends.nameofdatabasesystem(here postgresql)'
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',   # name of the database used 'django.db.backends.nameofdatabasesystem(here postgresql)'
         'NAME': os.getenv('DB_NAME'),                   # need to provide database name
-        'USER': os.getenv('DB_USER'),                     # need to provide username
-        'PASSWORD': os.getenv('DB_USER_PASSWORD'),                    # need to provide password
+        'USER': os.getenv('DB_USER'),                   # need to provide username
+        'PASSWORD': os.getenv('DB_USER_PASSWORD'),      # need to provide password
         'HOST': os.getenv('DB_HOST'),
         'PORT': os.getenv('DB_PORT')
     }
@@ -165,3 +201,20 @@ CSRF_COOKIE_SECURE = True     # Ensures CSRF cookies are sent over HTTPS
 
 # Trust the Nginx reverse proxy for HTTPS
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+
+
+#GDAL Settings
+
+GDAL_LIBRARY_PATH = r"C:\Users\dadir\AppData\Roaming\Python\Python312\site-packages\osgeo\gdal311.dll"
+
+
+# # Optional: stronger default signer for your own signed values
+# SIGNING_BACKEND = "django_cryptography.core.signing.TimestampSigner"
+
+
+#Newly Added
+# AUTHENTICATION_BACKENDS = [
+#     # 'authentication.backends.CaseInsensitiveModelBackend',  # our backend first
+#     'django.contrib.auth.backends.ModelBackend',
+# ] 
