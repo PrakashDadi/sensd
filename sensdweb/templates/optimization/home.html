@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %} | Optimization{% endblock %}
+
+{% block content %}
+<div class="sensd-shell py-3">
+  {% include "partials/_messages.html" %}
+
+  {% include "partials/_page_header.html" with title="Optimization" subtitle="Choose a tool to start or continue your work." %}
+  {% block header_actions %}
+    <a class="btn btn-outline-primary" href="{% url 'user_requests' %}">
+      <i class="bi bi-journals me-1"></i> All Requests
+    </a>
+  {% endblock %}
+
+  <div class="row g-3">
+    <div class="col-12 col-lg-6">
+      <div class="card sensd-card h-100">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <div class="fw-semibold">
+            <i class="bi bi-speedometer2 me-2"></i>Distribution Dashboard
+          </div>
+          <span class="badge text-bg-light border">Optimization Tool #1</span>
+        </div>
+        <div class="card-body">
+          <p class="text-body-secondary mb-3">
+            Review requests, upload data, run optimization, and explore results.
+          </p>
+
+          <div class="d-grid gap-2 d-sm-flex">
+            <a class="btn btn-primary" href="{% url 'optimization_dashboard' %}">
+              <i class="bi bi-grid-1x2-fill me-1"></i> Open Dashboard
+            </a>
+            <a class="btn btn-outline-primary" href="{% url 'upload_excel' %}">
+              <i class="bi bi-upload me-1"></i> Upload Excel
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+      <div class="card sensd-card h-100">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <div class="fw-semibold">
+            <i class="bi bi-geo-alt-fill me-2"></i>Sensor Placement
+          </div>
+          <span class="badge text-bg-light border">Optimization Tool #2</span>
+        </div>
+        <div class="card-body">
+          <p class="text-body-secondary mb-3">
+            Create sensor placement inputs, validate constraints, and submit runs.
+          </p>
+
+          <div class="d-grid gap-2 d-sm-flex">
+            <a class="btn btn-primary" href="{% url 'sensor_inputs' %}">
+              <i class="bi bi-list-check me-1"></i> Manage Inputs
+            </a>
+            <a class="btn btn-outline-primary" href="{% url 'sensor_request_history' %}">
+              <i class="bi bi-clock-history me-1"></i> Request History
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="card sensd-card">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <div class="fw-semibold">
+            <i class="bi bi-diagram-3-fill me-2"></i>Intelligent Distribution
+          </div>
+          <span class="badge text-bg-light border">Decision Support</span>
+        </div>
+        <div class="card-body">
+          <div class="row g-3 align-items-center">
+            <div class="col-12 col-md-8">
+              <p class="text-body-secondary mb-0">
+                Work with distribution inputs, routing decisions, and analytics. Use this for the “ISD” flow.
+              </p>
+            </div>
+            <div class="col-12 col-md-4 text-md-end">
+              <a class="btn btn-primary" href="{% url 'isdrequests_home' %}">
+                <i class="bi bi-lightbulb-fill me-1"></i> Open ISD
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+

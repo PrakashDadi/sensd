@@ -1,0 +1,265 @@
+{% extends "gisdashboards/gisbase.html" %}
+{% load static %}
+
+{% block title %}SENSD - Flow Dashboard{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="{% static 'css/flow_analysis.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div id="dashboard-wrapper">
+
+    <!-- LEFT: Table of Contents -->
+    <div id="toc-panel">
+        <div id="toc-header">
+            <span><i class="fa fa-layer-group"></i> Layers</span>
+            <button id="toc-collapse-btn" title="Collapse"><i class="fa fa-chevron-left"></i></button>
+        </div>
+
+        <div id="toc-body">
+
+            <!-- Basemap Section -->
+            <div class="toc-section">
+                <div class="toc-section-title" data-target="toc-basemap">
+                    <i class="fa fa-map fa-fw"></i> Basemap
+                    <i class="fa fa-chevron-down toc-chevron"></i>
+                </div>
+                <div class="toc-section-body" id="toc-basemap">
+                    <div class="basemap-options">
+                        <label class="basemap-option active" data-basemap="osm">
+                            <div class="basemap-thumb osm-thumb"></div>
+                            <span>Streets</span>
+                        </label>
+                        <label class="basemap-option" data-basemap="satellite">
+                            <div class="basemap-thumb satellite-thumb"></div>
+                            <span>Satellite</span>
+                        </label>
+                        <label class="basemap-option" data-basemap="light">
+                            <div class="basemap-thumb light-thumb"></div>
+                            <span>Light</span>
+                        </label>
+                        <label class="basemap-option" data-basemap="dark">
+                            <div class="basemap-thumb dark-thumb"></div>
+                            <span>Dark</span>
+                        </label>
+                    </div>
+                    <div class="toc-row" style="margin-top:8px;">
+                        <label class="toc-toggle-label">
+                            <input type="checkbox" id="basemap-toggle" checked>
+                            <span class="toc-toggle-slider"></span>
+                        </label>
+                        <span class="toc-layer-name">Show Basemap</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Flow Layers Section -->
+            <div class="toc-section">
+                <div class="toc-section-title" data-target="toc-flow">
+                    <i class="fa fa-route fa-fw"></i> Uploaded Flow Layers
+                    <i class="fa fa-chevron-down toc-chevron"></i>
+                </div>
+                <div class="toc-section-body" id="toc-flow">
+                    <div id="toc-flow-empty" class="toc-empty-msg">
+                        <i class="fa fa-arrow-up-from-bracket"></i>
+                        No layers yet.<br>Upload a file in the Toolbox.
+                    </div>
+                    <div id="toc-flow-layers"></div>
+                </div>
+            </div>
+
+        </div><!-- /toc-body -->
+    </div><!-- /toc-panel -->
+
+    <!-- CENTER: Map -->
+    <div id="dashboard-map-wrapper">
+        <div id="dashboard-map"></div>
+    </div>
+
+    <!-- RIGHT: Toolbox -->
+    <div id="toolbox-panel">
+        <div id="toolbox-header">
+            <button id="toolbox-collapse-btn" title="Collapse"><i class="fa fa-chevron-right"></i></button>
+            <span>Toolbox <i class="fa fa-toolbox"></i></span>
+        </div>
+
+        <div id="toolbox-body">
+
+            <!-- Tool 1: Upload -->
+            <div class="tool-section">
+                <div class="tool-title" data-target="tool-upload">
+                    <i class="fa fa-upload fa-fw"></i> Upload Layer
+                    <i class="fa fa-chevron-down tool-chevron"></i>
+                </div>
+                <div class="tool-body" id="tool-upload">
+
+                    <!-- Mode switcher -->
+                    <div class="upload-mode-switch">
+                        <button class="mode-btn active" id="mode-btn-flow" onclick="switchUploadMode('flow')">
+                            <i class="fa fa-route"></i> Flow Data
+                        </button>
+                        <button class="mode-btn" id="mode-btn-display" onclick="switchUploadMode('display')">
+                            <i class="fa fa-map-pin"></i> Display Layer
+                        </button>
+                    </div>
+
+                    <!-- Flow mode hint -->
+                    <div class="upload-hint" id="upload-hint-flow">
+                        <i class="fa fa-circle-info"></i>
+                        CSV, Excel or GeoJSON with columns:<br>
+                        <code>From_ID, From_Latitude, From_Longitude,<br>
+                        To_ID, To_Latitude, To_Longitude, Quantity</code><br>
+                        Optional: From_Node, From_State, To_Node,<br>
+                        To_State, Product_Type_i, Product_Type_j
+                    </div>
+
+                    <!-- Display mode hint -->
+                    <div class="upload-hint" id="upload-hint-display" style="display:none;">
+                        <i class="fa fa-circle-info"></i>
+                        <b>GeoJSON</b> — renders as-is (points, lines, polygons)<br>
+                        <b>CSV / Excel</b> — must have <code>Latitude</code> and
+                        <code>Longitude</code> columns (renders as points)
+                    </div>
+
+                    <!-- Display mode: lat/lon column overrides -->
+                    <div id="display-col-config" style="display:none;">
+                        <div class="sym-row" style="gap:6px;">
+                            <label style="width:80px;">Lat col</label>
+                            <input type="text" id="display-lat-col" value="Latitude"
+                                style="flex:1;background:var(--panel-b);border:1px solid var(--border);
+                                       color:var(--text);padding:4px 8px;border-radius:4px;font-size:12px;">
+                        </div>
+                        <div class="sym-row" style="gap:6px;margin-top:4px;">
+                            <label style="width:80px;">Lon col</label>
+                            <input type="text" id="display-lon-col" value="Longitude"
+                                style="flex:1;background:var(--panel-b);border:1px solid var(--border);
+                                       color:var(--text);padding:4px 8px;border-radius:4px;font-size:12px;">
+                        </div>
+                    </div>
+
+                    <div id="upload-drop-zone">
+                        <i class="fa fa-cloud-arrow-up"></i>
+                        <span>Drop file here or click to browse</span>
+                        <input type="file" id="dash-file-input" accept=".csv,.xlsx,.xls,.geojson,.json">
+                    </div>
+                    <div id="upload-file-name"></div>
+                    <button id="dash-upload-btn" class="tool-btn" disabled>
+                        <i class="fa fa-play"></i> Upload & Process
+                    </button>
+                    <div id="dash-upload-status"></div>
+                </div>
+            </div>
+
+            <!-- Tool 2: Symbology -->
+            <div class="tool-section">
+                <div class="tool-title" data-target="tool-symbology">
+                    <i class="fa fa-palette fa-fw"></i> Symbology
+                    <i class="fa fa-chevron-down tool-chevron"></i>
+                </div>
+                <div class="tool-body" id="tool-symbology" style="display:none;">
+                    <div class="sym-select-row">
+                        <label>Layer</label>
+                        <select id="sym-layer-select">
+                            <option value="">— select a layer —</option>
+                        </select>
+                    </div>
+                    <div id="sym-controls" style="display:none;">
+                        <div class="sym-row">
+                            <label>Line Color</label>
+                            <input type="color" id="sym-line-color" value="#e74c3c">
+                        </div>
+                        <div class="sym-row">
+                            <label>Point Color</label>
+                            <input type="color" id="sym-point-color" value="#3a86ff">
+                        </div>
+                        <div class="sym-row">
+                            <label>Line Width <span id="sym-weight-val">3</span>px</label>
+                            <input type="range" id="sym-weight" min="1" max="12" value="3">
+                        </div>
+                        <div class="sym-row">
+                            <label>Point Size <span id="sym-radius-val">6</span>px</label>
+                            <input type="range" id="sym-radius" min="2" max="16" value="6">
+                        </div>
+                        <div class="sym-row">
+                            <label>Opacity <span id="sym-opacity-val">75</span>%</label>
+                            <input type="range" id="sym-opacity" min="10" max="100" value="75">
+                        </div>
+                        <button id="sym-apply-btn" class="tool-btn">
+                            <i class="fa fa-check"></i> Apply
+                        </button>
+                        <button id="sym-reset-btn" class="tool-btn tool-btn-secondary">
+                            <i class="fa fa-rotate-left"></i> Reset
+                        </button>
+                    </div>
+                    <div id="sym-empty-msg" class="toc-empty-msg">
+                        <i class="fa fa-arrow-up"></i> Upload a layer first
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tool 3: Flow Analysis -->
+            <div class="tool-section">
+                <div class="tool-title" data-target="tool-analysis">
+                    <i class="fa fa-chart-bar fa-fw"></i> Flow Analysis
+                    <i class="fa fa-chevron-down tool-chevron"></i>
+                </div>
+                <div class="tool-body" id="tool-analysis" style="display:none;">
+                    <div id="analysis-layer-select-row" class="sym-select-row">
+                        <label>Layer</label>
+                        <select id="analysis-layer-select">
+                            <option value="">— select a layer —</option>
+                        </select>
+                    </div>
+                    <button id="run-analysis-btn" class="tool-btn">
+                        <i class="fa fa-play"></i> Run Analysis
+                    </button>
+                    <div id="analysis-results" style="display:none;">
+                        <div class="stat-grid">
+                            <div class="stat-card">
+                                <div class="stat-val" id="stat-total-flows">—</div>
+                                <div class="stat-label">Total Flows</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-val" id="stat-total-qty">—</div>
+                                <div class="stat-label">Total Quantity</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-val" id="stat-avg-qty">—</div>
+                                <div class="stat-label">Avg Quantity</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-val" id="stat-max-qty">—</div>
+                                <div class="stat-label">Max Quantity</div>
+                            </div>
+                        </div>
+
+                        <div class="analysis-section-label">Product Mix</div>
+                        <div id="product-mix-chart"></div>
+
+                        <div class="analysis-section-label">Top 5 Flows by Quantity</div>
+                        <div id="top-flows-chart"></div>
+
+                        <div class="analysis-section-label">Filter by Product Type</div>
+                        <div id="product-filter-row"></div>
+                    </div>
+                    <div id="analysis-empty-msg" class="toc-empty-msg">
+                        <i class="fa fa-arrow-up"></i> Upload a layer first
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /toolbox-body -->
+    </div><!-- /toolbox-panel -->
+
+</div><!-- /dashboard-wrapper -->
+
+{% endblock %}
+
+{% block js %}
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="{% static 'js/flow_analysis.js' %}"></script>
+{% endblock %}

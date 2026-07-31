@@ -1,0 +1,31 @@
+<a href="{{ href }}" class="text-decoration-none">
+  <div class="card shadow-sm h-100 border-0">
+    <div class="card-body p-4">
+      <div class="d-flex align-items-start justify-content-between">
+        <div>
+          <div class="text-uppercase small text-muted fw-semibold mb-2">{{ kicker }}</div>
+          <h5 class="fw-bold mb-2">{{ title }}</h5>
+          <div class="text-muted">{{ description }}</div>
+        </div>
+        <div class="ms-3">
+          <span class="badge text-bg-light border">
+            <i class="bi {{ icon }} me-1"></i> Open
+          </span>
+        </div>
+      </div>
+
+      {% if stats %}
+      <div class="row g-2 mt-3">
+        {% for s in stats %}
+          <div class="col-6">
+            <div class="p-2 rounded border bg-light">
+              <div class="small text-muted">{{ s.label }}</div>
+              <div class="fw-semibold">{{ s.value }}</div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</a>

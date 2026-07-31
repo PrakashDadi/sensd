@@ -155,7 +155,7 @@
 .main-content {
   padding: 20px;
   height: 100vh; /* Full height */
-  overflow-y: scroll; /* Enable scrolling for the main content */
+  overflow-y: hidden; /* Enable scrolling for the main content */
 }
 
 /* Style for the sidebar links */
@@ -179,5 +179,25 @@ body {
 }
 
 
+/* “Soft card” layout consistent across all optimization pages */
+.sensd-shell { max-width: 1200px; margin: 0 auto; }
+.sensd-card {
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 14px;
+  box-shadow: 0 10px 24px rgba(0,0,0,.06);
+}
+.sensd-card .card-header {
+  background: rgba(248,249,250,.9);
+  border-bottom: 1px solid rgba(0,0,0,.06);
+}
+.kpi {
+  display:flex; align-items:center; gap:.75rem;
+  padding: 1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,.08);
+  background: rgba(255,255,255,.9);
+}
+.kpi i { font-size: 1.25rem; }
+.table-wrap { overflow-x:auto; }
 
 

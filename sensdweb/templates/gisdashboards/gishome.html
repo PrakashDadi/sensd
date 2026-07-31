@@ -1,0 +1,51 @@
+{% extends 'gisdashboards/gisbase.html' %}
+{% block title %}SENSD Platform{% endblock %}
+{% block content %}
+<main class="sensd-page">
+  <section class="platform-hero">
+    <div class="sensd-eyebrow">Decision support platform</div>
+    <h1>Explore data. Optimize decisions.</h1>
+    <p>SENSD brings geospatial visualization and two optimization workflows into one connected, practical workspace.</p>
+  </section>
+
+  <section class="row g-4" aria-label="SENSD tools">
+    <div class="col-lg-6">
+      <article class="sensd-tool-card">
+        <div class="sensd-tool-icon"><i class="bi bi-map"></i></div>
+        <h2>GIS Visualization</h2>
+        <p>Explore locations, geographic layers, network flows, and spatial patterns through interactive mapping tools.</p>
+        <ul class="text-muted small ps-3 mb-4">
+          <li class="mb-1">Interactive map visualization</li>
+          <li class="mb-1">Flow and network analysis</li>
+          <li>Data mapping and grid views</li>
+        </ul>
+        <div class="sensd-actions">
+          <a href="{% url 'gis_dashboard' %}" class="btn btn-sensd">Open GIS workspace</a>
+          <a href="{% url 'flow_analysis' %}" class="btn btn-outline-sensd">Flow analysis</a>
+        </div>
+      </article>
+    </div>
+    <div class="col-lg-6">
+      <article class="sensd-tool-card">
+        <div class="sensd-tool-icon"><i class="bi bi-diagram-3"></i></div>
+        <h2>SENSD Optimization</h2>
+        <p>Run Sensor Data and Intelligent Distribution optimization workflows, then review and download their results.</p>
+        <ul class="text-muted small ps-3 mb-4">
+          <li class="mb-1">Sensor Data manual input or workbook upload</li>
+          <li class="mb-1">Intelligent Distribution workbook upload</li>
+          <li>Request history and result visualization</li>
+        </ul>
+        <div class="sensd-actions">
+          <a href="{% url 'sensd' %}" class="btn btn-sensd">Open optimization</a>
+          <a href="{% url 'user_requests' %}" class="btn btn-outline-sensd">All requests</a>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="sensd-panel p-4 mt-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+    <div><h2 class="sensd-section-title mb-1">Need guidance?</h2><p class="text-muted mb-0">Documentation and project information can be added here later without restructuring the homepage.</p></div>
+    <span class="badge text-bg-light border px-3 py-2">Documentation coming soon</span>
+  </section>
+</main>
+{% endblock %}

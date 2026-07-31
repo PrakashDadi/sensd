@@ -1,0 +1,66 @@
+{% extends "gisdashboards/gisbase.html" %}
+{% load static %}
+
+{% block title %}SENSD - GIS Dashboard{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<link rel="stylesheet" href="{% static 'mapsapp/css/style.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="search-container">
+    <div class="search-box">
+        <div class="input-group">
+            <input type="text" class="form-control" id="searchBox" placeholder="Search by City, State or ZIP">
+            <button class="btn btn-primary" onclick="filterStores()">
+                <i class="fas fa-search"></i>
+            </button>
+            <button class="btn btn-outline-secondary" onclick="resetFilters()">
+                <i class="fas fa-redo"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="map"></div>
+
+<div class="leaflet-control leaflet-control-legend">
+    <h4>Store Types</h4>
+    <div><i class="legend-walmart"></i> Walmart</div>
+    <div><i class="legend-schnucks"></i> Schnucks</div>
+    <div><i class="legend-wholefoods"></i> Whole Foods</div>
+    <div><i class="legend-savealot"></i> Save A Lot</div>
+    <div><i class="legend-fsis"></i> FSIS Establishments</div>
+
+    <h4>County Bivariate</h4>
+    <div id="bivariate-legend-row">
+        <div id="bivariate-diamond-container">
+            <div id="bivariate-grid">
+                <div class="bivariate-swatch" style="background:#DCDDDF;"></div>
+                <div class="bivariate-swatch" style="background:#B8BFF3;"></div>
+                <div class="bivariate-swatch" style="background:#83A0FC;"></div>
+                <div class="bivariate-swatch" style="background:#F39DA7;"></div>
+                <div class="bivariate-swatch" style="background:#C07C91;"></div>
+                <div class="bivariate-swatch" style="background:#8260AD;"></div>
+                <div class="bivariate-swatch" style="background:#F36161;"></div>
+                <div class="bivariate-swatch" style="background:#BE4362;"></div>
+                <div class="bivariate-swatch" style="background:#73124E;"></div>
+            </div>
+        </div>
+        <div class="bivariate-text">
+            <div class="label">
+                <span class="arrow">Low → High</span> <span>Social Vulnerability</span>
+            </div>
+            <div class="label">
+                <span class="arrow">Low → High</span> <span>Food Insecurity</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="{% static 'mapsapp/map.js' %}"></script>
+{% endblock %}

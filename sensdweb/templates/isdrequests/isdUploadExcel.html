@@ -1,22 +1,21 @@
 {% extends 'base.html' %}
 {% block content %}
+<div class="sensd-page">
 <style>
 .section-title{font-size:1.3rem;font-weight:600;text-transform:uppercase;text-align:center;margin:30px 0 15px}
 .table th,.table td{vertical-align:middle;white-space:nowrap;text-align:center}
 .modal-body h4{margin-top:20px;font-weight:bold;color:#1a6332}
 </style>
 
-<header class="theme-banner text-center py-5 mb-4 shadow-lg border-bottom border-success">
-  <div class="container">
-    <h1 class="display-4 fw-bold text-uppercase" style="letter-spacing:2px">Upload Distribution Data</h1>
-    <p class="lead subtext mt-2">Preview and submit your Excel-based input for analysis</p>
-  </div>
+<header class="sensd-page-header">
+  <div><div class="sensd-eyebrow">Intelligent Distribution Optimization</div><h1 class="sensd-page-title">Upload distribution data</h1><p class="sensd-page-copy">Preview the distribution workbook, run the model, and save the request for later access.</p></div>
+  <a class="btn btn-outline-sensd" href="{% url 'requests_list' %}">Requests and results</a>
 </header>
 
 {% include 'partials/_messages.html' %}
 
-<div class="card shadow-sm border-success mb-4">
-  <div class="card-header bg-success text-white fw-semibold">Upload Excel File</div>
+<div class="sensd-panel mb-4">
+  <div class="card-header border-bottom bg-white p-3 fw-semibold">Intelligent Distribution workbook</div>
   <div class="card-body">
     <form id="uploadexcel" method="POST" enctype="multipart/form-data" action="{% url 'preview_excel' %}">
       {% csrf_token %}
@@ -24,7 +23,7 @@
         <label for="file" class="form-label">Choose Excel File</label>
         <input class="form-control" type="file" name="file" id="file" accept=".xlsx,.xls" required>
       </div>
-      <button type="submit" class="btn btn-success px-4">Preview</button>
+      <button type="submit" class="btn btn-sensd px-4">Preview workbook</button>
     </form>
   </div>
 </div>
@@ -172,5 +171,6 @@ async function submitSolution(optUrl, redirectUrl) {
   document.getElementById('solutionForm').submit();
 }
 </script>
+</div>
 
 {% endblock %}

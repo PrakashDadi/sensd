@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
-<header class="theme-banner text-center py-4 mb-4 shadow-lg"><h2 class="mb-0">Your Requests</h2></header>
+<div class="sensd-page">
+<header class="sensd-page-header"><div><div class="sensd-eyebrow">Intelligent Distribution</div><h1 class="sensd-page-title">Requests and results</h1><p class="sensd-page-copy">Return to completed visualizations or review the status of an uploaded model.</p></div><a class="btn btn-sensd" href="{% url 'isdrequests_home' %}">Upload distribution data</a></header>
 {% include 'partials/_messages.html' %}
-<div class="card shadow-sm">
+<div class="sensd-panel sensd-table-card">
   <div class="card-body">
     <div class="table-responsive">
       <table class="table table-striped align-middle">
@@ -24,5 +25,6 @@
       </table>
     </div>
   </div>
+</div>
 </div>
 {% endblock %}
