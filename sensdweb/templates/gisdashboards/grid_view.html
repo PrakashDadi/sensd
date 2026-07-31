@@ -1,0 +1,16 @@
+{% extends "gisdashboards/gisbase.html" %}
+{% load static %}
+
+{% block title %}SENSD - Grid View{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'css/grid_view.css' %}">
+{% endblock %}
+
+{% block content %}
+<div id="grid-container"></div>
+{% endblock %}
+
+{% block js %}
+<script src="{% static 'js/grid_view.js' %}"></script>
+{% endblock %}

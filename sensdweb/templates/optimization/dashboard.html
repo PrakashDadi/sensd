@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %} | Distribution Dashboard{% endblock %}
+
+{% block content %}
+<div class="sensd-shell py-3">
+  {% include "partials/_messages.html" %}
+  {% include "partials/_page_header.html" with title="Distribution Dashboard" subtitle="Quick actions + recent activity in one place." %}
+
+  <div class="row g-3 mb-3">
+    <div class="col-12 col-md-4">
+      <div class="kpi">
+        <i class="bi bi-journals"></i>
+        <div>
+          <div class="small text-body-secondary">Requests</div>
+          <div class="h5 mb-0">{{ requests_count|default:"—" }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-4">
+      <div class="kpi">
+        <i class="bi bi-clipboard-data"></i>
+        <div>
+          <div class="small text-body-secondary">Results</div>
+          <div class="h5 mb-0">{{ results_count|default:"—" }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-4">
+      <div class="kpi">
+        <i class="bi bi-upload"></i>
+        <div>
+          <div class="small text-body-secondary">Last Upload</div>
+          <div class="h6 mb-0">{{ last_upload|default:"No uploads yet" }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 col-lg-6">
+      <div class="card sensd-card h-100">
+        <div class="card-header fw-semibold">Request History</div>
+        <div class="card-body">
+          <p class="text-body-secondary">Create, view, and manage optimization requests.</p>
+          <div class="d-grid gap-2 d-sm-flex">
+            <a class="btn btn-primary" href="{% url 'user_requests' %}">
+              <i class="bi bi-journals me-1"></i> Open Requests
+            </a>
+            <a class="btn btn-outline-primary" href="{% url 'new_request' %}">
+              <i class="bi bi-plus-circle me-1"></i> New Request
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+      <div class="card sensd-card h-100">
+        <div class="card-header fw-semibold">Result History</div>
+        <div class="card-body">
+          <p class="text-body-secondary">Browse output runs and export tables/charts.</p>
+          <div class="d-grid gap-2 d-sm-flex">
+            <a class="btn btn-primary" href="{% url 'result_history' %}">
+              <i class="bi bi-clipboard-data me-1"></i> Open Results
+            </a>
+            <a class="btn btn-outline-primary" href="{% url 'upload_excel' %}">
+              <i class="bi bi-upload me-1"></i> Upload Excel
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="card sensd-card">
+        <div class="card-header fw-semibold">Upload Excel for Optimization</div>
+        <div class="card-body">
+          <div class="row g-3 align-items-center">
+            <div class="col-12 col-md-8">
+              <p class="text-body-secondary mb-0">
+                Upload your input workbook. The system will validate sheets/columns and prepare the run.
+              </p>
+            </div>
+            <div class="col-12 col-md-4 text-md-end">
+              <a class="btn btn-primary" href="{% url 'upload_excel' %}">
+                <i class="bi bi-cloud-arrow-up-fill me-1"></i> Upload Now
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

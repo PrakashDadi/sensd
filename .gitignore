@@ -50,3 +50,24 @@ logs/
 #Nginix files
 nginx-1.26.2/
 
+# Added by code-review-graph
+.code-review-graph/
+.venv/
+.venv/*
+
+docs/
+docs/*
+
+.claude/
+.code-review-graph/
+
+.env
+.env.*
+*.pem
+*.key
+sensdweb/ssl/
+sensdweb/media/
+media/
+nginx-1.26.2/
+.mcp.json
+CLAUDE.md

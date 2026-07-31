@@ -1,0 +1,81 @@
+{% extends "gisdashboards/gisbase.html" %}
+{% load static %}
+
+{% block title %}SENSD - GIS Dashboard{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+<link rel="stylesheet" href="{% static 'css/maps.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="search-container">
+    <div class="search-box">
+        <div class="input-group">
+            <input type="text" id="searchBox" class="form-control" placeholder="Search by City, State or ZIP">
+            <button class="btn btn-primary" onclick="filterStores()"><i class="fas fa-search"></i></button>
+            <button class="btn btn-outline-secondary" onclick="resetFilters()"><i class="fas fa-redo"></i></button>
+        </div>
+    </div>
+</div>
+
+<div id="map"></div>
+
+<div class="leaflet-control leaflet-control-legend">
+    <h4>Store Types</h4>
+    <div><i class="legend-walmart"></i> Walmart</div>
+    <div><i class="legend-schnucks"></i> Schnucks</div>
+    <div><i class="legend-wholefoods"></i> Whole Foods</div>
+    <div><i class="legend-savealot"></i> Save A Lot</div>
+    <div><i class="legend-fsis"></i> FSIS Establishments</div>
+
+    <h4>Flow Lines (From → To)</h4>
+    <div><i style="background:#c0392b; display:inline-block; width:24px; height:4px; border-radius:2px; margin-right:6px; vertical-align:middle;"></i> Raw → Raw</div>
+    <div><i style="background:#e67e22; display:inline-block; width:24px; height:4px; border-radius:2px; margin-right:6px; vertical-align:middle;"></i> Raw → Semicooked</div>
+    <div><i style="background:#f1c40f; display:inline-block; width:24px; height:4px; border-radius:2px; margin-right:6px; vertical-align:middle;"></i> Semicooked → Semicooked</div>
+    <div><i style="background:#27ae60; display:inline-block; width:24px; height:4px; border-radius:2px; margin-right:6px; vertical-align:middle;"></i> Cooked → Cooked</div>
+
+    <h4>Flow Points</h4>
+    <div><i style="background:#3a86ff; display:inline-block; width:12px; height:12px; border-radius:50%; margin-right:6px; vertical-align:middle;"></i> Flow Point Node</div>
+
+    <h4>County Bivariate</h4>
+
+    <div id="bivariate-legend-row">
+
+        <!-- Diamond -->
+        <div id="bivariate-diamond-container">
+            <div id="bivariate-grid">
+                <div class="bivariate-swatch" style="background:#DCDDDF;"></div>
+                <div class="bivariate-swatch" style="background:#B8BFF3;"></div>
+                <div class="bivariate-swatch" style="background:#83A0FC;"></div>
+                <div class="bivariate-swatch" style="background:#F39DA7;"></div>
+                <div class="bivariate-swatch" style="background:#C07C91;"></div>
+                <div class="bivariate-swatch" style="background:#8260AD;"></div>
+                <div class="bivariate-swatch" style="background:#F36161;"></div>
+                <div class="bivariate-swatch" style="background:#BE4362;"></div>
+                <div class="bivariate-swatch" style="background:#73124E;"></div>
+            </div>
+        </div>
+
+        <!-- Text beside diamond -->
+        <div class="bivariate-text">
+            <div class="label">
+                <span class="arrow">Low → High</span>
+                <span>Social Vulnerability</span>
+            </div>
+            <div class="label">
+                <span class="arrow">Low → High</span>
+                <span>Food Insecurity</span>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}
+
+{% block js %}
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="{% static 'js/maps.js' %}"></script>
+{% endblock %}

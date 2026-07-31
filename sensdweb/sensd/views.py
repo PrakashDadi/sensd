@@ -8,6 +8,7 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 
 from sensdrequests.models import Request as RequestModel, ResultModel
+from isdrequests.models import Request as DistributionRequest
 
 
 from .models import UserDetails
@@ -31,13 +32,8 @@ logger = logging.getLogger(__name__)
 # Create your views here.
 
 
-@cache_control(no_cache=True, must_revalidate=True, no_store=True)
-@login_required(login_url='/authentication/login')
-
 def index(request):
-    uservalues = request.session.get('uservalues', None)
-    print("Session uservalues retrieved:", uservalues)
-    return render(request, 'authentication/login.html', {'uservalues': uservalues})
+    return redirect('gis-home')
 
 def adminindex(request):  
     uservalues = request.session.get('uservalues', None)
@@ -86,12 +82,22 @@ def home(request):
     # requestlists = RequestModel.objects.filter(created_by = uservalues['email'])
     # resultlists = ResultModel.objects.filter(created_by = uservalues['email'])
 
+    distribution_requests = DistributionRequest.objects.order_by('-created_at')
+    if request.user.is_authenticated:
+        owned_distribution_requests = distribution_requests.filter(requested_by=request.user)
+        if owned_distribution_requests.exists():
+            distribution_requests = owned_distribution_requests
+
     return render(request, 'dashboard/index.html',{
         'uservalues': uservalues,
         'requests': user_requests,
-        'results': user_results
+        'results': user_results,
+        'distribution_requests': distribution_requests[:6],
+        'sensor_request_count': len(user_requests),
+        'sensor_result_count': len(user_results),
+        'distribution_request_count': distribution_requests.count(),
+        'distribution_result_count': distribution_requests.filter(status='DONE').count(),
     })
-
 def add_user(request):
     return render(request, 'dashboard/add_users.html')
 

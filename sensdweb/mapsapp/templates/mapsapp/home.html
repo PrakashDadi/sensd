@@ -1,19 +1,9 @@
+{% extends 'mapsapp/base.html' %}
 {% load static %}
 
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <title>SENS-D Project Home</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Bootstrap CSS & Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'mapsapp/css/style.css' %}">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-</head>
-
- <style>
+{% block css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<style>
         {% comment %} body {
             background: url("{% static 'mapsapp/images/bg.jpg' %}") no-repeat center center fixed;
             background-size: cover;
@@ -69,47 +59,12 @@
             }
         }
     </style>
+{% endblock %}
 
-<body>
-    <div class="overlay"></div>
+{% block content %}
+<div class="overlay"></div>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="{% url 'gis-home' %}">SENSD</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="{% url 'gis-home' %}">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">About</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">NSF</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Our Team</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Publications</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">News</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Contact</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <div class="container main-content py-5">
+<div class="container main-content py-5">
         <h1 class="display-4 text-center sensd-heading mb-3 text-while"><strong>Welcome to SENS-D</strong></h1>
         <p class="lead text-center sensd-lead mb-5 text-white-100"><em>This dashboard helps visualize store locations and access patterns using interactive maps and real-time data.</em></p>
         <div class="row justify-content-center g-4">
@@ -183,8 +138,4 @@
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-
-</html>
+{% endblock %}

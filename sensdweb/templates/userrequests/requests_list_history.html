@@ -1,14 +1,13 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="container">
-    <header class="theme-banner text-center py-5 mb-4 shadow-lg border-bottom border-success">
-        <div class="container">
-            <h1 class="display-4 fw-bold text-uppercase" style="letter-spacing: 2px;">Request History</h1>
-            <p class="lead subtext mt-2">Review Your Optimization Input History</p>
-        </div>
+<div class="sensd-page">
+    <header class="sensd-page-header">
+        <div><div class="sensd-eyebrow">Optimization</div><h1 class="sensd-page-title">All requests</h1><p class="sensd-page-copy">Review Sensor Data and Intelligent Distribution requests while keeping each workflow separate.</p></div>
+        <a class="btn btn-outline-sensd" href="{% url 'sensd' %}">Back to dashboard</a>
     </header>
 
     <div class="card mb-5">
+        <div class="card-header bg-white"><h2 class="sensd-section-title">Sensor Data requests</h2></div>
         <div class="card-body">
             <table id="request-table" class="table table-bordered table-hover table-striped">
                 <thead class="table-success">
@@ -35,6 +34,22 @@
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <div class="card mb-5">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center"><h2 class="sensd-section-title">Intelligent Distribution requests</h2><a class="btn btn-sm btn-sensd" href="{% url 'isdrequests_home' %}">Upload distribution data</a></div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="distribution-request-table" class="table table-bordered table-hover table-striped align-middle">
+                    <thead><tr><th>Request</th><th>Status</th><th>Created</th><th>Updated</th><th>Results</th></tr></thead>
+                    <tbody>
+                    {% for req in distribution_requests %}
+                        <tr><td><span class="badge badge-distribution me-2">Intelligent Distribution</span>#{{ req.id }} — {{ req.title }}</td><td><span class="badge {% if req.status == 'DONE' %}text-bg-success{% elif req.status == 'FAILED' %}text-bg-danger{% elif req.status == 'RUNNING' %}text-bg-warning{% else %}text-bg-secondary{% endif %}">{{ req.status }}</span></td><td>{{ req.created_at }}</td><td>{{ req.updated_at }}</td><td>{% if req.status == 'DONE' %}<a class="btn btn-sm btn-outline-sensd" href="{% url 'results_view' req.id %}">View results</a>{% else %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'requests_list' %}">View status</a>{% endif %}</td></tr>
+                    {% empty %}<tr><td colspan="5" class="sensd-empty">No Intelligent Distribution requests found.</td></tr>{% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -83,6 +98,9 @@ document.addEventListener("DOMContentLoaded", function () {
         order: [[0, 'desc']],
         ordering: true
     });
+    if ($('#distribution-request-table tbody tr').length > 1 || !$('#distribution-request-table .sensd-empty').length) {
+        $('#distribution-request-table').DataTable({dom: 'frtip', pageLength: 10, order: [[0, 'desc']]});
+    }
 });
 </script>
 {% endblock %}

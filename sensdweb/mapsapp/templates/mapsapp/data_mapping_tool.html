@@ -1,0 +1,266 @@
+{% extends 'mapsapp/base.html' %}
+{% load static %}
+
+{% block title %}SENSD - Data Upload & Visualize{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<link rel="stylesheet" href="{% static 'css/data_mapping_tool.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="main-container">
+    <div id="sidebar">
+        <h3 class="sidebar-heading">Upload Data</h3>
+
+        <div id="uploadFormContainer" class="p-2">
+            {% csrf_token %}
+            <label for="fileInput" class="form-label">Select File (.csv, .xlsx, .geojson):</label>
+            <input type="file" id="fileInput" name="file" accept=".csv, .xlsx, .xls, .geojson, .json"
+                class="form-control mb-3" required>
+
+            <div id="columnSelector" class="card p-3 mb-3" style="display:none;">
+                <h5 class="card-title">Select Coordinates (CSV)</h5>
+                <div class="mb-3">
+                    <label for="latColumn" class="form-label small">Latitude Column:</label>
+                    <select id="latColumn" class="form-select"></select>
+                </div>
+                <div class="mb-3">
+                    <label for="lngColumn" class="form-label small">Longitude Column:</label>
+                    <select id="lngColumn" class="form-select"></select>
+                </div>
+
+                <!-- Category Column Selector -->
+                <div class="mb-3">
+                    <label for="categoryColumn" class="form-label small">Category Column (Optional):</label>
+                    <select id="categoryColumn" class="form-select">
+                        <option value="">-- None --</option>
+                    </select>
+                    <small class="text-muted">For color-coded markers by category</small>
+                </div>
+
+                <button onclick="processFile()" class="btn btn-success w-100">
+                    <i class="bi bi-geo-alt-fill"></i> Process & Visualize
+                </button>
+            </div>
+        </div>
+
+        <hr class="my-3">
+
+        <h3 class="sidebar-heading">Map Layers</h3>
+        <ul id="layersList" class="list-unstyled p-2">
+        </ul>
+
+        <hr class="my-3">
+
+        <h3 class="sidebar-heading">Geoprocessing Tools</h3>
+        <div class="p-2">
+            <div class="card p-3 mb-3">
+                <h6 class="card-title">Buffer Analysis</h6>
+                <div class="mb-2">
+                    <label class="form-label small">Select Layer:</label>
+                    <select id="bufferLayerSelect" class="form-select form-select-sm"></select>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small">Buffer Distance (meters):</label>
+                    <input type="number" id="bufferDistance" class="form-control form-control-sm" value="1000" min="1">
+                </div>
+                <button onclick="createBuffer()" class="btn btn-primary btn-sm w-100">
+                    <i class="bi bi-circle"></i> Create Buffer
+                </button>
+            </div>
+        </div>
+
+        <hr class="my-3">
+
+        <h3 class="sidebar-heading">Location Search</h3>
+        <div class="p-2">
+            <input type="text" id="searchInput" class="form-control" placeholder="Search Address or City...">
+        </div>
+
+        <div id="loading" class="alert alert-info text-center mt-3 mb-0" style="display: none;">
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            Processing data...
+        </div>
+        <div id="statusMessage" class="status-message"></div>
+    </div>
+
+    <div id="map"></div>
+
+    <!-- Layer Styling Modal -->
+    <div id="styleModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Layer Styling Options</h5>
+                <button class="close-btn" onclick="closeStyleModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="pointStyleOptions" style="display:none;">
+                    <h6>Point/Marker Styling</h6>
+                    <div class="mb-3">
+                        <label class="form-label">Color by Category:</label>
+                        <select id="colorByCategory" class="form-select mb-2">
+                            <option value="">-- Single Color --</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Default Color:</label>
+                        <input type="color" id="pointColor" class="form-control" value="#1E88E5">
+                    </div>
+                    <div id="categoryColors" class="mb-3" style="display:none;">
+                        <!-- Dynamic category color pickers will be added here -->
+                    </div>
+                </div>
+
+                <div id="polygonStyleOptions" style="display:none;">
+                    <h6>Polygon Symbology</h6>
+
+                    <!-- Symbology Type Selection -->
+                    <div class="mb-3">
+                        <label class="form-label">Symbology Type:</label>
+                        <select id="symbologyType" class="form-select">
+                            <option value="single">Single Color</option>
+                            <option value="graduated">Graduated Colors (Choropleth)</option>
+                            <option value="bivariate">Bivariate (2 Variables)</option>
+                        </select>
+                    </div>
+
+                    <!-- Single Color Options -->
+                    <div id="singleColorOptions" class="symbology-options">
+                        <div class="mb-3">
+                            <label class="form-label">Fill Color:</label>
+                            <input type="color" id="polygonFillColor" class="form-control" value="#1a73e8">
+                        </div>
+                    </div>
+
+                    <!-- Graduated Colors Options -->
+                    <div id="graduatedColorOptions" class="symbology-options" style="display:none;">
+                        <div class="mb-3">
+                            <label class="form-label">Value Field:</label>
+                            <select id="graduatedField" class="form-select">
+                                <option value="">-- Select Field --</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Color Scheme:</label>
+                            <select id="colorScheme" class="form-select">
+                                <option value="blues">Blues (Light to Dark)</option>
+                                <option value="reds">Reds (Light to Dark)</option>
+                                <option value="greens">Greens (Light to Dark)</option>
+                                <option value="purples">Purples (Light to Dark)</option>
+                                <option value="oranges">Oranges (Light to Dark)</option>
+                                <option value="redblue">Red-Blue Diverging</option>
+                                <option value="spectral">Spectral (Rainbow)</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Classification Method:</label>
+                            <select id="classificationMethod" class="form-select">
+                                <option value="quantile">Quantile (Equal Count)</option>
+                                <option value="equal">Equal Interval</option>
+                                <option value="natural">Natural Breaks (Jenks)</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Number of Classes:</label>
+                            <select id="numClasses" class="form-select">
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5" selected>5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Bivariate Options -->
+                    <div id="bivariateColorOptions" class="symbology-options" style="display:none;">
+                        <div class="mb-3">
+                            <label class="form-label">Use Pre-classified Data:</label>
+                            <select id="useBivariateClass" class="form-select">
+                                <option value="auto">Auto-detect</option>
+                                <option value="fields">Select Two Fields</option>
+                                <option value="class">Use BivariateClass Field</option>
+                            </select>
+                            <small class="text-muted">Auto-detect will check for BivariateClass field first</small>
+                        </div>
+
+                        <div id="bivariateFieldSelection">
+                            <div class="mb-3">
+                                <label class="form-label">X-Axis Field:</label>
+                                <select id="bivariateFieldX" class="form-select">
+                                    <option value="">-- Select Field --</option>
+                                </select>
+                                <small class="text-muted">e.g., Social Vulnerability (RPL_THEMES)</small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Y-Axis Field:</label>
+                                <select id="bivariateFieldY" class="form-select">
+                                    <option value="">-- Select Field --</option>
+                                </select>
+                                <small class="text-muted">e.g., Food Insecurity (Overall_Food_Insecurity)</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Color Scheme:</label>
+                            <select id="bivariateScheme" class="form-select">
+                                <option value="bluepink">Blue-Pink-Purple (Recommended)</option>
+                                <option value="bluered">Blue-Red Alternative</option>
+                                <option value="greenblue">Green-Blue Alternative</option>
+                                <option value="purpleorange">Purple-Orange Alternative</option>
+                            </select>
+                        </div>
+                        <div class="alert alert-info" style="font-size: 0.85rem; padding: 8px;">
+                            <strong>3×3 Bivariate Classification:</strong><br>
+                            • Light colors = Low values for both variables<br>
+                            • Dark colors = High values for both variables<br>
+                            • Works with heat waves, PulseNet, vulnerability data, etc.<br><br>
+                            <strong>Color Matrix Example:</strong>
+                            <div
+                                style="display: inline-grid; grid-template-columns: repeat(3, 20px); grid-template-rows: repeat(3, 20px); gap: 2px; margin-top: 4px; vertical-align: middle;">
+                                <div style="background: #73124E; border: 1px solid #999;" title="High-High"></div>
+                                <div style="background: #BE4362; border: 1px solid #999;" title="High-Med"></div>
+                                <div style="background: #F36161; border: 1px solid #999;" title="High-Low"></div>
+                                <div style="background: #8260AD; border: 1px solid #999;" title="Med-High"></div>
+                                <div style="background: #C07C91; border: 1px solid #999;" title="Med-Med"></div>
+                                <div style="background: #F39DA7; border: 1px solid #999;" title="Med-Low"></div>
+                                <div style="background: #83A0FC; border: 1px solid #999;" title="Low-High"></div>
+                                <div style="background: #B8BFF3; border: 1px solid #999;" title="Low-Med"></div>
+                                <div style="background: #DCDDDF; border: 1px solid #999;" title="Low-Low"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Common Options -->
+                    <div class="mb-3">
+                        <label class="form-label">Fill Opacity:</label>
+                        <input type="range" id="polygonFillOpacity" class="form-range" min="0" max="100" value="70">
+                        <span id="fillOpacityValue">70%</span>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Border Color:</label>
+                        <input type="color" id="polygonBorderColor" class="form-control" value="#ffffff">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Border Width:</label>
+                        <input type="range" id="polygonBorderWidth" class="form-range" min="0" max="5" value="1">
+                        <span id="borderWidthValue">1px</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="applyLayerStyle()" class="btn btn-primary">Apply Style</button>
+                <button onclick="closeStyleModal()" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+<script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+<script src="{% static 'js/data_mapping_tool.js' %}"></script>
+{% endblock %}

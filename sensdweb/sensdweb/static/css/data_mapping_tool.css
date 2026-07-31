@@ -1,0 +1,289 @@
+/* Custom CSS for the Data Mapping Tool page */
+
+/* --- Layout --- */
+.main-container {
+    display: flex;
+    height: calc(100vh - 56px);
+}
+
+#sidebar {
+    width: 350px;
+    padding: 10px 0;
+    background-color: #f8f9fa;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+}
+
+#map {
+    flex-grow: 1;
+    z-index: 1;
+}
+
+/* --- Sidebar Components --- */
+.sidebar-heading {
+    padding: 10px 15px;
+    background-color: #e9ecef;
+    margin-bottom: 0;
+    font-size: 1.2rem;
+}
+
+/* --- Layer List --- */
+#layersList {
+    padding: 10px 15px !important;
+}
+
+.layer-item {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.layer-item:last-child {
+    border-bottom: none;
+}
+
+.layer-name {
+    font-weight: bold;
+    width: 100%;
+    font-size: 0.95rem;
+}
+
+.layer-info {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-top: 3px;
+}
+
+.layer-actions {
+    margin-top: 5px;
+}
+
+.layer-action-btn {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    margin-left: 5px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+    cursor: pointer;
+}
+
+.layer-action-btn:hover {
+    background-color: #e9ecef;
+}
+
+.delete-btn {
+    color: #dc3545;
+    border-color: #dc3545;
+}
+
+/* --- Status Messages --- */
+.status-message {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    border-radius: 5px;
+    color: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+    z-index: 1000;
+}
+
+.status-message.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.status-message.success {
+    background-color: #28a745;
+}
+
+.status-message.error {
+    background-color: #dc3545;
+}
+
+.status-message.warning {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+/* --- Modal Styling --- */
+.modal {
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: white;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.modal-title {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #6c757d;
+}
+
+.close-btn:hover {
+    color: #000;
+}
+
+.modal-body {
+    padding: 20px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #dee2e6;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/* --- Category Color Picker --- */
+.category-color-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    background-color: #f8f9fa;
+}
+
+.category-color-item label {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.category-color-item input[type="color"] {
+    width: 50px;
+    height: 30px;
+    border: none;
+    cursor: pointer;
+}
+
+/* --- Geoprocessing Tools Card --- */
+.card {
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background-color: white;
+}
+
+.card-title {
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+/* --- Popup Styling --- */
+.leaflet-popup-content {
+    margin: 10px;
+    line-height: 1.6;
+}
+
+.leaflet-popup-content strong {
+    color: #1a73e8;
+}
+
+/* --- Buffer Layer Styling --- */
+.buffer-layer {
+    fill-opacity: 0.2;
+    stroke-width: 2;
+    stroke-dasharray: 5, 5;
+}
+
+/* --- Symbology Options --- */
+.symbology-options {
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+/* --- Legend Styling --- */
+.legend {
+    background: white;
+    padding: 10px;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.legend-title {
+    font-weight: bold;
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.legend-color {
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+    border: 1px solid #999;
+}
+
+.bivariate-legend {
+    display: grid;
+    grid-template-columns: repeat(3, 30px);
+    grid-template-rows: repeat(3, 30px);
+    gap: 2px;
+    margin-top: 8px;
+}
+
+.bivariate-cell {
+    border: 1px solid #999;
+}
+
+.bivariate-labels {
+    margin-top: 8px;
+    font-size: 11px;
+}
+
+.bivariate-axis-label {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 4px;
+}

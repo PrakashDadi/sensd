@@ -16,6 +16,7 @@ from django.utils import timezone
 from django.http import HttpResponse , JsonResponse
 
 from .models import Request as RequestModel, AllNodes, InitialNodes, FinishedGoods, Arc, PathogenTestingMethod , PathogenTestingMethodFNodes, DynamicParameters, ResultModel , NodeResult, VariableResult
+from isdrequests.models import Request as DistributionRequest
 from .forms import AllNodeForm, InitialNodeForm, FinishedGoodsForm, ArcForm, PathogenTestingMethodForm , PathogenTestingMethodFNodesForm, DynamicParametersForm
 
 from django.core.files.storage import FileSystemStorage
@@ -620,10 +621,17 @@ def user_requests(request):
         except Exception as e:
             print("Decryption failed for a result:", e)
 
+    distribution_requests = DistributionRequest.objects.order_by('-created_at')
+    if request.user.is_authenticated:
+        owned_distribution_requests = distribution_requests.filter(requested_by=request.user)
+        if owned_distribution_requests.exists():
+            distribution_requests = owned_distribution_requests
+
     return render(request, 'userrequests/requests_list_history.html', {
         'uservalues': uservalues,
         'requests': user_requests,
-        'results': user_results
+        'results': user_results,
+        'distribution_requests': distribution_requests,
     })
 
 def uploadexcel(request):

@@ -1,0 +1,13 @@
+{# templates/partials/_page_header.html #}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
+  <div>
+    <h1 class="h4 mb-1">{{ title }}</h1>
+    {% if subtitle %}
+      <div class="text-body-secondary">{{ subtitle }}</div>
+    {% endif %}
+  </div>
+
+  <div class="d-flex flex-wrap gap-2">
+    {% block header_actions %}{% endblock %}
+  </div>
+</div>
