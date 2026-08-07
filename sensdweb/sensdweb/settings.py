@@ -17,26 +17,41 @@ from pathlib import Path
 from dotenv import load_dotenv
 from django.contrib import messages
 
-try:
-    import osgeo
-    _osg = Path(osgeo.__file__).parent  # ...\site-packages\osgeo
-    # make sure Windows can resolve dependent DLLs from this folder
-    if hasattr(os, "add_dll_directory"):
-        os.add_dll_directory(str(_osg))
-    # set data dirs
-    os.environ.setdefault("GDAL_DATA", str(_osg / "data"))
-    os.environ.setdefault("PROJ_LIB",  str(_osg / "proj"))
-    os.environ["PROJ_LIB"] = r"C:\Program Files\PostgreSQL\16\share\contrib\postgis-3.4\proj"
-    # pick the installed GDAL dll (3.9/3.10/3.11 etc.)
-    _dll = next(iter(sorted(_osg.glob("gdal*.dll"), reverse=True)), None)
-    if _dll:
-        # preload and tell Django exactly which one to use
-        ctypes.CDLL(str(_dll))
-        GDAL_LIBRARY_PATH = str(_dll)
-except Exception as _e:
-    print("GDAL bootstrap warning:", _e)
+if os.name == "nt":  # Windows
+    try:
+        import osgeo
+        _osg = Path(osgeo.__file__).parent  # ...\site-packages\osgeo
+        # make sure Windows can resolve dependent DLLs from this folder
+        if hasattr(os, "add_dll_directory"):
+            os.add_dll_directory(str(_osg))
+        # set data dirs
+        os.environ.setdefault("GDAL_DATA", str(_osg / "data"))
+        os.environ.setdefault("PROJ_LIB", str(_osg / "proj"))
+        # pick the installed GDAL dll (3.9/3.10/3.11 etc.)
+        _dll = next(iter(sorted(_osg.glob("gdal*.dll"), reverse=True)), None)
+        if _dll:
+            # preload and tell Django exactly which one to use
+            ctypes.CDLL(str(_dll))
+            GDAL_LIBRARY_PATH = str(_dll)
+    except Exception as _e:
+        print("GDAL bootstrap warning:", _e)
 # --- end ---
 
+def env_bool(name, default=False):
+    value = os.getenv(name)
+
+    if value is None:
+        return default
+
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def env_list(name, default=""):
+    return [
+        item.strip()
+        for item in os.getenv(name, default).split(",")
+        if item.strip()
+    ]
 
 load_dotenv()
 
@@ -53,9 +68,10 @@ print("base dir", BASE_DIR)
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-)+-3_5&1x23bkhx#x86y-fqg^ay-iyskbs27n&a#=^9ht=huaz'
 
-SALT_KEY = SECRET_KEY
+# SECRET_KEY = 'django-insecure-)+-3_5&1x23bkhx#x86y-fqg^ay-iyskbs27n&a#=^9ht=huaz'
+
+# SALT_KEY = SECRET_KEY
 
 # CRYPTOGRAPHY_KEY  = SECRET_KEY
 
@@ -63,9 +79,14 @@ SALT_KEY = SECRET_KEY
 # CRYPTOGRAPHY_SALT = os.getenv('CRYPTOGRAPHY_SALT').encode() if os.getenv('CRYPTOGRAPHY_SALT') else None
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# DEBUG = True
 
-ALLOWED_HOSTS = []
+# ALLOWED_HOSTS = []
+
+SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
+SALT_KEY = os.getenv("SALT_KEY", SECRET_KEY)
+
+DEBUG = env_bool("DJANGO_DEBUG", False)
 
 
 # Application definition
@@ -128,7 +149,11 @@ DATABASES = {
         'USER': os.getenv('DB_USER'),                   # need to provide username
         'PASSWORD': os.getenv('DB_USER_PASSWORD'),      # need to provide password
         'HOST': os.getenv('DB_HOST'),
-        'PORT': os.getenv('DB_PORT')
+        'PORT': os.getenv('DB_PORT', '5432'),
+        "CONN_MAX_AGE": 60,
+        "OPTIONS": {
+            "sslmode": os.getenv("DB_SSLMODE", "require"),
+        },
     }
 }
 
@@ -193,12 +218,29 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 #SSl settings
-# ALLOWED_HOSTS = ['134.124.243.144']
-ALLOWED_HOSTS = ['sensdweb.com', '127.0.0.1', 'localhost', '134.124.26.19']
-# Redirect all traffic to HTTPS
-SECURE_SSL_REDIRECT = True  # Forces HTTPS
-SESSION_COOKIE_SECURE = True  # Ensures cookies are sent over HTTPS
-CSRF_COOKIE_SECURE = True     # Ensures CSRF cookies are sent over HTTPS
+# # ALLOWED_HOSTS = ['134.124.243.144']
+# ALLOWED_HOSTS = ['sensdweb.com', '127.0.0.1', 'localhost', '134.124.26.19']
+# # Redirect all traffic to HTTPS
+# SECURE_SSL_REDIRECT = True  # Forces HTTPS
+# SESSION_COOKIE_SECURE = True  # Ensures cookies are sent over HTTPS
+# CSRF_COOKIE_SECURE = True     # Ensures CSRF cookies are sent over HTTPS
+
+ALLOWED_HOSTS = env_list(
+    "DJANGO_ALLOWED_HOSTS",
+    "127.0.0.1,localhost",
+)
+
+CSRF_TRUSTED_ORIGINS = env_list(
+    "DJANGO_CSRF_TRUSTED_ORIGINS"
+)
+
+SECURE_SSL_REDIRECT = env_bool(
+    "DJANGO_SECURE_SSL_REDIRECT",
+    False,
+)
+
+SESSION_COOKIE_SECURE = SECURE_SSL_REDIRECT
+CSRF_COOKIE_SECURE = SECURE_SSL_REDIRECT
 
 # Trust the Nginx reverse proxy for HTTPS
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -207,8 +249,8 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 #GDAL Settings
 
-GDAL_LIBRARY_PATH = r"C:\Users\dadir\AppData\Roaming\Python\Python312\site-packages\osgeo\gdal311.dll"
-
+if os.name == "nt" and os.getenv("GDAL_LIBRARY_PATH"):
+    GDAL_LIBRARY_PATH = os.environ["GDAL_LIBRARY_PATH"]
 
 # # Optional: stronger default signer for your own signed values
 # SIGNING_BACKEND = "django_cryptography.core.signing.TimestampSigner"
@@ -218,4 +260,4 @@ GDAL_LIBRARY_PATH = r"C:\Users\dadir\AppData\Roaming\Python\Python312\site-packa
 # AUTHENTICATION_BACKENDS = [
 #     # 'authentication.backends.CaseInsensitiveModelBackend',  # our backend first
 #     'django.contrib.auth.backends.ModelBackend',
-# ] 
+# ]
