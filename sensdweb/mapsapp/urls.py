@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views
+from . import spatial_views, views
 
 urlpatterns = [
     path("gis-home/", views.home, name="gis-home"),
@@ -9,6 +9,61 @@ urlpatterns = [
     path("grid/", views.grid_view, name="grid_view"),
     path("data-mapping/", views.data_mapping_tool_view, name="data_mapping_tool"),
     path("flow_analysis/", views.flow_analysis_view, name="flow_analysis"),
+    path(
+        "spatial-analysis/",
+        spatial_views.flow_analysis_view,
+        name="spatial_analysis",
+    ),
+    path(
+        "api/spatial/inspect-columns/",
+        spatial_views.inspect_columns_api,
+        name="spatial_inspect_columns_api",
+    ),
+    path(
+        "api/spatial/upload-flow/",
+        spatial_views.upload_flow_api,
+        name="spatial_upload_flow_api",
+    ),
+    path(
+        "api/spatial/upload-reference/",
+        spatial_views.upload_reference_api,
+        name="spatial_upload_reference_api",
+    ),
+    path(
+        "api/spatial/salmonella-risk-map/",
+        spatial_views.salmonella_risk_map_api,
+        name="spatial_salmonella_risk_map_api",
+    ),
+    path(
+        "api/spatial/bivariate-map/",
+        spatial_views.bivariate_map_api,
+        name="spatial_bivariate_map_api",
+    ),
+    path(
+        "api/spatial/local-moran/",
+        spatial_views.local_moran_api,
+        name="spatial_local_moran_api",
+    ),
+    path(
+        "api/spatial/spatial-association/",
+        spatial_views.spatial_association_api,
+        name="spatial_association_api",
+    ),
+    path(
+        "api/spatial/spatial-regression/",
+        spatial_views.spatial_regression_api,
+        name="spatial_regression_api",
+    ),
+    path(
+        "api/spatial/county-salmonella-risk/",
+        spatial_views.county_salmonella_risk_api,
+        name="spatial_county_salmonella_risk_api",
+    ),
+    path(
+        "api/spatial/geography-values/",
+        spatial_views.analysis_geography_values_api,
+        name="spatial_analysis_geography_values_api",
+    ),
     path("api/walmart/", views.walmart_geojson, name="walmart_geojson"),
     path("api/schnucks/", views.schnucks_geojson, name="schnucks_geojson"),
     path("api/save_a_lot/", views.save_a_lot_geojson, name="save_a_lot_geojson"),

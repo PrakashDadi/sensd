@@ -65,9 +65,12 @@ docs/*
 .env.*
 *.pem
 *.key
+*.lic
 sensdweb/ssl/
 sensdweb/media/
 media/
 nginx-1.26.2/
 .mcp.json
 CLAUDE.md
+20230912_code_changes_mapsapp.zip
+Poultry-Dashboard-main.zip

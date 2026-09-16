@@ -13,15 +13,22 @@ const map = L.map('dashboard-map', {
     maxBoundsViscosity: 1.0
 }).setView([40, -95], 5);
 
+const tileConfig = window.SENSD_MAP_TILE_CONFIG || {};
 const basemaps = {
-    osm:       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }),
     satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri' }),
     light:     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© CartoDB' }),
     dark:      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '© CartoDB' }),
 };
 
-let currentBasemap = 'osm';
-basemaps.osm.addTo(map);
+if (tileConfig.url) {
+    basemaps.osm = L.tileLayer(tileConfig.url, {
+        attribution: tileConfig.attribution || '',
+        maxZoom: Number(tileConfig.maxZoom) || 19
+    });
+}
+
+let currentBasemap = tileConfig.url ? 'osm' : 'satellite';
+basemaps[currentBasemap].addTo(map);
 
 // ── FLOW COMBO COLORS (matches main maps.js) ──────────────
 const flowComboColors = {

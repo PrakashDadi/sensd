@@ -1,0 +1,2644 @@
+/* ============================================================
+   SENSD FLOW ANALYSIS DASHBOARD
+   geosens/static/css/flow_analysis.css
+   ============================================================ */
+
+
+/* ============================================================
+   ROOT VARIABLES
+   ============================================================ */
+
+:root {
+    --sensd-bg: #0f1825;
+    --sensd-panel: #101c2b;
+    --sensd-panel-alt: #152338;
+    --sensd-panel-hover: #192a40;
+
+    --sensd-border: #2c3f58;
+    --sensd-border-soft: #22354c;
+
+    --sensd-text: #f1f5f9;
+    --sensd-text-secondary: #c6d2df;
+    --sensd-text-muted: #8ea5bd;
+
+    --sensd-accent: #4f8ef7;
+    --sensd-accent-hover: #3d7fe8;
+
+    --sensd-success: #27c983;
+    --sensd-danger: #ff6464;
+    --sensd-warning: #f5c451;
+
+    --sensd-radius: 6px;
+
+    /*
+     * These values are changed dynamically by JavaScript
+     * when users drag the sidebar resize handles.
+     */
+    --sensd-left-width: 200px;
+    --sensd-right-width: 275px;
+
+    --sensd-header-height: 48px;
+}
+
+
+/* ============================================================
+   GLOBAL
+   ============================================================ */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+}
+
+
+body {
+    background: var(--sensd-bg);
+    color: var(--sensd-text);
+
+    overflow: hidden;
+}
+
+
+button,
+input,
+select,
+textarea {
+    font-family: inherit;
+}
+
+
+/* ============================================================
+   DASHBOARD WRAPPER
+   ============================================================ */
+
+#dashboard-wrapper {
+    display: flex;
+
+    position: relative;
+
+    width: 100%;
+
+    height: calc(
+        100vh -
+        var(--sensd-header-height)
+    );
+
+    overflow: hidden;
+
+    background: var(--sensd-bg);
+}
+
+
+/* ============================================================
+   CENTER MAP
+   ============================================================ */
+
+#dashboard-map-wrapper {
+    position: relative;
+
+    flex: 1 1 auto;
+
+    min-width: 0;
+    min-height: 0;
+
+    overflow: hidden;
+
+    z-index: 1;
+}
+
+
+#dashboard-map {
+    width: 100%;
+    height: 100%;
+
+    min-width: 0;
+    min-height: 0;
+
+    background: #dbe2e8;
+}
+
+
+/* ============================================================
+   LEFT MAP LAYERS PANEL
+   ============================================================ */
+
+#toc-panel {
+    position: relative;
+
+    flex: 0 0 var(--sensd-left-width);
+
+    width: var(--sensd-left-width);
+    min-width: var(--sensd-left-width);
+    max-width: var(--sensd-left-width);
+
+    height: 100%;
+
+    display: flex;
+
+    flex-direction: column;
+
+    background: var(--sensd-panel);
+
+    border-right:
+        1px solid
+        var(--sensd-border);
+
+    overflow: visible;
+
+    z-index: 300;
+
+    transition:
+        width 0.2s ease,
+        min-width 0.2s ease,
+        max-width 0.2s ease,
+        flex-basis 0.2s ease;
+}
+
+
+#toc-panel.collapsed {
+    flex-basis: 0 !important;
+
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+
+    border-right: 0;
+
+    overflow: hidden;
+}
+
+
+#toc-panel.collapsed > * {
+    visibility: hidden;
+}
+
+
+/* ============================================================
+   LEFT PANEL HEADER
+   ============================================================ */
+
+#toc-header {
+    height: 40px;
+    min-height: 40px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 8px;
+
+    padding: 0 10px;
+
+    border-bottom:
+        1px solid
+        var(--sensd-border);
+
+    background: var(--sensd-panel);
+
+    color: var(--sensd-text);
+
+    font-size: 14px;
+    font-weight: 700;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+}
+
+
+/* ============================================================
+   PANEL COLLAPSE BUTTONS
+   ============================================================ */
+
+#toc-collapse-btn,
+#toolbox-collapse-btn {
+    border: 0;
+    outline: 0;
+
+    background: transparent;
+
+    color: var(--sensd-text-secondary);
+
+    width: 28px;
+    height: 28px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+
+    border-radius: 4px;
+
+    flex: 0 0 auto;
+
+    transition:
+        background 0.15s ease,
+        color 0.15s ease;
+}
+
+
+#toc-collapse-btn:hover,
+#toolbox-collapse-btn:hover {
+    background: var(--sensd-panel-hover);
+
+    color: #ffffff;
+}
+
+
+/* ============================================================
+   SIDEBAR RESTORE BUTTONS
+   ============================================================ */
+
+#toc-restore-btn,
+#toolbox-restore-btn {
+    position: absolute;
+
+    top: 8px;
+
+    width: 30px;
+    height: 30px;
+
+    align-items: center;
+    justify-content: center;
+
+    border:
+        1px solid
+        var(--sensd-border);
+
+    border-radius: 5px;
+
+    background: var(--sensd-panel);
+
+    color: var(--sensd-text);
+
+    cursor: pointer;
+
+    z-index: 1800;
+
+    box-shadow:
+        0 2px 8px
+        rgba(0, 0, 0, 0.25);
+
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease;
+}
+
+
+#toc-restore-btn {
+    left: 6px;
+}
+
+
+#toolbox-restore-btn {
+    right: 6px;
+}
+
+
+#toc-restore-btn:hover,
+#toolbox-restore-btn:hover {
+    background: var(--sensd-panel-hover);
+
+    border-color: var(--sensd-accent);
+}
+
+
+/* ============================================================
+   LEFT PANEL BODY
+   ============================================================ */
+
+#toc-body {
+    flex: 1;
+
+    min-height: 0;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    scrollbar-width: thin;
+
+    scrollbar-color:
+        var(--sensd-border)
+        transparent;
+}
+
+
+#toc-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+
+#toc-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+
+#toc-body::-webkit-scrollbar-thumb {
+    background: var(--sensd-border);
+
+    border-radius: 10px;
+}
+
+
+/* ============================================================
+   LEFT PANEL SECTIONS
+   ============================================================ */
+
+.toc-section {
+    border-bottom:
+        1px solid
+        var(--sensd-border-soft);
+}
+
+
+.toc-section-title {
+    width: 100%;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    min-height: 42px;
+
+    padding: 9px 10px;
+
+    color: var(--sensd-text);
+
+    font-size: 13px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    user-select: none;
+
+    transition:
+        background 0.15s ease;
+}
+
+
+.toc-section-title:hover {
+    background: var(--sensd-panel-hover);
+}
+
+
+.toc-section-title
+.toc-chevron {
+    margin-left: auto;
+
+    font-size: 10px;
+
+    color: var(--sensd-text-muted);
+}
+
+
+.toc-section-body {
+    padding: 5px 8px 10px;
+}
+
+
+/* ============================================================
+   BASEMAP CONTROL
+   ============================================================ */
+
+.toc-select-row {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 5px;
+
+    margin: 3px 0 5px;
+}
+
+
+.toc-select-row label {
+    color: var(--sensd-text-muted);
+
+    font-size: 11px;
+    font-weight: 600;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.04em;
+}
+
+
+.toc-select-row select {
+    width: 100%;
+
+    height: 32px;
+
+    padding: 4px 8px;
+
+    border:
+        1px solid
+        var(--sensd-border);
+
+    border-radius: var(--sensd-radius);
+
+    outline: 0;
+
+    background: var(--sensd-panel-alt);
+
+    color: var(--sensd-text);
+
+    font-size: 12px;
+}
+
+
+.toc-select-row select:hover,
+.toc-select-row select:focus {
+    border-color: var(--sensd-accent);
+}
+
+
+/* ============================================================
+   UNIFIED LAYER ROW
+   ============================================================ */
+
+.toc-row {
+    display: flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    min-height: 34px;
+
+    padding: 5px 3px;
+
+    border-radius: 5px;
+
+    color: var(--sensd-text);
+
+    font-size: 12px;
+
+    transition:
+        background 0.15s ease;
+}
+
+
+.toc-row:hover {
+    background: var(--sensd-panel-hover);
+}
+
+
+.toc-layer-name {
+    flex: 1 1 auto;
+
+    min-width: 0;
+
+    color: var(--sensd-text);
+
+    font-size: 12px;
+
+    line-height: 1.35;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+}
+
+
+.toc-layer-actions {
+    display: flex;
+
+    align-items: center;
+
+    flex: 0 0 auto;
+
+    margin-left: auto;
+}
+
+
+.toc-action-btn {
+    width: 25px;
+    height: 25px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border: 0;
+
+    border-radius: 4px;
+
+    outline: 0;
+
+    background: transparent;
+
+    color: var(--sensd-text-muted);
+
+    font-size: 11px;
+
+    cursor: pointer;
+}
+
+
+.toc-action-btn:hover {
+    background:
+        rgba(255, 100, 100, 0.1);
+
+    color: var(--sensd-danger);
+}
+
+
+/* ============================================================
+   LAYER COLOR DOT
+   ============================================================ */
+
+.layer-dot {
+    width: 9px;
+    height: 9px;
+
+    min-width: 9px;
+
+    border-radius: 50%;
+
+    flex: 0 0 auto;
+}
+
+
+/* ============================================================
+   LAYER TOGGLE
+   ============================================================ */
+
+.toc-toggle-label {
+    position: relative;
+
+    display: inline-block;
+
+    width: 25px;
+    height: 14px;
+
+    min-width: 25px;
+
+    flex: 0 0 auto;
+}
+
+
+.toc-toggle-label input {
+    position: absolute;
+
+    opacity: 0;
+
+    width: 0;
+    height: 0;
+}
+
+
+.toc-toggle-slider {
+    position: absolute;
+
+    inset: 0;
+
+    border-radius: 14px;
+
+    background: #46576b;
+
+    cursor: pointer;
+
+    transition:
+        background 0.18s ease;
+}
+
+
+.toc-toggle-slider::before {
+    content: "";
+
+    position: absolute;
+
+    width: 10px;
+    height: 10px;
+
+    left: 2px;
+    top: 2px;
+
+    border-radius: 50%;
+
+    background: white;
+
+    transition:
+        transform 0.18s ease;
+}
+
+
+.toc-toggle-label
+input:checked
++
+.toc-toggle-slider {
+    background: var(--sensd-accent);
+}
+
+
+.toc-toggle-label
+input:checked
++
+.toc-toggle-slider::before {
+    transform:
+        translateX(11px);
+}
+
+
+/* ============================================================
+   FLOW TREE
+   ============================================================ */
+
+.toc-tree-parent {
+    border-bottom:
+        1px solid
+        rgba(44, 63, 88, 0.5);
+
+    padding-bottom: 3px;
+}
+
+
+.toc-tree-header {
+    display: flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    min-height: 34px;
+
+    padding: 4px 3px;
+
+    border-radius: 5px;
+}
+
+
+.toc-tree-header:hover {
+    background: var(--sensd-panel-hover);
+}
+
+
+.toc-tree-toggle-btn {
+    width: 18px;
+    min-width: 18px;
+
+    height: 22px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border: 0;
+
+    outline: 0;
+
+    background: transparent;
+
+    color: var(--sensd-text-muted);
+
+    font-size: 9px;
+
+    cursor: pointer;
+
+    padding: 0;
+}
+
+
+.toc-tree-toggle-btn:hover {
+    color: var(--sensd-text);
+}
+
+
+.toc-tree-children {
+    margin-left: 10px;
+
+    padding-left: 9px;
+
+    border-left:
+        1px solid
+        var(--sensd-border-soft);
+}
+
+
+.toc-sub-row {
+    min-height: 31px;
+
+    padding: 3px 3px;
+}
+
+
+.toc-sub-row
+.toc-layer-name {
+    color: var(--sensd-text-secondary);
+
+    font-size: 12px;
+}
+
+
+.toc-sub-row
+.layer-dot {
+    width: 8px;
+    min-width: 8px;
+    height: 8px;
+}
+
+
+/* ============================================================
+   EMPTY LAYER MESSAGE
+   ============================================================ */
+
+.toc-empty-msg {
+    padding: 14px 8px;
+
+    color: var(--sensd-text-muted);
+
+    font-size: 12px;
+
+    line-height: 1.5;
+
+    text-align: center;
+
+    border:
+        1px dashed
+        var(--sensd-border);
+
+    border-radius: 5px;
+}
+
+
+/* ============================================================
+   RIGHT TOOLBOX PANEL
+   ============================================================ */
+
+#toolbox-panel {
+    position: relative;
+
+    flex: 0 0 var(--sensd-right-width);
+
+    width: var(--sensd-right-width);
+    min-width: var(--sensd-right-width);
+    max-width: var(--sensd-right-width);
+
+    height: 100%;
+
+    display: flex;
+
+    flex-direction: column;
+
+    background: var(--sensd-panel);
+
+    border-left:
+        1px solid
+        var(--sensd-border);
+
+    overflow: visible;
+
+    z-index: 300;
+
+    transition:
+        width 0.2s ease,
+        min-width 0.2s ease,
+        max-width 0.2s ease,
+        flex-basis 0.2s ease;
+}
+
+
+#toolbox-panel.collapsed {
+    flex-basis: 0 !important;
+
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+
+    border-left: 0;
+
+    overflow: hidden;
+}
+
+
+#toolbox-panel.collapsed > * {
+    visibility: hidden;
+}
+
+
+/* ============================================================
+   TOOLBOX HEADER
+   ============================================================ */
+
+#toolbox-header {
+    height: 40px;
+    min-height: 40px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 8px;
+
+    padding: 0 10px;
+
+    border-bottom:
+        1px solid
+        var(--sensd-border);
+
+    background: var(--sensd-panel);
+
+    color: var(--sensd-text);
+
+    font-size: 14px;
+    font-weight: 700;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+}
+
+
+/* ============================================================
+   TOOLBOX BODY
+   ============================================================ */
+
+#toolbox-body {
+    flex: 1;
+
+    min-height: 0;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    scrollbar-width: thin;
+
+    scrollbar-color:
+        var(--sensd-border)
+        transparent;
+}
+
+
+#toolbox-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+
+#toolbox-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+
+#toolbox-body::-webkit-scrollbar-thumb {
+    background: var(--sensd-border);
+
+    border-radius: 10px;
+}
+
+
+/* ============================================================
+   RESIZABLE SIDEBAR HANDLES
+   ============================================================ */
+
+#toc-resize-handle,
+#toolbox-resize-handle {
+    position: absolute;
+
+    top: 0;
+    bottom: 0;
+
+    width: 10px;
+
+    z-index: 1700;
+
+    cursor: ew-resize;
+
+    background: transparent;
+
+    visibility: visible !important;
+
+    pointer-events: auto;
+
+    transition:
+        background 0.15s ease;
+}
+
+
+/*
+ * Half of each resize hit area sits outside
+ * its corresponding panel, making it easier
+ * to grab without covering panel content.
+ */
+
+#toc-resize-handle {
+    right: -5px;
+}
+
+
+#toolbox-resize-handle {
+    left: -5px;
+}
+
+
+#toc-resize-handle:hover,
+#toolbox-resize-handle:hover {
+    background:
+        rgba(79, 142, 247, 0.35);
+}
+
+
+#toc-resize-handle.dragging,
+#toolbox-resize-handle.dragging {
+    background:
+        rgba(79, 142, 247, 0.72);
+}
+
+
+#toc-resize-handle.hidden,
+#toolbox-resize-handle.hidden {
+    display: none;
+}
+
+
+body.sensd-resizing {
+    cursor: ew-resize !important;
+
+    user-select: none !important;
+}
+
+
+body.sensd-resizing * {
+    cursor: ew-resize !important;
+
+    user-select: none !important;
+}
+
+
+/* ============================================================
+   TOOLBOX TREE
+   ============================================================ */
+
+#toolbox-list-view {
+    padding: 4px 0 8px;
+}
+
+
+.toolbox-tree-parent {
+    width: 100%;
+
+    display: flex;
+
+    align-items: center;
+
+    min-height: 40px;
+
+    padding: 8px 10px;
+
+    border: 0;
+
+    border-bottom:
+        1px solid
+        rgba(44, 63, 88, 0.35);
+
+    outline: 0;
+
+    background: transparent;
+
+    color: var(--sensd-text);
+
+    font-size: 13px;
+    font-weight: 700;
+
+    text-align: left;
+
+    cursor: pointer;
+
+    transition:
+        background 0.15s ease;
+}
+
+
+.toolbox-tree-parent:hover {
+    background: var(--sensd-panel-hover);
+}
+
+
+.toolbox-tree-parent-nested {
+    min-height: 35px;
+
+    padding-left: 20px;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    color: var(--sensd-text-secondary);
+}
+
+
+.toolbox-tree-chevron {
+    width: 15px;
+
+    margin-right: 4px;
+
+    flex: 0 0 auto;
+
+    color: var(--sensd-text-muted);
+
+    font-size: 9px;
+
+    text-align: center;
+}
+
+
+.toolbox-tree-children {
+    display: block;
+}
+
+
+.toolbox-tree-children
+.toolbox-tree-children {
+    margin-left: 14px;
+
+    border-left:
+        1px solid
+        var(--sensd-border-soft);
+}
+
+
+/* ============================================================
+   TOOLBOX LEAF
+   ============================================================ */
+
+.toolbox-tree-leaf {
+    position: relative;
+
+    width: 100%;
+
+    min-height: 34px;
+
+    display: flex;
+
+    align-items: center;
+
+    padding:
+        7px
+        10px
+        7px
+        27px;
+
+    border: 0;
+
+    outline: 0;
+
+    background: transparent;
+
+    color:
+        var(--sensd-text-secondary);
+
+    font-size: 12px;
+
+    font-weight: 400;
+
+    text-align: left;
+
+    line-height: 1.35;
+
+    cursor: pointer;
+
+    overflow: hidden;
+
+    transition:
+        background 0.15s ease,
+        color 0.15s ease;
+}
+
+
+.toolbox-tree-leaf::before {
+    content: "";
+
+    position: absolute;
+
+    left: 14px;
+
+    width: 8px;
+    height: 1px;
+
+    background:
+        var(--sensd-border);
+}
+
+
+.toolbox-tree-leaf > span {
+    min-width: 0;
+
+    overflow-wrap: anywhere;
+}
+
+
+.toolbox-tree-leaf:hover {
+    background:
+        var(--sensd-panel-hover);
+
+    color: #ffffff;
+}
+
+
+.toolbox-tree-leaf.active {
+    background:
+        rgba(79, 142, 247, 0.12);
+
+    color:
+        var(--sensd-accent);
+
+    font-weight: 600;
+}
+
+
+.toolbox-tree-leaf-nested {
+    padding-left: 38px;
+}
+
+
+.toolbox-tree-leaf-nested::before {
+    left: 25px;
+}
+
+
+/* Remove tool icons */
+
+.toolbox-tree-leaf
+> i:not(.toolbox-tree-chevron),
+
+.toolbox-tree-parent
+> i:not(.toolbox-tree-chevron) {
+    display: none !important;
+}
+
+
+/* ============================================================
+   TOOL DETAIL HEADER
+   ============================================================ */
+
+#toolbox-detail-header {
+    position: sticky;
+
+    top: 0;
+
+    z-index: 20;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    min-height: 42px;
+
+    padding: 6px 9px;
+
+    background: var(--sensd-panel);
+
+    border-bottom:
+        1px solid
+        var(--sensd-border);
+}
+
+
+#toolbox-back-btn {
+    width: 29px;
+    height: 29px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex: 0 0 auto;
+
+    border:
+        1px solid
+        var(--sensd-border);
+
+    border-radius: 4px;
+
+    background:
+        var(--sensd-panel-alt);
+
+    color:
+        var(--sensd-text-secondary);
+
+    cursor: pointer;
+}
+
+
+#toolbox-back-btn:hover {
+    border-color: var(--sensd-accent);
+
+    color: #ffffff;
+}
+
+
+#toolbox-detail-title {
+    min-width: 0;
+
+    overflow: hidden;
+
+    white-space: nowrap;
+
+    text-overflow: ellipsis;
+
+    color: var(--sensd-text);
+
+    font-size: 13px;
+    font-weight: 700;
+}
+
+
+/* ============================================================
+   TOOL PAGES
+   ============================================================ */
+
+.tool-page {
+    padding:
+        10px
+        10px
+        18px;
+
+    color:
+        var(--sensd-text);
+}
+
+
+.analysis-section-label {
+    margin: 7px 0 8px;
+
+    padding-bottom: 6px;
+
+    border-bottom:
+        1px solid
+        var(--sensd-border);
+
+    color: var(--sensd-text);
+
+    font-size: 12px;
+    font-weight: 700;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.025em;
+}
+
+
+.tool-hint-text,
+.upload-hint {
+    margin: 4px 0 9px;
+
+    color:
+        var(--sensd-text-muted);
+
+    font-size: 11px;
+
+    line-height: 1.45;
+}
+
+
+/* ============================================================
+   STANDARD FORM ROWS
+   ============================================================ */
+
+.sym-select-row {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 5px;
+
+    margin-bottom: 10px;
+}
+
+
+.sym-select-row label,
+.sym-row label {
+    color: var(--sensd-text);
+
+    font-size: 11px;
+    font-weight: 600;
+
+    line-height: 1.35;
+}
+
+
+.sym-select-row select,
+.sym-select-row input[type="number"],
+.sym-select-row input[type="text"],
+.sym-row select,
+.sym-row input[type="number"],
+.sym-row input[type="text"] {
+    width: 100%;
+
+    min-height: 34px;
+
+    padding: 6px 8px;
+
+    border:
+        1px solid
+        var(--sensd-border);
+
+    border-radius:
+        var(--sensd-radius);
+
+    outline: 0;
+
+    background:
+        var(--sensd-panel-alt);
+
+    color:
+        var(--sensd-text);
+
+    font-size: 12px;
+}
+
+
+.sym-select-row select:focus,
+.sym-select-row input:focus,
+.sym-row select:focus,
+.sym-row input:focus {
+    border-color:
+        var(--sensd-accent);
+}
+
+
+.sym-select-row select[multiple] {
+    min-height: 105px;
+
+    padding: 4px;
+}
+
+
+.sym-select-row option {
+    padding: 5px;
+}
+
+
+.sym-row {
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    margin-bottom: 8px;
+}
+
+
+.sym-row > label {
+    flex: 1;
+}
+
+
+.sym-row input[type="color"] {
+    width: 40px;
+    height: 29px;
+
+    border:
+        1px solid
+        var(--sensd-border);
+
+    border-radius: 4px;
+
+    background: transparent;
+
+    cursor: pointer;
+}
+
+
+.sym-row input[type="range"] {
+    flex: 1;
+
+    accent-color:
+        var(--sensd-accent);
+}
+
+
+/* ============================================================
+   FILE UPLOAD
+   ============================================================ */
+
+#upload-drop-zone,
+#reference-drop-zone {
+    position: relative;
+
+    width: 100%;
+
+    padding: 16px 10px;
+
+    border:
+        1px dashed
+        var(--sensd-border);
+
+    border-radius:
+        var(--sensd-radius);
+
+    background:
+        rgba(255, 255, 255, 0.015);
+
+    color:
+        var(--sensd-text-muted);
+
+    font-size: 11px;
+
+    line-height: 1.45;
+
+    text-align: center;
+
+    cursor: pointer;
+
+    transition:
+        border-color 0.15s ease,
+        background 0.15s ease;
+}
+
+
+#upload-drop-zone:hover,
+#reference-drop-zone:hover,
+#upload-drop-zone.drag-over,
+#reference-drop-zone.drag-over {
+    border-color:
+        var(--sensd-accent);
+
+    background:
+        rgba(79, 142, 247, 0.06);
+}
+
+
+#upload-drop-zone
+input[type="file"],
+
+#reference-drop-zone
+input[type="file"] {
+    position: absolute;
+
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    opacity: 0;
+
+    cursor: pointer;
+}
+
+
+#upload-file-name,
+#reference-file-name,
+[id$="-file-name"] {
+    display: block;
+
+    max-width: 100%;
+
+    margin: 5px 0;
+
+    color:
+        var(--sensd-text-secondary);
+
+    font-size: 11px;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+}
+
+
+.tool-page
+input[type="file"] {
+    max-width: 100%;
+
+    color:
+        var(--sensd-text-secondary);
+
+    font-size: 11px;
+}
+
+
+.tool-page
+input[type="file"]::file-selector-button {
+    padding: 5px 8px;
+
+    margin-right: 5px;
+
+    border:
+        1px solid
+        var(--sensd-border);
+
+    border-radius: 4px;
+
+    background: #ffffff;
+
+    color: #101010;
+
+    cursor: pointer;
+
+    font-size: 11px;
+}
+
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
+.tool-btn {
+    width: 100%;
+
+    min-height: 34px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 5px;
+
+    margin-top: 8px;
+
+    padding: 7px 10px;
+
+    border: 0;
+
+    border-radius:
+        var(--sensd-radius);
+
+    outline: 0;
+
+    background:
+        var(--sensd-accent);
+
+    color: #ffffff;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        background 0.15s ease,
+        opacity 0.15s ease;
+}
+
+
+.tool-btn:hover:not(:disabled) {
+    background:
+        var(--sensd-accent-hover);
+}
+
+
+.tool-btn:disabled {
+    opacity: 0.45;
+
+    cursor: not-allowed;
+}
+
+
+.tool-btn-secondary {
+    background:
+        var(--sensd-panel-alt);
+
+    border:
+        1px solid
+        var(--sensd-border);
+
+    color:
+        var(--sensd-text);
+}
+
+
+/* ============================================================
+   STATUS MESSAGES
+   ============================================================ */
+
+.spatial-analysis-status,
+#dash-upload-status,
+#reference-upload-status,
+#export-status {
+    min-height: 16px;
+
+    margin-top: 7px;
+
+    color:
+        var(--sensd-text-muted);
+
+    font-size: 11px;
+
+    line-height: 1.4;
+
+    overflow-wrap: anywhere;
+}
+
+
+.spatial-analysis-status.success,
+#dash-upload-status.success,
+#reference-upload-status.success {
+    color:
+        var(--sensd-success);
+}
+
+
+.spatial-analysis-status.error,
+#dash-upload-status.error,
+#reference-upload-status.error,
+#export-status.error {
+    color:
+        var(--sensd-danger);
+}
+
+
+/* ============================================================
+   FLOW SUMMARY
+   ============================================================ */
+
+.stat-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(0, 1fr)
+        );
+
+    gap: 7px;
+
+    margin: 8px 0 12px;
+}
+
+
+.stat-card {
+    min-width: 0;
+
+    padding: 10px 6px;
+
+    background:
+        var(--sensd-panel-alt);
+
+    border:
+        1px solid
+        var(--sensd-border);
+
+    border-radius:
+        var(--sensd-radius);
+
+    text-align: center;
+}
+
+
+.stat-val {
+    color: #ffffff;
+
+    font-size: 15px;
+    font-weight: 700;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+}
+
+
+.stat-label {
+    margin-top: 4px;
+
+    color:
+        var(--sensd-text-muted);
+
+    font-size: 10px;
+
+    line-height: 1.25;
+}
+
+
+.analysis-bar-row {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 10px;
+
+    padding: 7px 3px;
+
+    border-bottom:
+        1px solid
+        var(--sensd-border-soft);
+
+    font-size: 11px;
+}
+
+
+.analysis-bar-row span {
+    flex: 1;
+
+    min-width: 0;
+
+    color:
+        var(--sensd-text-secondary);
+
+    overflow-wrap: anywhere;
+}
+
+
+.analysis-bar-row strong {
+    flex: 0 0 auto;
+
+    color:
+        var(--sensd-text);
+
+    font-size: 11px;
+
+    text-align: right;
+}
+
+
+/* ============================================================
+   PRODUCT FILTERS
+   ============================================================ */
+
+#product-filter-row {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 5px;
+
+    margin-top: 6px;
+}
+
+
+.product-filter-item {
+    display: flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    color:
+        var(--sensd-text-secondary);
+
+    font-size: 11px;
+
+    line-height: 1.4;
+
+    cursor: pointer;
+}
+
+
+.product-filter-item
+input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+
+    accent-color:
+        var(--sensd-accent);
+
+    cursor: pointer;
+}
+
+
+/* ============================================================
+   SPATIAL ANALYSIS CARDS
+   ============================================================ */
+
+.spatial-analysis-card {
+    margin: 9px 0;
+
+    padding: 10px;
+
+    border:
+        1px solid
+        var(--sensd-border);
+
+    border-radius:
+        var(--sensd-radius);
+
+    background:
+        rgba(255, 255, 255, 0.015);
+}
+
+
+.spatial-analysis-card-title {
+    margin-bottom: 5px;
+
+    color:
+        var(--sensd-text);
+
+    font-size: 13px;
+    font-weight: 700;
+}
+
+
+.spatial-analysis-card-subtitle {
+    margin-bottom: 8px;
+
+    color:
+        var(--sensd-text-muted);
+
+    font-size: 11px;
+
+    line-height: 1.4;
+}
+
+
+.spatial-analysis-method-row {
+    display: flex;
+
+    align-items: flex-start;
+
+    justify-content: space-between;
+
+    gap: 10px;
+
+    padding: 5px 0;
+
+    border-bottom:
+        1px solid
+        var(--sensd-border-soft);
+
+    color:
+        var(--sensd-text-muted);
+
+    font-size: 11px;
+
+    line-height: 1.4;
+}
+
+
+.spatial-analysis-method-row:last-child {
+    border-bottom: 0;
+}
+
+
+.spatial-analysis-method-row strong,
+.spatial-analysis-method-row span:last-child {
+    color:
+        var(--sensd-text);
+
+    text-align: right;
+}
+
+
+/* ============================================================
+   ANALYSIS SUMMARY GRID
+   ============================================================ */
+
+.analysis-summary-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(0, 1fr)
+        );
+
+    gap: 6px;
+
+    margin-top: 8px;
+}
+
+
+.analysis-summary-item {
+    padding: 8px 6px;
+
+    border:
+        1px solid
+        var(--sensd-border);
+
+    border-radius: 5px;
+
+    background:
+        var(--sensd-panel-alt);
+
+    text-align: center;
+}
+
+
+.analysis-summary-value {
+    color: #ffffff;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    overflow-wrap: anywhere;
+}
+
+
+.analysis-summary-label {
+    margin-top: 3px;
+
+    color:
+        var(--sensd-text-muted);
+
+    font-size: 9.5px;
+
+    line-height: 1.25;
+}
+
+
+/* ============================================================
+   REGRESSION TABLE
+   ============================================================ */
+
+.spatial-regression-table-wrapper {
+    width: 100%;
+
+    overflow-x: auto;
+
+    margin-top: 8px;
+}
+
+
+.spatial-regression-table {
+    width: 100%;
+
+    min-width: 430px;
+
+    border-collapse: collapse;
+
+    font-size: 10px;
+}
+
+
+.spatial-regression-table th {
+    padding: 6px;
+
+    background:
+        var(--sensd-panel-alt);
+
+    border:
+        1px solid
+        var(--sensd-border);
+
+    color:
+        var(--sensd-text-secondary);
+
+    font-weight: 700;
+
+    text-align: left;
+}
+
+
+.spatial-regression-table td {
+    padding: 6px;
+
+    border:
+        1px solid
+        var(--sensd-border-soft);
+
+    color:
+        var(--sensd-text-secondary);
+}
+
+
+/* ============================================================
+   GALLERY / LAYOUT TILES
+   ============================================================ */
+
+.gallery-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(0, 1fr)
+        );
+
+    gap: 8px;
+
+    margin-top: 7px;
+}
+
+
+.gallery-tile {
+    min-width: 0;
+
+    padding: 8px;
+
+    border:
+        1px solid
+        var(--sensd-border);
+
+    border-radius:
+        var(--sensd-radius);
+
+    background:
+        var(--sensd-panel-alt);
+
+    color:
+        var(--sensd-text);
+
+    cursor: pointer;
+
+    transition:
+        border-color 0.15s ease,
+        transform 0.15s ease;
+}
+
+
+.gallery-tile:hover {
+    border-color:
+        var(--sensd-accent);
+
+    transform:
+        translateY(-1px);
+}
+
+
+.gallery-tile.active {
+    border-color:
+        var(--sensd-accent);
+
+    box-shadow:
+        inset 0 0 0 1px
+        var(--sensd-accent);
+}
+
+
+.tile-preview {
+    position: relative;
+
+    height: 68px;
+
+    margin-bottom: 6px;
+
+    overflow: hidden;
+
+    border:
+        1px solid
+        var(--sensd-border-soft);
+
+    border-radius: 4px;
+
+    background: #172334;
+}
+
+
+.tile-label {
+    color:
+        var(--sensd-text);
+
+    font-size: 11px;
+    font-weight: 700;
+}
+
+
+.tile-desc {
+    margin-top: 2px;
+
+    color:
+        var(--sensd-text-muted);
+
+    font-size: 9.5px;
+
+    line-height: 1.3;
+}
+
+
+/* ============================================================
+   ANALYSIS MAP LEGEND
+   ============================================================ */
+
+#analysis-map-legend {
+    position: absolute;
+
+    left: 16px;
+    bottom: 16px;
+
+    z-index: 700;
+
+    max-width: 225px;
+
+    max-height:
+        calc(
+            100% -
+            40px
+        );
+
+    overflow: auto;
+
+    padding: 9px 10px;
+
+    border:
+        1px solid
+        rgba(30, 41, 59, 0.25);
+
+    border-radius: 6px;
+
+    background:
+        rgba(255, 255, 255, 0.94);
+
+    color: #1e293b;
+
+    box-shadow:
+        0 3px 12px
+        rgba(0, 0, 0, 0.22);
+
+    backdrop-filter:
+        blur(3px);
+}
+
+
+.analysis-legend-title {
+    margin-bottom: 6px;
+
+    color: #172033;
+
+    font-size: 10px;
+    font-weight: 700;
+
+    line-height: 1.25;
+
+    overflow-wrap: anywhere;
+}
+
+
+.analysis-legend-row {
+    display: flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    margin: 4px 0;
+
+    color: #3c4858;
+
+    font-size: 9px;
+
+    line-height: 1.25;
+}
+
+
+.analysis-legend-swatch {
+    display: inline-block;
+
+    width: 11px;
+    min-width: 11px;
+
+    height: 11px;
+
+    border:
+        1px solid
+        rgba(0, 0, 0, 0.15);
+
+    border-radius: 2px;
+}
+
+
+/* ============================================================
+   COMPACT BIVARIATE 3 x 3 LEGEND
+   ============================================================ */
+
+.bivariate-main-title {
+    margin-bottom: 5px;
+
+    font-size: 10px;
+
+    line-height: 1.2;
+}
+
+
+.bivariate-main-title > div {
+    overflow-wrap: anywhere;
+}
+
+
+.bivariate-title-divider {
+    display: inline;
+
+    margin: 0 2px;
+
+    color: #64748b;
+}
+
+
+.bivariate-matrix-legend {
+    display: flex;
+
+    align-items: center;
+    justify-content: flex-start;
+
+    gap: 4px;
+
+    margin: 2px 0 0;
+
+    padding: 0;
+
+    color: #334155;
+}
+
+
+.bivariate-axis-y {
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 12px;
+
+    color: #475569;
+
+    font-size: 8px;
+    font-weight: 700;
+
+    line-height: 1;
+}
+
+
+.bivariate-axis-arrow {
+    font-size: 9px;
+}
+
+
+.bivariate-matrix-content {
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: flex-end;
+
+    gap: 1px;
+}
+
+
+.bivariate-column-labels {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            3,
+            18px
+        );
+
+    gap: 2px;
+
+    margin-left: 27px;
+
+    margin-bottom: 1px;
+}
+
+
+.bivariate-column-labels span {
+    width: 18px;
+
+    color: #64748b;
+
+    font-size: 7px;
+    font-weight: 500;
+
+    line-height: 1;
+
+    text-align: center;
+}
+
+
+.bivariate-grid-layout {
+    display: flex;
+
+    align-items: center;
+
+    gap: 3px;
+}
+
+
+.bivariate-row-labels {
+    display: grid;
+
+    grid-template-rows:
+        repeat(
+            3,
+            18px
+        );
+
+    gap: 2px;
+
+    width: 24px;
+}
+
+
+.bivariate-row-labels span {
+    display: flex;
+
+    align-items: center;
+    justify-content: flex-end;
+
+    color: #64748b;
+
+    font-size: 7px;
+    font-weight: 500;
+
+    line-height: 1;
+
+    white-space: nowrap;
+}
+
+
+.bivariate-color-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            3,
+            18px
+        );
+
+    grid-template-rows:
+        repeat(
+            3,
+            18px
+        );
+
+    gap: 2px;
+}
+
+
+.bivariate-color-cell {
+    width: 18px;
+    height: 18px;
+
+    border:
+        1px solid
+        rgba(30, 41, 59, 0.16);
+
+    border-radius: 1px;
+
+    cursor: help;
+
+    transition:
+        transform 0.12s ease;
+}
+
+
+.bivariate-color-cell:hover {
+    transform:
+        scale(1.05);
+}
+
+
+.bivariate-axis-x {
+    width: 58px;
+
+    margin-top: 2px;
+
+    color: #475569;
+
+    font-size: 8px;
+    font-weight: 700;
+
+    line-height: 1;
+
+    text-align: center;
+}
+
+
+.bivariate-variable-key {
+    margin-top: 5px;
+
+    padding-top: 4px;
+
+    border-top:
+        1px solid
+        #e2e8f0;
+
+    color: #475569;
+
+    font-size: 8px;
+
+    line-height: 1.25;
+}
+
+
+.bivariate-variable-key div {
+    margin: 1px 0;
+
+    overflow-wrap: anywhere;
+}
+
+
+.bivariate-variable-key strong {
+    color: #1e293b;
+
+    font-weight: 700;
+}
+
+
+.bivariate-no-data-row {
+    display: flex;
+
+    align-items: center;
+
+    gap: 5px;
+
+    margin-top: 4px;
+
+    color: #475569;
+
+    font-size: 8px;
+}
+
+
+.bivariate-no-data-row
+.analysis-legend-swatch {
+    width: 10px;
+
+    min-width: 10px;
+
+    height: 10px;
+}
+
+
+/* ============================================================
+   LEAFLET POPUPS
+   ============================================================ */
+
+.sensd-popup {
+    min-width: 170px;
+
+    max-width: 290px;
+
+    color: #1f2937;
+
+    font-size: 11px;
+
+    line-height: 1.5;
+}
+
+
+.sensd-popup strong {
+    color: #111827;
+
+    font-weight: 700;
+}
+
+
+.sensd-popup-row {
+    padding: 2px 0;
+
+    border-bottom:
+        1px solid
+        #eef1f4;
+
+    overflow-wrap: anywhere;
+}
+
+
+.sensd-popup-row:last-child {
+    border-bottom: 0;
+}
+
+
+/* ============================================================
+   LEAFLET CONTROLS
+   ============================================================ */
+
+.leaflet-control-zoom {
+    border: 0 !important;
+
+    box-shadow:
+        0 1px 5px
+        rgba(0, 0, 0, 0.25) !important;
+}
+
+
+.leaflet-control-zoom a {
+    color:
+        #111827 !important;
+}
+
+
+.leaflet-control-attribution {
+    font-size:
+        9px !important;
+}
+
+
+/* ============================================================
+   EXPORT FIELDS
+   ============================================================ */
+
+#export-title,
+#export-subtitle {
+    width: 100%;
+
+    min-height: 34px;
+
+    padding: 6px 8px;
+
+    border:
+        1px solid
+        var(--sensd-border);
+
+    border-radius:
+        var(--sensd-radius);
+
+    outline: 0;
+
+    background:
+        var(--sensd-panel-alt);
+
+    color:
+        var(--sensd-text);
+
+    font-size: 12px;
+}
+
+
+#export-title:focus,
+#export-subtitle:focus {
+    border-color:
+        var(--sensd-accent);
+}
+
+
+/* ============================================================
+   CHECKBOXES
+   ============================================================ */
+
+.tool-page
+input[type="checkbox"] {
+    accent-color:
+        var(--sensd-accent);
+}
+
+
+/* ============================================================
+   SELECT COLORS
+   ============================================================ */
+
+select {
+    color-scheme: dark;
+}
+
+
+select option {
+    background:
+        var(--sensd-panel-alt);
+
+    color:
+        var(--sensd-text);
+}
+
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (
+    max-width: 1100px
+) {
+    :root {
+        --sensd-left-width: 180px;
+        --sensd-right-width: 245px;
+    }
+
+
+    .toolbox-tree-parent {
+        font-size: 12px;
+    }
+
+
+    .toolbox-tree-leaf {
+        font-size: 11px;
+    }
+
+
+    .toc-layer-name {
+        font-size: 11px;
+    }
+}
+
+
+/* ============================================================
+   ACCESSIBILITY
+   ============================================================ */
+
+button:focus-visible,
+select:focus-visible,
+input:focus-visible {
+    outline:
+        2px solid
+        rgba(79, 142, 247, 0.75);
+
+    outline-offset: 1px;
+}
+
+
+/* ============================================================
+   END OF FILE
+   ============================================================ */

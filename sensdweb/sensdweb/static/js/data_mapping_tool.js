@@ -6,10 +6,13 @@ const map = L.map('map', {
     zoomControl: false
 }).setView([40, -95], 5);
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '&copy; OpenStreetMap contributors'
-}).addTo(map);
+const tileConfig = window.SENSD_MAP_TILE_CONFIG || {};
+if (tileConfig.url) {
+    L.tileLayer(tileConfig.url, {
+        maxZoom: Number(tileConfig.maxZoom) || 19,
+        attribution: tileConfig.attribution || ''
+    }).addTo(map);
+}
 
 L.control.zoom({
     position: 'bottomright'

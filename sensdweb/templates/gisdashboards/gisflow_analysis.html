@@ -30,11 +30,13 @@
                 </div>
                 <div class="toc-section-body" id="toc-basemap">
                     <div class="basemap-options">
+                        {% if map_tile_config.url %}
                         <label class="basemap-option active" data-basemap="osm">
                             <div class="basemap-thumb osm-thumb"></div>
                             <span>Streets</span>
                         </label>
-                        <label class="basemap-option" data-basemap="satellite">
+                        {% endif %}
+                        <label class="basemap-option{% if not map_tile_config.url %} active{% endif %}" data-basemap="satellite">
                             <div class="basemap-thumb satellite-thumb"></div>
                             <span>Satellite</span>
                         </label>

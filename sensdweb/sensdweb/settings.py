@@ -17,6 +17,15 @@ from pathlib import Path
 from dotenv import load_dotenv
 from django.contrib import messages
 
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load local configuration from sensdweb/.env by default. Deployments may set
+# DJANGO_ENV_FILE to another path (for example /etc/sensd.env). Existing
+# process/systemd variables take precedence because override remains False.
+ENV_FILE = Path(os.getenv("DJANGO_ENV_FILE", str(BASE_DIR / ".env")))
+load_dotenv(dotenv_path=ENV_FILE, override=False)
+
 if os.name == "nt":  # Windows
     try:
         import osgeo
@@ -24,9 +33,16 @@ if os.name == "nt":  # Windows
         # make sure Windows can resolve dependent DLLs from this folder
         if hasattr(os, "add_dll_directory"):
             os.add_dll_directory(str(_osg))
-        # set data dirs
-        os.environ.setdefault("GDAL_DATA", str(_osg / "data"))
-        os.environ.setdefault("PROJ_LIB", str(_osg / "proj"))
+        # Use data shipped with the active virtual environment. Replace stale
+        # machine/user variables only when they do not point to valid data.
+        _gdal_data = _osg / "data" / "gdal"
+        _proj_data = _osg / "data" / "proj"
+        if not Path(os.getenv("GDAL_DATA", "")).joinpath("gcs.csv").is_file():
+            os.environ["GDAL_DATA"] = str(_gdal_data)
+        if not Path(os.getenv("PROJ_DATA", "")).joinpath("proj.db").is_file():
+            os.environ["PROJ_DATA"] = str(_proj_data)
+        if not Path(os.getenv("PROJ_LIB", "")).joinpath("proj.db").is_file():
+            os.environ["PROJ_LIB"] = str(_proj_data)
         # pick the installed GDAL dll (3.9/3.10/3.11 etc.)
         _dll = next(iter(sorted(_osg.glob("gdal*.dll"), reverse=True)), None)
         if _dll:
@@ -53,14 +69,8 @@ def env_list(name, default=""):
         if item.strip()
     ]
 
-load_dotenv()
-
 AUTH_USER_MODEL = 'authentication.CustomUser'
 
-
-
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
 print("base dir", BASE_DIR)
 
 
@@ -131,6 +141,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'sensdweb.context_processors.map_tile_config',
             ],
         },
     },
@@ -241,6 +252,13 @@ SECURE_SSL_REDIRECT = env_bool(
 
 SESSION_COOKIE_SECURE = SECURE_SSL_REDIRECT
 CSRF_COOKIE_SECURE = SECURE_SSL_REDIRECT
+
+# Optional raster basemap for mapsapp. Keep provider credentials in the
+# environment, not in source control. When unset, spatial analysis uses a
+# blank basemap and all uploaded/result geometry remains available.
+MAP_TILE_URL = os.getenv("MAP_TILE_URL", "").strip()
+MAP_TILE_ATTRIBUTION = os.getenv("MAP_TILE_ATTRIBUTION", "").strip()
+MAP_TILE_MAX_ZOOM = int(os.getenv("MAP_TILE_MAX_ZOOM", "19"))
 
 # Trust the Nginx reverse proxy for HTTPS
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

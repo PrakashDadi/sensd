@@ -5,9 +5,13 @@ map.createPane('statePane');
 map.getPane('statePane').style.zIndex = 650;
 map.getPane('statePane').style.pointerEvents = 'none';
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap Contributors'
-}).addTo(map);
+const tileConfig = window.SENSD_MAP_TILE_CONFIG || {};
+if (tileConfig.url) {
+    L.tileLayer(tileConfig.url, {
+        attribution: tileConfig.attribution || '',
+        maxZoom: Number(tileConfig.maxZoom) || 19
+    }).addTo(map);
+}
 
 
 const layers = {

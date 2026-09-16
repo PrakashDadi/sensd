@@ -1,4 +1,5 @@
 from django.contrib.gis.db import models
+from django.conf import settings
 from encrypted_fields.fields import (
     EncryptedCharField,
     EncryptedTextField,
@@ -160,3 +161,64 @@ class UploadedLayer(models.Model):
 
     def __str__(self):
         return f"[{self.id}] {self.name} ({self.feature_count} features)"
+
+
+class UploadedDataset(models.Model):
+    """A user-owned dataset uploaded for spatial analysis."""
+
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="spatial_datasets",
+    )
+    name = EncryptedCharField(max_length=255)
+    original_filename = EncryptedCharField(max_length=255)
+    fields = EncryptedTextField(default="[]", blank=True)
+    file_type = models.CharField(max_length=50, blank=True)
+    geometry_type = models.CharField(max_length=50, blank=True)
+    feature_count = models.PositiveIntegerField(default=0)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Dataset {self.pk}"
+
+
+class UploadedFeature(models.Model):
+    """A PostGIS feature whose user-supplied properties stay encrypted."""
+
+    dataset = models.ForeignKey(
+        UploadedDataset,
+        on_delete=models.CASCADE,
+        related_name="features",
+    )
+    geometry = models.GeometryField(srid=4326)
+    properties = EncryptedTextField(default="{}", blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Dataset {self.dataset_id} - Feature {self.pk}"
+
+
+class AnalysisRun(models.Model):
+    """A persisted, encrypted result summary for a spatial analysis."""
+
+    ANALYSIS_TYPES = [
+        ("salmonella_risk", "Salmonella Risk"),
+        ("bivariate", "Bivariate Analysis"),
+        ("local_moran", "Local Moran's I"),
+        ("spatial_association", "Spatial Association Analysis"),
+        ("spatial_regression", "Spatial Regression Analysis"),
+    ]
+
+    dataset = models.ForeignKey(
+        UploadedDataset,
+        on_delete=models.CASCADE,
+        related_name="analysis_runs",
+    )
+    analysis_type = models.CharField(max_length=50, choices=ANALYSIS_TYPES)
+    parameters = EncryptedTextField(default="{}", blank=True)
+    summary = EncryptedTextField(default="{}", blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.get_analysis_type_display()} - Dataset {self.dataset_id}"
