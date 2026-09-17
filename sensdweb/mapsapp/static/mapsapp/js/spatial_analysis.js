@@ -453,37 +453,54 @@ basemapLayers.states = L.geoJSON(
     }
 );
 
-if (tileConfig.url) {
-    basemapLayers.configured = L.tileLayer(
-        tileConfig.url,
-        {
-            attribution: tileConfig.attribution || "",
-            maxZoom: Number(tileConfig.maxZoom) || 19,
-            updateWhenIdle: true,
-            keepBuffer: 2
-        }
-    );
+const sharedTileOptions = {
+    updateWhenIdle: true,
+    keepBuffer: 2,
+    referrerPolicy: "strict-origin-when-cross-origin"
+};
 
-    let tileErrorCount = 0;
+basemapLayers.osm = L.tileLayer(
+    tileConfig.url || "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+        ...sharedTileOptions,
+        attribution:
+            tileConfig.attribution ||
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: Number(tileConfig.maxZoom) || 19
+    }
+);
 
-    basemapLayers.configured.on("tileerror", () => {
-        tileErrorCount += 1;
+basemapLayers.topo = L.tileLayer(
+    "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
+    {
+        ...sharedTileOptions,
+        attribution:
+            'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | Map style &copy; OpenTopoMap',
+        maxZoom: 17
+    }
+);
 
-        if (tileErrorCount === 3 && map.hasLayer(basemapLayers.configured)) {
-            console.warn(
-                "OpenStreetMap tiles are unavailable; using SENSD state boundaries."
-            );
-            setBasemap("states");
+basemapLayers.hot = L.tileLayer(
+    "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png",
+    {
+        ...sharedTileOptions,
+        attribution:
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | Tiles style by Humanitarian OpenStreetMap Team',
+        maxZoom: 19
+    }
+);
 
-            const basemapSelect = getEl("basemap-select");
-            if (basemapSelect) {
-                basemapSelect.value = "states";
-            }
-        }
+for (const [name, layer] of Object.entries(basemapLayers)) {
+    if (!(layer instanceof L.TileLayer)) {
+        continue;
+    }
+
+    layer.on("tileerror", error => {
+        console.error(`${name} basemap tile failed to load.`, error);
     });
 }
 
-let activeBasemapLayer = basemapLayers.configured || basemapLayers.states;
+let activeBasemapLayer = basemapLayers.osm;
 
 if (activeBasemapLayer) {
     activeBasemapLayer.addTo(map);

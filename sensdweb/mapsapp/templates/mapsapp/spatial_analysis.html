@@ -8,7 +8,7 @@
 
 <link
     rel="stylesheet"
-    href="{% static 'mapsapp/vendor/leaflet/leaflet.css' %}"
+    href="{% static 'mapsapp/vendor/leaflet/leaflet.css' %}?v=1.9.4"
 >
 
 <link
@@ -18,7 +18,7 @@
 
 <link
     rel="stylesheet"
-    href="{% static 'mapsapp/css/spatial_analysis.css' %}"
+    href="{% static 'mapsapp/css/spatial_analysis.css' %}?v=20260917"
 >
 
 {% endblock %}
@@ -88,15 +88,21 @@
 
                         <select id="basemap-select">
 
-                            <option value="states"{% if not map_tile_config.url %} selected{% endif %}>
-                                SENSD U.S. States
+                            <option value="osm" selected>
+                                OpenStreetMap Standard
                             </option>
 
-                            {% if map_tile_config.url %}
-                            <option value="configured" selected>
-                                OpenStreetMap
+                            <option value="topo">
+                                OpenTopoMap
                             </option>
-                            {% endif %}
+
+                            <option value="hot">
+                                Humanitarian (HOT)
+                            </option>
+
+                            <option value="states">
+                                SENSD U.S. States
+                            </option>
 
                             <option value="none">
                                 Blank (No Basemap)
@@ -3315,7 +3321,7 @@
 {{ map_tile_config|json_script:"map-tile-config" }}
 
 <script
-    src="{% static 'mapsapp/vendor/leaflet/leaflet.js' %}"
+    src="{% static 'mapsapp/vendor/leaflet/leaflet.js' %}?v=1.9.4"
 ></script>
 
 <script
@@ -3383,7 +3389,7 @@
 
 
 <script
-    src="{% static 'mapsapp/js/spatial_analysis.js' %}"
+    src="{% static 'mapsapp/js/spatial_analysis.js' %}?v=20260917"
 ></script>
 
 {% endblock %}
