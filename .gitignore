@@ -72,5 +72,5 @@ media/
 nginx-1.26.2/
 .mcp.json
 CLAUDE.md
-20230912_code_changes_mapsapp.zip
-Poultry-Dashboard-main.zip
+# Source/import archives are local handoff material, not application assets.
+*.zip
