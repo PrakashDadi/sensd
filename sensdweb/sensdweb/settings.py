@@ -261,14 +261,15 @@ SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 # OpenStreetMap Standard is the default Leaflet basemap. These remain
 # configurable so production can move to a hosted/self-managed provider if
 # its usage grows beyond OSM's community tile-service policy.
-MAP_TILE_URL = os.getenv(
-    "MAP_TILE_URL",
-    "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-).strip()
-MAP_TILE_ATTRIBUTION = os.getenv(
-    "MAP_TILE_ATTRIBUTION",
-    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-).strip()
+DEFAULT_MAP_TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+DEFAULT_MAP_TILE_ATTRIBUTION = (
+    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+)
+MAP_TILE_URL = os.getenv("MAP_TILE_URL", "").strip() or DEFAULT_MAP_TILE_URL
+MAP_TILE_ATTRIBUTION = (
+    os.getenv("MAP_TILE_ATTRIBUTION", "").strip()
+    or DEFAULT_MAP_TILE_ATTRIBUTION
+)
 MAP_TILE_MAX_ZOOM = int(os.getenv("MAP_TILE_MAX_ZOOM", "19"))
 
 # Optional Poultry Dashboard integrations. Secrets remain environment-only.
