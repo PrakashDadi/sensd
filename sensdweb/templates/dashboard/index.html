@@ -51,6 +51,23 @@
     </div>
   </div>
 
+  <div class="row g-4 mb-4">
+    <div class="col-lg-6">
+      <section class="sensd-tool-card">
+        <div class="d-flex justify-content-between align-items-start">
+          <div class="sensd-tool-icon"><i class="bi bi-thermometer-half"></i></div>
+          <span class="badge badge-sensor">Poultry Sensors</span>
+        </div>
+        <h2>Poultry Dashboard</h2>
+        <p>Monitor BluConsole loggers, visualize temperature history, estimate shelf life, and review AI-assisted sensor summaries.</p>
+        <div class="sensd-actions">
+          <a href="{% url 'poultrydashboard:home' %}" class="btn btn-sensd">Open dashboard</a>
+          <a href="{% url 'poultrydashboard:connect' %}" class="btn btn-outline-sensd">Connect sensors</a>
+        </div>
+      </section>
+    </div>
+  </div>
+
   <div class="row g-4">
     <div class="col-xl-6">
       <section class="sensd-panel sensd-table-card">

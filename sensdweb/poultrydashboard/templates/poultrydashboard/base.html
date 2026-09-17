@@ -1,0 +1,82 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{{ title|default:"Poultry Dashboard" }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              auburn: "#0b2341",
+              brick: "#ea711a",
+            },
+          },
+        },
+      };
+    </script>
+    <link rel="stylesheet" href="{% static 'poultrydashboard/css/site.css' %}" />
+    {% block extra_head %}{% endblock %}
+  </head>
+  <body class="min-h-screen w-full bg-gray-50 text-slate-900">
+    <div class="min-h-screen w-full bg-gray-50 text-slate-900 flex">
+      <aside class="w-60 bg-auburn text-white sticky top-0 h-[100dvh] flex flex-col">
+        <div class="px-4 py-4 text-lg font-semibold text-brick">
+          Auburn University
+        </div>
+
+        <nav class="px-2 space-y-1 overflow-y-auto flex-1">
+          {% with path=request.path %}
+          <a href="{% url 'sensd' %}" class="block rounded px-3 py-2 transition text-white hover:bg-white/10">SENSD Dashboard</a>
+          <a href="{% url 'gis-home' %}" class="block rounded px-3 py-2 transition text-white hover:bg-white/10">Maps Application</a>
+          <div class="my-2 border-t border-white/20"></div>
+          <a href="{% url 'poultrydashboard:home' %}" class="block rounded px-3 py-2 transition text-brick hover:bg-white/10 {% if path == '/poultry/' %}bg-white/10{% endif %}">Poultry Home</a>
+          <a href="{% url 'poultrydashboard:connect' %}" class="block rounded px-3 py-2 transition text-brick hover:bg-white/10 {% if path == '/poultry/connect/' %}bg-white/10{% endif %}">Sensor Connection</a>
+          <a href="{% url 'poultrydashboard:sensor_feed' %}" class="block rounded px-3 py-2 transition text-brick hover:bg-white/10 {% if path == '/poultry/sensor-feed/' %}bg-white/10{% endif %}">Sensor Feed</a>
+          <a href="{% url 'poultrydashboard:visualizations' %}" class="block rounded px-3 py-2 transition text-brick hover:bg-white/10 {% if path == '/poultry/visualizations/' %}bg-white/10{% endif %}">Visualizations</a>
+          <a href="{% url 'poultrydashboard:ai' %}" class="block rounded px-3 py-2 transition text-brick hover:bg-white/10 {% if path == '/poultry/ai-estimation/' %}bg-white/10{% endif %}">AI Estimation</a>
+          <a href="{% url 'poultrydashboard:ai_chat' %}" class="block rounded px-3 py-2 transition text-brick hover:bg-white/10 {% if path == '/poultry/ai-chat/' %}bg-white/10{% endif %}">AI ChatBot</a>
+          <a href="{% url 'poultrydashboard:faq' %}" class="block rounded px-3 py-2 transition text-brick hover:bg-white/10 {% if path == '/poultry/faq/' %}bg-white/10{% endif %}">FAQ</a>
+          {% endwith %}
+        </nav>
+
+        <footer class="px-4 py-3 text-xs text-white/80 mt-auto border-t border-white/10">
+          <a href="{% url 'poultrydashboard:profile' %}" class="hover:underline">Poultry Profile</a>
+          <span class="mx-1">|</span>
+          <button type="button" class="hover:underline" data-bu-logout>Disconnect sensors</button>
+          <span class="mx-1">|</span>
+          <a href="{% url 'logout' %}" class="hover:underline">Log out</a>
+          <span class="mx-1">|</span>
+          <a href="{% url 'poultrydashboard:contact' %}" class="hover:underline">Contact</a>
+        </footer>
+      </aside>
+
+      <div class="flex-1 flex flex-col">
+        <header class="sticky top-0 z-10 bg-white border-b w-full">
+          <div class="relative flex items-center px-6 h-14 w-full">
+            <h3 class="absolute left-1/2 -translate-x-1/2 whitespace-nowrap truncate max-w-[calc(100%-6rem)] text-auburn font-semibold text-xl md:text-2xl">
+              Auburn University - College of Agriculture
+            </h3>
+            <a href="{% url 'poultrydashboard:profile' %}" class="ml-auto" aria-label="Open profile">
+              <img
+                src="{% static 'poultrydashboard/img/icons8-user-48.png' %}"
+                alt="Profile"
+                class="h-8 w-8 rounded-full ring-2 ring-auburn object-cover"
+              />
+            </a>
+          </div>
+        </header>
+
+        <main class="p-6 flex-1">
+          {% block content %}{% endblock %}
+        </main>
+      </div>
+    </div>
+
+    <script src="{% static 'poultrydashboard/js/app.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+  </body>
+</html>

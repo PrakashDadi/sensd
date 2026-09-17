@@ -114,6 +114,7 @@ INSTALLED_APPS = [
     'sensdrequests.apps.RequestsConfig',
     'isdrequests',
     'mapsapp', # Maps Handling
+    'poultrydashboard.apps.PoultryDashboardConfig',
     'django.contrib.gis', # GIS support for maps
 ]
 
@@ -259,6 +260,14 @@ CSRF_COOKIE_SECURE = SECURE_SSL_REDIRECT
 MAP_TILE_URL = os.getenv("MAP_TILE_URL", "").strip()
 MAP_TILE_ATTRIBUTION = os.getenv("MAP_TILE_ATTRIBUTION", "").strip()
 MAP_TILE_MAX_ZOOM = int(os.getenv("MAP_TILE_MAX_ZOOM", "19"))
+
+# Optional Poultry Dashboard integrations. Secrets remain environment-only.
+BLU_BASE = os.getenv("BLU_BASE", "https://http-receiver.bluconsole.com").rstrip("/")
+DEMO_LOGIN_ENABLED = env_bool("POULTRY_DEMO_LOGIN_ENABLED", DEBUG)
+DEMO_LOGIN_USERNAME = os.getenv("POULTRY_DEMO_LOGIN_USERNAME", "demo")
+DEMO_LOGIN_PASSWORD = os.getenv("POULTRY_DEMO_LOGIN_PASSWORD", "demo")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
 # Trust the Nginx reverse proxy for HTTPS
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

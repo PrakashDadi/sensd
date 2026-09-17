@@ -24,6 +24,7 @@ urlpatterns = [
     path('authentication/', include('authentication.urls')),
     path('requests/', include('sensdrequests.urls')),
     path('mapsapp/', include('mapsapp.urls')),
+    path('poultry/', include('poultrydashboard.urls')),
     path('isdrequests/', include('isdrequests.urls')),
     path('admin/', admin.site.urls),
 ]
