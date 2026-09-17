@@ -254,8 +254,8 @@ SESSION_COOKIE_SECURE = SECURE_SSL_REDIRECT
 CSRF_COOKIE_SECURE = SECURE_SSL_REDIRECT
 
 # Optional raster basemap for mapsapp. Keep provider credentials in the
-# environment, not in source control. When unset, spatial analysis uses a
-# blank basemap and all uploaded/result geometry remains available.
+# environment, not in source control. When unset, spatial analysis uses the
+# state boundaries already stored in SENSD instead of external raster tiles.
 MAP_TILE_URL = os.getenv("MAP_TILE_URL", "").strip()
 MAP_TILE_ATTRIBUTION = os.getenv("MAP_TILE_ATTRIBUTION", "").strip()
 MAP_TILE_MAX_ZOOM = int(os.getenv("MAP_TILE_MAX_ZOOM", "19"))

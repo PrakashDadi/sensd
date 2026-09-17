@@ -406,6 +406,53 @@ const tileConfig = tileConfigElement
     : {};
 const basemapLayers = {};
 
+function statesBasemapStyle() {
+    return {
+        color: "#64748b",
+        weight: 1,
+        opacity: 0.9,
+        fillColor: "#e2e8f0",
+        fillOpacity: 0.72
+    };
+}
+
+basemapLayers.states = L.geoJSON(
+    null,
+    {
+        style: statesBasemapStyle,
+        onEachFeature(feature, layer) {
+            const stateName = feature.properties?.state_name || "State";
+
+            layer.bindTooltip(stateName, {
+                className: "sensd-state-tooltip",
+                direction: "top",
+                sticky: true
+            });
+
+            layer.on({
+                mouseover(event) {
+                    event.target.setStyle({
+                        color: "#2563eb",
+                        weight: 2,
+                        fillColor: "#bfdbfe",
+                        fillOpacity: 0.88
+                    });
+                    event.target.bringToFront();
+                },
+                mouseout(event) {
+                    basemapLayers.states.resetStyle(event.target);
+                },
+                click(event) {
+                    map.fitBounds(event.target.getBounds(), {
+                        animate: true,
+                        padding: [24, 24]
+                    });
+                }
+            });
+        }
+    }
+);
+
 if (tileConfig.url) {
     basemapLayers.configured = L.tileLayer(
         tileConfig.url,
@@ -416,11 +463,43 @@ if (tileConfig.url) {
     );
 }
 
-let activeBasemapLayer = basemapLayers.configured || null;
+let activeBasemapLayer = basemapLayers.configured || basemapLayers.states;
 
 if (activeBasemapLayer) {
     activeBasemapLayer.addTo(map);
 }
+
+L.control.scale({
+    imperial: true,
+    metric: true,
+    position: "bottomleft"
+}).addTo(map);
+
+async function loadStatesBasemap() {
+    try {
+        const response = await fetch(SENSD_API.usStates);
+
+        if (!response.ok) {
+            throw new Error(`State boundary request failed (${response.status}).`);
+        }
+
+        const stateData = await response.json();
+
+        if (!Array.isArray(stateData.features) || stateData.features.length === 0) {
+            throw new Error("No state boundary features are available.");
+        }
+
+        basemapLayers.states.addData(stateData);
+
+        if (map.hasLayer(basemapLayers.states)) {
+            basemapLayers.states.bringToBack();
+        }
+    } catch (error) {
+        console.error("Unable to load the SENSD states basemap:", error);
+    }
+}
+
+loadStatesBasemap();
 
 
 function setBasemap(

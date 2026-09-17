@@ -8,7 +8,7 @@
 
 <link
     rel="stylesheet"
-    href="https://unpkg.com/leaflet/dist/leaflet.css"
+    href="{% static 'mapsapp/vendor/leaflet/leaflet.css' %}"
 >
 
 <link
@@ -88,13 +88,17 @@
 
                         <select id="basemap-select">
 
+                            <option value="states"{% if not map_tile_config.url %} selected{% endif %}>
+                                SENSD U.S. States
+                            </option>
+
                             {% if map_tile_config.url %}
                             <option value="configured" selected>
                                 Configured basemap
                             </option>
                             {% endif %}
 
-                            <option value="none"{% if not map_tile_config.url %} selected{% endif %}>
+                            <option value="none">
                                 Blank (No Basemap)
                             </option>
 
@@ -3311,7 +3315,7 @@
 {{ map_tile_config|json_script:"map-tile-config" }}
 
 <script
-    src="https://unpkg.com/leaflet/dist/leaflet.js"
+    src="{% static 'mapsapp/vendor/leaflet/leaflet.js' %}"
 ></script>
 
 <script
@@ -3339,6 +3343,9 @@
     };
 
     const SENSD_API = {
+
+        usStates:
+            "{% url 'us_states_geojson' %}",
 
         inspectColumns:
             "{% url 'spatial_inspect_columns_api' %}",

@@ -144,6 +144,10 @@ class SpatialApiTests(TestCase):
         self.assertContains(response, "Spatial Analysis")
         self.assertContains(response, reverse("gis-home"))
         self.assertNotContains(response, "tile.openstreetmap.org")
+        self.assertNotContains(response, "unpkg.com/leaflet")
+        self.assertContains(response, "mapsapp/vendor/leaflet/leaflet.js")
+        self.assertContains(response, "SENSD U.S. States")
+        self.assertContains(response, reverse("us_states_geojson"))
         self.assertContains(response, "Blank (No Basemap)")
 
     def test_column_inspection_supports_csv_excel_and_geojson(self):
