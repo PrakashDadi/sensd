@@ -1,3 +1,5 @@
-from django.test import TestCase
+"""Compatibility entry point for Django's app-based test discovery."""
 
-# Create your tests here.
+from .test_spatial_analysis import SpatialAlgorithmTests, SpatialApiTests
+
+__all__ = ["SpatialAlgorithmTests", "SpatialApiTests"]

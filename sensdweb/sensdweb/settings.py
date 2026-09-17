@@ -17,35 +17,60 @@ from pathlib import Path
 from dotenv import load_dotenv
 from django.contrib import messages
 
-try:
-    import osgeo
-    _osg = Path(osgeo.__file__).parent  # ...\site-packages\osgeo
-    # make sure Windows can resolve dependent DLLs from this folder
-    if hasattr(os, "add_dll_directory"):
-        os.add_dll_directory(str(_osg))
-    # set data dirs
-    os.environ.setdefault("GDAL_DATA", str(_osg / "data"))
-    os.environ.setdefault("PROJ_LIB",  str(_osg / "proj"))
-    os.environ["PROJ_LIB"] = r"C:\Program Files\PostgreSQL\16\share\contrib\postgis-3.4\proj"
-    # pick the installed GDAL dll (3.9/3.10/3.11 etc.)
-    _dll = next(iter(sorted(_osg.glob("gdal*.dll"), reverse=True)), None)
-    if _dll:
-        # preload and tell Django exactly which one to use
-        ctypes.CDLL(str(_dll))
-        GDAL_LIBRARY_PATH = str(_dll)
-except Exception as _e:
-    print("GDAL bootstrap warning:", _e)
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load local configuration from sensdweb/.env by default. Deployments may set
+# DJANGO_ENV_FILE to another path (for example /etc/sensd.env). Existing
+# process/systemd variables take precedence because override remains False.
+ENV_FILE = Path(os.getenv("DJANGO_ENV_FILE", str(BASE_DIR / ".env")))
+load_dotenv(dotenv_path=ENV_FILE, override=False)
+
+if os.name == "nt":  # Windows
+    try:
+        import osgeo
+        _osg = Path(osgeo.__file__).parent  # ...\site-packages\osgeo
+        # make sure Windows can resolve dependent DLLs from this folder
+        if hasattr(os, "add_dll_directory"):
+            os.add_dll_directory(str(_osg))
+        # Use data shipped with the active virtual environment. Replace stale
+        # machine/user variables only when they do not point to valid data.
+        _gdal_data = _osg / "data" / "gdal"
+        _proj_data = _osg / "data" / "proj"
+        if not Path(os.getenv("GDAL_DATA", "")).joinpath("gcs.csv").is_file():
+            os.environ["GDAL_DATA"] = str(_gdal_data)
+        if not Path(os.getenv("PROJ_DATA", "")).joinpath("proj.db").is_file():
+            os.environ["PROJ_DATA"] = str(_proj_data)
+        if not Path(os.getenv("PROJ_LIB", "")).joinpath("proj.db").is_file():
+            os.environ["PROJ_LIB"] = str(_proj_data)
+        # pick the installed GDAL dll (3.9/3.10/3.11 etc.)
+        _dll = next(iter(sorted(_osg.glob("gdal*.dll"), reverse=True)), None)
+        if _dll:
+            # preload and tell Django exactly which one to use
+            ctypes.CDLL(str(_dll))
+            GDAL_LIBRARY_PATH = str(_dll)
+    except Exception as _e:
+        print("GDAL bootstrap warning:", _e)
 # --- end ---
 
+def env_bool(name, default=False):
+    value = os.getenv(name)
 
-load_dotenv()
+    if value is None:
+        return default
+
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def env_list(name, default=""):
+    return [
+        item.strip()
+        for item in os.getenv(name, default).split(",")
+        if item.strip()
+    ]
 
 AUTH_USER_MODEL = 'authentication.CustomUser'
 
-
-
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
 print("base dir", BASE_DIR)
 
 
@@ -53,9 +78,10 @@ print("base dir", BASE_DIR)
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-)+-3_5&1x23bkhx#x86y-fqg^ay-iyskbs27n&a#=^9ht=huaz'
 
-SALT_KEY = SECRET_KEY
+# SECRET_KEY = 'django-insecure-)+-3_5&1x23bkhx#x86y-fqg^ay-iyskbs27n&a#=^9ht=huaz'
+
+# SALT_KEY = SECRET_KEY
 
 # CRYPTOGRAPHY_KEY  = SECRET_KEY
 
@@ -63,9 +89,14 @@ SALT_KEY = SECRET_KEY
 # CRYPTOGRAPHY_SALT = os.getenv('CRYPTOGRAPHY_SALT').encode() if os.getenv('CRYPTOGRAPHY_SALT') else None
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# DEBUG = True
 
-ALLOWED_HOSTS = []
+# ALLOWED_HOSTS = []
+
+SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
+SALT_KEY = os.getenv("SALT_KEY", SECRET_KEY)
+
+DEBUG = env_bool("DJANGO_DEBUG", False)
 
 
 # Application definition
@@ -83,6 +114,7 @@ INSTALLED_APPS = [
     'sensdrequests.apps.RequestsConfig',
     'isdrequests',
     'mapsapp', # Maps Handling
+    'poultrydashboard.apps.PoultryDashboardConfig',
     'django.contrib.gis', # GIS support for maps
 ]
 
@@ -110,6 +142,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'sensdweb.context_processors.map_tile_config',
             ],
         },
     },
@@ -128,7 +161,11 @@ DATABASES = {
         'USER': os.getenv('DB_USER'),                   # need to provide username
         'PASSWORD': os.getenv('DB_USER_PASSWORD'),      # need to provide password
         'HOST': os.getenv('DB_HOST'),
-        'PORT': os.getenv('DB_PORT')
+        'PORT': os.getenv('DB_PORT', '5432'),
+        "CONN_MAX_AGE": 60,
+        "OPTIONS": {
+            "sslmode": os.getenv("DB_SSLMODE", "require"),
+        },
     }
 }
 
@@ -193,12 +230,55 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 #SSl settings
-# ALLOWED_HOSTS = ['134.124.243.144']
-ALLOWED_HOSTS = ['sensdweb.com', '127.0.0.1', 'localhost', '134.124.26.19']
-# Redirect all traffic to HTTPS
-SECURE_SSL_REDIRECT = True  # Forces HTTPS
-SESSION_COOKIE_SECURE = True  # Ensures cookies are sent over HTTPS
-CSRF_COOKIE_SECURE = True     # Ensures CSRF cookies are sent over HTTPS
+# # ALLOWED_HOSTS = ['134.124.243.144']
+# ALLOWED_HOSTS = ['sensdweb.com', '127.0.0.1', 'localhost', '134.124.26.19']
+# # Redirect all traffic to HTTPS
+# SECURE_SSL_REDIRECT = True  # Forces HTTPS
+# SESSION_COOKIE_SECURE = True  # Ensures cookies are sent over HTTPS
+# CSRF_COOKIE_SECURE = True     # Ensures CSRF cookies are sent over HTTPS
+
+ALLOWED_HOSTS = env_list(
+    "DJANGO_ALLOWED_HOSTS",
+    "127.0.0.1,localhost",
+)
+
+CSRF_TRUSTED_ORIGINS = env_list(
+    "DJANGO_CSRF_TRUSTED_ORIGINS"
+)
+
+SECURE_SSL_REDIRECT = env_bool(
+    "DJANGO_SECURE_SSL_REDIRECT",
+    False,
+)
+
+SESSION_COOKIE_SECURE = SECURE_SSL_REDIRECT
+CSRF_COOKIE_SECURE = SECURE_SSL_REDIRECT
+
+# OSM requires normal browser requests to include the website origin as the
+# HTTP Referer. This policy preserves that origin without exposing URL paths.
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+
+# OpenStreetMap Standard is the default Leaflet basemap. These remain
+# configurable so production can move to a hosted/self-managed provider if
+# its usage grows beyond OSM's community tile-service policy.
+DEFAULT_MAP_TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+DEFAULT_MAP_TILE_ATTRIBUTION = (
+    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+)
+MAP_TILE_URL = os.getenv("MAP_TILE_URL", "").strip() or DEFAULT_MAP_TILE_URL
+MAP_TILE_ATTRIBUTION = (
+    os.getenv("MAP_TILE_ATTRIBUTION", "").strip()
+    or DEFAULT_MAP_TILE_ATTRIBUTION
+)
+MAP_TILE_MAX_ZOOM = int(os.getenv("MAP_TILE_MAX_ZOOM", "19"))
+
+# Optional Poultry Dashboard integrations. Secrets remain environment-only.
+BLU_BASE = os.getenv("BLU_BASE", "https://http-receiver.bluconsole.com").rstrip("/")
+DEMO_LOGIN_ENABLED = env_bool("POULTRY_DEMO_LOGIN_ENABLED", DEBUG)
+DEMO_LOGIN_USERNAME = os.getenv("POULTRY_DEMO_LOGIN_USERNAME", "demo")
+DEMO_LOGIN_PASSWORD = os.getenv("POULTRY_DEMO_LOGIN_PASSWORD", "demo")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
 # Trust the Nginx reverse proxy for HTTPS
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -207,8 +287,8 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 #GDAL Settings
 
-GDAL_LIBRARY_PATH = r"C:\Users\dadir\AppData\Roaming\Python\Python312\site-packages\osgeo\gdal311.dll"
-
+if os.name == "nt" and os.getenv("GDAL_LIBRARY_PATH"):
+    GDAL_LIBRARY_PATH = os.environ["GDAL_LIBRARY_PATH"]
 
 # # Optional: stronger default signer for your own signed values
 # SIGNING_BACKEND = "django_cryptography.core.signing.TimestampSigner"
@@ -218,4 +298,4 @@ GDAL_LIBRARY_PATH = r"C:\Users\dadir\AppData\Roaming\Python\Python312\site-packa
 # AUTHENTICATION_BACKENDS = [
 #     # 'authentication.backends.CaseInsensitiveModelBackend',  # our backend first
 #     'django.contrib.auth.backends.ModelBackend',
-# ] 
+# ]

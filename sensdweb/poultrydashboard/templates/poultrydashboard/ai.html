@@ -1,0 +1,298 @@
+{% extends "poultrydashboard/base.html" %}
+{% load static %}
+{% block content %}
+<div class="mx-auto max-w-[1400px]">
+  <div class="bg-white border border-auburn/30 rounded-2xl shadow-sm px-4 py-3 mb-5">
+    <div class="flex flex-wrap items-center gap-3">
+      <span class="font-semibold text-auburn">AI:</span>
+      <span class="text-slate-700">
+        Pick a logger or an uploaded file from the right panel.
+      </span>
+      <span id="ai-active-badge" class="ml-auto text-sm px-2 py-1 rounded-full bg-auburn/5 text-auburn border border-auburn/20">
+        Nothing selected
+      </span>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+    <div class="col-span-1 md:col-span-2 space-y-4">
+      <div class="bg-white border border-auburn/30 rounded-2xl shadow-sm p-4">
+        <div class="flex items-center gap-3 mb-2">
+          <h3 class="text-auburn font-semibold">Temperature (C) vs Time (hours)</h3>
+          <div class="ml-auto flex items-center gap-2">
+            <label for="cutoff" class="text-sm text-slate-600 whitespace-nowrap">
+              Cut-off (C):
+            </label>
+            <input
+              id="cutoff"
+              type="number"
+              step="0.01"
+              class="w-28 rounded-lg border border-slate-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-auburn/40"
+              value="18.50"
+            />
+            <label class="text-sm text-slate-600 whitespace-nowrap">X interval</label>
+            <select id="ai-x-interval" class="rounded-lg border border-slate-300 px-2 py-1 text-sm">
+              <option value="0.5">0.5h</option>
+              <option value="1" selected>1h</option>
+              <option value="2">2h</option>
+              <option value="4">4h</option>
+              <option value="6">6h</option>
+            </select>
+            <label class="text-sm text-slate-600 whitespace-nowrap">Y step</label>
+            <select id="ai-y-step" class="rounded-lg border border-slate-300 px-2 py-1 text-sm">
+              <option value="0.5">0.5</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="2.5" selected>2.5</option>
+              <option value="5">5</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="ai-empty" class="h-64 flex items-center justify-center text-slate-500 text-sm">
+          Nothing selected or no data.
+        </div>
+        <div id="ai-chart-wrap" class="h-72 hidden">
+          <canvas id="ai-chart"></canvas>
+        </div>
+      </div>
+
+      <div id="ai-method1" class="bg-white border border-auburn/30 rounded-2xl shadow-sm p-5 hidden">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-auburn font-semibold">Method 1 - Cut-off Exposure Summary</h3>
+          <div class="text-sm text-slate-600">
+            Cut-off:&nbsp;
+            <span id="ai-cutoff-label" class="text-auburn font-medium">18.50 C</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-3" id="ai-metrics"></div>
+        <p class="mt-3 text-[13px] text-slate-600">
+          <span class="font-medium">Notes:</span> Exposure is time-weighted assuming linear temperature change between points.
+          "Excursions" counts upward crossings through the cut-off.
+        </p>
+      </div>
+
+      <div id="ai-method2" class="bg-white border border-auburn/30 rounded-2xl shadow-sm p-5 hidden">
+        <div class="flex flex-wrap items-center gap-3 mb-3">
+          <h3 class="text-auburn font-semibold">Method 2 - Shelf-Life Models</h3>
+          <div class="ml-auto flex flex-wrap items-center gap-3 text-sm text-slate-600">
+            <div class="flex items-center gap-2">
+              <label for="ai-ref-temp" class="whitespace-nowrap">Reference temp (C)</label>
+              <input
+                id="ai-ref-temp"
+                type="number"
+                step="0.1"
+                class="w-24 rounded-lg border border-slate-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-auburn/40"
+                value="5"
+              />
+            </div>
+            <div class="flex items-center gap-2">
+              <label for="ai-baseline-life" class="whitespace-nowrap">Baseline life (days)</label>
+              <input
+                id="ai-baseline-life"
+                type="number"
+                step="0.01"
+                class="w-28 rounded-lg border border-slate-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-auburn/40"
+                value="7.16"
+              />
+            </div>
+            <span class="text-slate-500">
+              Cut-off: <span id="ai-cutoff-label-2" class="text-auburn font-medium">18.50 C</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-sm font-medium text-slate-700">Model Summary (click a row for details)</div>
+            <div class="text-xs text-slate-500">Selected: <span id="ai-selected-model-label" class="text-auburn font-medium">FEFO (Monte Carlo)</span></div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm border border-slate-200 rounded-xl overflow-hidden">
+              <thead class="bg-slate-100 text-slate-800">
+                <tr>
+                  <th class="px-4 py-2 text-left font-semibold">Model</th>
+                  <th class="px-4 py-2 text-left font-semibold">Remaining shelf life (days)</th>
+                  <th class="px-4 py-2 text-left font-semibold">Confidence (%)</th>
+                </tr>
+              </thead>
+              <tbody id="ai-model-list-body"></tbody>
+            </table>
+          </div>
+          <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+            <div id="ai-model-confidence-note" class="text-slate-600"></div>
+            <button
+              id="ai-confidence-help-open"
+              type="button"
+              class="text-auburn hover:underline"
+            >
+              Click here to know more about the confidence report
+            </button>
+            <button
+              id="ai-model-comparison-open"
+              type="button"
+              class="text-auburn hover:underline"
+            >
+              Click here to view model comparison table
+            </button>
+          </div>
+        </div>
+
+        <div data-ai-model-panel="fefo">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm border border-slate-200 rounded-xl overflow-hidden">
+              <thead class="bg-auburn/10 text-slate-800">
+                <tr>
+                  <th class="px-4 py-2 text-left font-semibold">Equivalent time @ ref (days)</th>
+                  <th class="px-4 py-2 text-left font-semibold">Risk of Loss (%)</th>
+                  <th class="px-4 py-2 text-left font-semibold">Remaining (days)</th>
+                  <th class="px-4 py-2 text-left font-semibold">Remaining (%)</th>
+                  <th class="px-4 py-2 text-left font-semibold">Reduction (%)</th>
+                </tr>
+              </thead>
+              <tbody id="ai-fefo-body"></tbody>
+            </table>
+          </div>
+          <div id="ai-fefo-summary" class="mt-4 bg-auburn/5 rounded-xl p-4 text-slate-700 text-sm"></div>
+        </div>
+
+        <div data-ai-model-panel="avgq10" class="hidden">
+          <div id="ai-model-avgq10" class="rounded-xl border border-slate-200 p-4 text-sm text-slate-700 bg-white"></div>
+        </div>
+        <div data-ai-model-panel="q10int" class="hidden">
+          <div id="ai-model-q10int" class="rounded-xl border border-slate-200 p-4 text-sm text-slate-700 bg-white"></div>
+        </div>
+        <div data-ai-model-panel="arrint" class="hidden">
+          <div id="ai-model-arrint" class="rounded-xl border border-slate-200 p-4 text-sm text-slate-700 bg-white"></div>
+        </div>
+        <div data-ai-model-panel="mktq10" class="hidden">
+          <div id="ai-model-mktq10" class="rounded-xl border border-slate-200 p-4 text-sm text-slate-700 bg-white"></div>
+        </div>
+        <div data-ai-model-panel="mktarr" class="hidden">
+          <div id="ai-model-mktarr" class="rounded-xl border border-slate-200 p-4 text-sm text-slate-700 bg-white"></div>
+        </div>
+
+        <div class="mt-4 text-xs text-slate-500">
+          Baseline life is used only to compute remaining days.
+          <button id="ai-report-download" type="button" class="ml-2 text-auburn hover:underline">Download detailed calculation report</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="space-y-4">
+      <div class="bg-white border border-auburn/30 rounded-2xl shadow-sm p-4">
+        <h3 class="text-auburn font-semibold mb-3">Select Logger</h3>
+        <div id="ai-devices-empty" class="text-slate-500 text-sm hidden">No devices found.</div>
+        <div id="ai-devices-loading" class="text-slate-500 text-sm hidden">Loading devices...</div>
+        <div id="ai-devices-list" class="flex flex-col gap-2"></div>
+      </div>
+
+      <div class="bg-white border border-auburn/30 rounded-2xl shadow-sm p-4">
+        <h3 class="text-auburn font-semibold mb-3">Upload History</h3>
+        <div id="ai-history-empty" class="text-slate-500 text-sm">No uploads yet.</div>
+        <div id="ai-history-list" class="flex flex-col gap-2"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="ai-confidence-help-modal" class="fixed inset-0 z-50 hidden">
+  <div id="ai-confidence-help-backdrop" class="absolute inset-0 bg-slate-900/45"></div>
+  <div class="absolute inset-0 flex items-center justify-center p-4">
+    <div class="w-full max-w-2xl rounded-2xl bg-white border border-slate-200 shadow-xl">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+        <h3 class="text-auburn font-semibold">Confidence Report (Heuristic)</h3>
+        <button id="ai-confidence-help-close" type="button" class="text-slate-500 hover:text-slate-700 text-xl leading-none" aria-label="Close">
+          &times;
+        </button>
+      </div>
+      <div class="px-5 py-4 text-sm text-slate-700 space-y-3 max-h-[70vh] overflow-y-auto">
+        <p>
+          The confidence percentage is a <span class="font-semibold">heuristic decision-support score</span>.
+          It helps us judge how much to trust each model result for the current dataset quality and temperature pattern.
+          It is <span class="font-semibold">not</span> a lab-validated probability of correctness.
+        </p>
+        <div>
+          <div class="font-semibold text-slate-800 mb-1">How we score it (0-100%)</div>
+          <ul class="list-disc pl-5 space-y-1">
+            <li>Data quality: reading count, monitoring duration, and long gaps in the time series</li>
+            <li>Model agreement: how close the remaining shelf-life estimates are across methods</li>
+            <li>Model suitability: whether the temperature profile fits that method (spikes, variability, excursions)</li>
+            <li>Exposure severity: extreme warm exposure adds uncertainty to model assumptions</li>
+          </ul>
+        </div>
+        <div>
+          <div class="font-semibold text-slate-800 mb-1">How to interpret it</div>
+          <ul class="list-disc pl-5 space-y-1">
+            <li><span class="font-semibold">80-100%</span>: strong data coverage and/or good agreement with model suitability</li>
+            <li><span class="font-semibold">60-79%</span>: usable, but check the confidence note for limitations</li>
+            <li><span class="font-semibold">0-59%</span>: use caution; data gaps or model disagreement may be high</li>
+          </ul>
+        </div>
+        <p class="text-xs text-slate-500">
+          This can be replaced later with validated confidence after we collect ground-truth spoilage / QC outcomes.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="ai-model-comparison-modal" class="fixed inset-0 z-50 hidden">
+  <div id="ai-model-comparison-backdrop" class="absolute inset-0 bg-slate-900/45"></div>
+  <div class="absolute inset-0 flex items-center justify-center p-4">
+    <div class="w-full max-w-6xl rounded-2xl bg-white border border-slate-200 shadow-xl">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+        <h3 class="text-auburn font-semibold">Model Comparison Table (Heuristic / Proxy)</h3>
+        <button id="ai-model-comparison-close" type="button" class="text-slate-500 hover:text-slate-700 text-xl leading-none" aria-label="Close">
+          &times;
+        </button>
+      </div>
+      <div class="px-5 py-4 text-sm text-slate-700 space-y-4 max-h-[75vh] overflow-y-auto">
+        <div class="overflow-x-auto border border-slate-200 rounded-xl">
+          <table class="w-full min-w-[1200px] text-sm">
+            <thead class="bg-slate-100 text-slate-800">
+              <tr>
+                <th class="px-3 py-2 text-left font-semibold">Model</th>
+                <th class="px-3 py-2 text-left font-semibold">Ref SL (d)</th>
+                <th class="px-3 py-2 text-left font-semibold">Rem SL (d)</th>
+                <th class="px-3 py-2 text-left font-semibold">SL Red. (%)</th>
+                <th class="px-3 py-2 text-left font-semibold">Confidence (%)</th>
+                <th class="px-3 py-2 text-left font-semibold">Agreement Score (%)</th>
+                <th class="px-3 py-2 text-left font-semibold">Bias vs Consensus</th>
+                <th class="px-3 py-2 text-left font-semibold">Accuracy</th>
+                <th class="px-3 py-2 text-left font-semibold">AIC</th>
+                <th class="px-3 py-2 text-left font-semibold">RÂ²</th>
+                <th class="px-3 py-2 text-left font-semibold">RMSE</th>
+                <th class="px-3 py-2 text-left font-semibold">Rank</th>
+              </tr>
+            </thead>
+            <tbody id="ai-model-comparison-body"></tbody>
+          </table>
+        </div>
+        <div id="ai-model-comparison-summary" class="rounded-xl bg-auburn/5 border border-auburn/10 p-4 text-sm"></div>
+        <div class="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-700 space-y-2">
+          <div class="font-semibold text-slate-800">Table Terms Explained</div>
+          <div><span class="font-semibold">Ref SL (d):</span> Reference shelf life in days (the baseline shelf life value you entered).</div>
+          <div><span class="font-semibold">Rem SL (d):</span> Remaining shelf life predicted by that model for the selected temperature history.</div>
+          <div><span class="font-semibold">SL Red. (%):</span> Shelf-life reduction percentage compared to the reference shelf life.</div>
+          <div><span class="font-semibold">Confidence (%):</span> Heuristic confidence score based on data quality, model agreement, and profile suitability (not lab-validated accuracy).</div>
+          <div><span class="font-semibold">Agreement Score (%):</span> How close a model's prediction is to the group consensus (median of all model predictions). Higher means it agrees more with the other models.</div>
+          <div><span class="font-semibold">Bias vs Consensus:</span> Whether a model predicts more remaining life than the consensus (<span class="font-semibold">Optimistic</span>) or less (<span class="font-semibold">Conservative</span>). Neutral means it is close to consensus.</div>
+          <div><span class="font-semibold">Accuracy / AIC / RÂ² / RMSE:</span> These require real ground-truth validation data (lab/QC/spoilage outcomes). They are shown as N/A until that data is available.</div>
+          <div><span class="font-semibold">Rank:</span> A heuristic ranking for this dataset only, based on confidence, agreement score, and how well the model type fits the observed temperature pattern.</div>
+        </div>
+        <p class="text-xs text-slate-500">
+          Accuracy / AIC / RÂ² / RMSE are shown as N/A until ground-truth validation data is available.
+          Current ranking is heuristic and based on confidence, agreement, and profile suitability.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="{% static 'poultrydashboard/js/ai.js' %}"></script>
+{% endblock %}

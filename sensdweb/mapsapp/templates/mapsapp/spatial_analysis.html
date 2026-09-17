@@ -1,0 +1,3395 @@
+{% extends "gisdashboards/gisbase.html" %}
+{% load static %}
+
+{% block title %}SENSD - Spatial Analysis{% endblock %}
+
+
+{% block css %}
+
+<link
+    rel="stylesheet"
+    href="{% static 'mapsapp/vendor/leaflet/leaflet.css' %}?v=1.9.4"
+>
+
+<link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+>
+
+<link
+    rel="stylesheet"
+    href="{% static 'mapsapp/css/spatial_analysis.css' %}?v=20260917"
+>
+
+{% endblock %}
+
+
+{% block content %}
+
+<div id="dashboard-wrapper">
+
+
+    <!-- =====================================================
+         LEFT PANEL — MAP LAYERS
+         ===================================================== -->
+
+    <div id="toc-panel">
+
+        <div id="toc-header">
+
+            <span>
+                Map Layers
+            </span>
+
+            <button
+                id="toc-collapse-btn"
+                type="button"
+                title="Collapse Map Layers"
+            >
+                <i class="fa fa-chevron-left"></i>
+            </button>
+
+        </div>
+
+
+        <div id="toc-body">
+
+
+            <!-- =================================================
+                 BASEMAP
+                 ================================================= -->
+
+            <div class="toc-section">
+
+                <div
+                    class="toc-section-title"
+                    data-target="toc-basemap"
+                >
+
+                    <span>
+                        Basemap
+                    </span>
+
+                    <i class="fa fa-chevron-down toc-chevron"></i>
+
+                </div>
+
+
+                <div
+                    class="toc-section-body"
+                    id="toc-basemap"
+                >
+
+                    <div class="toc-select-row">
+
+                        <label for="basemap-select">
+                            Style
+                        </label>
+
+                        <select id="basemap-select">
+
+                            <option value="osm" selected>
+                                OpenStreetMap Standard
+                            </option>
+
+                            <option value="topo">
+                                OpenTopoMap
+                            </option>
+
+                            <option value="hot">
+                                Humanitarian (HOT)
+                            </option>
+
+                            <option value="states">
+                                SENSD U.S. States
+                            </option>
+
+                            <option value="none">
+                                Blank (No Basemap)
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 UNIFIED LAYERS
+                 ================================================= -->
+
+            <div class="toc-section">
+
+                <div
+                    class="toc-section-title"
+                    data-target="toc-layers"
+                >
+
+                    <span>
+                        Layers
+                    </span>
+
+                    <i class="fa fa-chevron-down toc-chevron"></i>
+
+                </div>
+
+
+                <div
+                    class="toc-section-body"
+                    id="toc-layers"
+                >
+
+                    <div
+                        id="toc-layers-empty"
+                        class="toc-empty-msg"
+                    >
+                        No layers yet.
+                    </div>
+
+
+                    <div id="toc-layers-list"></div>
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         LEFT RESIZE HANDLE
+         ===================================================== -->
+
+    <div
+        id="toc-resize-handle"
+        class="sidebar-resize-handle sidebar-resize-handle-left"
+        title="Drag to resize Map Layers"
+    ></div>
+
+
+    <!-- =====================================================
+         LEFT RESTORE BUTTON
+         ===================================================== -->
+
+    <button
+        id="toc-restore-btn"
+        class="sidebar-restore-btn sidebar-restore-left"
+        type="button"
+        title="Show Map Layers"
+        style="display:none;"
+    >
+        <i class="fa fa-chevron-right"></i>
+    </button>
+
+
+    <!-- =====================================================
+         CENTER — MAP
+         ===================================================== -->
+
+    <div id="dashboard-map-wrapper">
+
+        <div id="dashboard-map"></div>
+
+
+        <!-- Spatial analysis legend -->
+
+        <div
+            id="analysis-map-legend"
+            style="display:none;"
+        ></div>
+
+
+        <!-- Dashboard template overlays -->
+
+        <div
+            id="dash-executive-strip"
+            class="dash-layout-piece"
+            style="display:none;"
+        ></div>
+
+
+        <div
+            id="dash-analyst-panel"
+            class="dash-layout-piece"
+            style="display:none;"
+        ></div>
+
+
+        <div
+            id="dash-ops-table"
+            class="dash-layout-piece"
+            style="display:none;"
+        ></div>
+
+
+        <button
+            id="dash-presentation-exit"
+            class="dash-layout-piece"
+            type="button"
+            style="display:none;"
+        >
+            <i class="fa fa-xmark"></i>
+            Exit Presentation Mode
+        </button>
+
+    </div>
+
+
+    <!-- =====================================================
+         RIGHT RESIZE HANDLE
+         ===================================================== -->
+
+    <div
+        id="toolbox-resize-handle"
+        class="sidebar-resize-handle sidebar-resize-handle-right"
+        title="Drag to resize Toolbox"
+    ></div>
+
+
+    <!-- =====================================================
+         RIGHT RESTORE BUTTON
+         ===================================================== -->
+
+    <button
+        id="toolbox-restore-btn"
+        class="sidebar-restore-btn sidebar-restore-right"
+        type="button"
+        title="Show Toolbox"
+        style="display:none;"
+    >
+        <i class="fa fa-chevron-left"></i>
+    </button>
+
+
+    <!-- =====================================================
+         RIGHT PANEL — TOOLBOX
+         ===================================================== -->
+
+    <div id="toolbox-panel">
+
+
+        <!-- =================================================
+             TOOLBOX HEADER
+             ================================================= -->
+
+        <div id="toolbox-header">
+
+            <button
+                id="toolbox-collapse-btn"
+                type="button"
+                title="Collapse Toolbox"
+            >
+                <i class="fa fa-chevron-right"></i>
+            </button>
+
+
+            <span>
+                Toolbox
+            </span>
+
+        </div>
+
+
+        <div id="toolbox-body">
+
+
+            <!-- =================================================
+                 TOOLBOX TREE
+                 ================================================= -->
+
+            <div id="toolbox-list-view">
+
+                <div
+                    id="toolbox-tree"
+                    class="toolbox-tree"
+                >
+
+
+                    <!-- =========================================
+                         DATA MANAGEMENT
+                         ========================================= -->
+
+                    <div class="toolbox-tree-group">
+
+                        <button
+                            type="button"
+                            class="toolbox-tree-parent open"
+                            data-tree-target="tree-data-management"
+                        >
+
+                            <i class="fa fa-chevron-down toolbox-tree-chevron"></i>
+
+                            <span>
+                                Data Management
+                            </span>
+
+                        </button>
+
+
+                        <div
+                            class="toolbox-tree-children"
+                            id="tree-data-management"
+                        >
+
+                            <button
+                                type="button"
+                                class="toolbox-tree-leaf"
+                                data-tool="upload-data"
+                                data-title="Upload Data Layers"
+                            >
+
+                                <span class="toolbox-tree-branch"></span>
+
+                                <span>
+                                    Upload Data Layers
+                                </span>
+
+                            </button>
+
+
+                            <button
+                                type="button"
+                                class="toolbox-tree-leaf"
+                                data-tool="upload-flow"
+                                data-title="Upload Flow Data"
+                            >
+
+                                <span class="toolbox-tree-branch"></span>
+
+                                <span>
+                                    Upload Flow Data
+                                </span>
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =========================================
+                         LAYER STYLING
+                         ========================================= -->
+
+                    <div class="toolbox-tree-group">
+
+                        <button
+                            type="button"
+                            class="toolbox-tree-parent open"
+                            data-tree-target="tree-layer-styling"
+                        >
+
+                            <i class="fa fa-chevron-down toolbox-tree-chevron"></i>
+
+                            <span>
+                                Layer Styling
+                            </span>
+
+                        </button>
+
+
+                        <div
+                            class="toolbox-tree-children"
+                            id="tree-layer-styling"
+                        >
+
+                            <button
+                                type="button"
+                                class="toolbox-tree-leaf"
+                                data-tool="symbology"
+                                data-title="Symbology"
+                            >
+
+                                <span class="toolbox-tree-branch"></span>
+
+                                <span>
+                                    Symbology
+                                </span>
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =========================================
+                         MAP TEMPLATES
+                         ========================================= -->
+
+                    <div class="toolbox-tree-group">
+
+                        <button
+                            type="button"
+                            class="toolbox-tree-parent open"
+                            data-tree-target="tree-map-templates"
+                        >
+
+                            <i class="fa fa-chevron-down toolbox-tree-chevron"></i>
+
+                            <span>
+                                Map Templates
+                            </span>
+
+                        </button>
+
+
+                        <div
+                            class="toolbox-tree-children"
+                            id="tree-map-templates"
+                        >
+
+                            <button
+                                type="button"
+                                class="toolbox-tree-leaf"
+                                data-tool="dashboard-layouts"
+                                data-title="Dashboard Layouts"
+                            >
+
+                                <span class="toolbox-tree-branch"></span>
+
+                                <span>
+                                    Dashboard Layouts
+                                </span>
+
+                            </button>
+
+
+                            <button
+                                type="button"
+                                class="toolbox-tree-leaf"
+                                data-tool="export-layouts"
+                                data-title="Export Layouts"
+                            >
+
+                                <span class="toolbox-tree-branch"></span>
+
+                                <span>
+                                    Export Layouts
+                                </span>
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =========================================
+                         FLOW ANALYSIS
+                         ========================================= -->
+
+                    <div class="toolbox-tree-group">
+
+                        <button
+                            type="button"
+                            class="toolbox-tree-parent open"
+                            data-tree-target="tree-flow-analysis"
+                        >
+
+                            <i class="fa fa-chevron-down toolbox-tree-chevron"></i>
+
+                            <span>
+                                Flow Analysis
+                            </span>
+
+                        </button>
+
+
+                        <div
+                            class="toolbox-tree-children"
+                            id="tree-flow-analysis"
+                        >
+
+                            <button
+                                type="button"
+                                class="toolbox-tree-leaf"
+                                data-tool="flow-summary"
+                                data-title="Flow Summary"
+                            >
+
+                                <span class="toolbox-tree-branch"></span>
+
+                                <span>
+                                    Flow Summary
+                                </span>
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =========================================
+                         SPATIAL ANALYSIS
+                         ========================================= -->
+
+                    <div class="toolbox-tree-group">
+
+                        <button
+                            type="button"
+                            class="toolbox-tree-parent open"
+                            data-tree-target="tree-spatial-analysis"
+                        >
+
+                            <i class="fa fa-chevron-down toolbox-tree-chevron"></i>
+
+                            <span>
+                                Spatial Analysis
+                            </span>
+
+                        </button>
+
+
+                        <div
+                            class="toolbox-tree-children"
+                            id="tree-spatial-analysis"
+                        >
+
+
+                            <!-- Risk Map -->
+
+                            <button
+                                type="button"
+                                class="toolbox-tree-leaf"
+                                data-tool="salmonella-risk"
+                                data-title="Risk Map"
+                            >
+
+                                <span class="toolbox-tree-branch"></span>
+
+                                <span>
+                                    Risk Map
+                                </span>
+
+                            </button>
+
+
+                            <!-- Bivariate Analysis -->
+
+                            <button
+                                type="button"
+                                class="toolbox-tree-leaf"
+                                data-tool="bivariate"
+                                data-title="Bivariate Analysis"
+                            >
+
+                                <span class="toolbox-tree-branch"></span>
+
+                                <span>
+                                    Bivariate Analysis
+                                </span>
+
+                            </button>
+
+
+                            <!-- Hotspot Analysis -->
+
+                            <div class="toolbox-tree-subgroup">
+
+                                <button
+                                    type="button"
+                                    class="toolbox-tree-parent toolbox-tree-parent-nested open"
+                                    data-tree-target="tree-hotspot-analysis"
+                                >
+
+                                    <span class="toolbox-tree-branch"></span>
+
+                                    <i class="fa fa-chevron-down toolbox-tree-chevron"></i>
+
+                                    <span>
+                                        Hotspot Analysis
+                                    </span>
+
+                                </button>
+
+
+                                <div
+                                    class="toolbox-tree-children toolbox-tree-children-nested"
+                                    id="tree-hotspot-analysis"
+                                >
+
+                                    <button
+                                        type="button"
+                                        class="toolbox-tree-leaf toolbox-tree-leaf-nested"
+                                        data-tool="local-moran"
+                                        data-title="Hotspot Analysis"
+                                    >
+
+                                        <span class="toolbox-tree-branch"></span>
+
+                                        <span>
+                                            Local Moran's I (LISA)
+                                        </span>
+
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- Spatial Association Analysis -->
+
+                            <div class="toolbox-tree-subgroup">
+
+                                <button
+                                    type="button"
+                                    class="toolbox-tree-parent toolbox-tree-parent-nested open"
+                                    data-tree-target="tree-spatial-association"
+                                >
+
+                                    <span class="toolbox-tree-branch"></span>
+
+                                    <i class="fa fa-chevron-down toolbox-tree-chevron"></i>
+
+                                    <span>
+                                        Spatial Association Analysis
+                                    </span>
+
+                                </button>
+
+
+                                <div
+                                    class="toolbox-tree-children toolbox-tree-children-nested"
+                                    id="tree-spatial-association"
+                                >
+
+                                    <button
+                                        type="button"
+                                        class="toolbox-tree-leaf toolbox-tree-leaf-nested"
+                                        data-tool="spatial-association"
+                                        data-title="Spatial Association Analysis"
+                                    >
+
+                                        <span class="toolbox-tree-branch"></span>
+
+                                        <span>
+                                            Bivariate Moran's I
+                                        </span>
+
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- Spatial Regression Analysis -->
+
+                            <div class="toolbox-tree-subgroup">
+
+                                <button
+                                    type="button"
+                                    class="toolbox-tree-parent toolbox-tree-parent-nested open"
+                                    data-tree-target="tree-spatial-regression"
+                                >
+
+                                    <span class="toolbox-tree-branch"></span>
+
+                                    <i class="fa fa-chevron-down toolbox-tree-chevron"></i>
+
+                                    <span>
+                                        Spatial Regression Analysis
+                                    </span>
+
+                                </button>
+
+
+                                <div
+                                    class="toolbox-tree-children toolbox-tree-children-nested"
+                                    id="tree-spatial-regression"
+                                >
+
+                                    <button
+                                        type="button"
+                                        class="toolbox-tree-leaf toolbox-tree-leaf-nested"
+                                        data-tool="spatial-regression"
+                                        data-title="Spatial Regression Analysis"
+                                    >
+
+                                        <span class="toolbox-tree-branch"></span>
+
+                                        <span>
+                                            OLS + Spatial Diagnostics
+                                        </span>
+
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+
+                        </div>
+
+                    </div>
+
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 TOOLBOX DETAIL VIEW
+                 ================================================= -->
+
+            <div
+                id="toolbox-detail-view"
+                style="display:none;"
+            >
+
+
+                <!-- =============================================
+                     DETAIL HEADER
+                     ============================================= -->
+
+                <div id="toolbox-detail-header">
+
+                    <button
+                        id="toolbox-back-btn"
+                        type="button"
+                        title="Back to Toolbox"
+                    >
+                        <i class="fa fa-arrow-left"></i>
+                    </button>
+
+
+                    <span id="toolbox-detail-title">
+                        Tool
+                    </span>
+
+                </div>
+
+
+                <!-- =============================================
+                     UPLOAD DATA
+                     ============================================= -->
+
+                <div
+                    class="tool-page"
+                    id="page-upload-data"
+                    style="display:none;"
+                >
+
+                    <div class="analysis-section-label">
+                        Upload Data Layers
+                    </div>
+
+                
+                    <div id="reference-drop-zone">
+
+                        <span>
+                            Drop a data file here or click to browse (.csv,.xlsx,.xls,.geojson,.json)
+                        </span>
+
+                        <input
+                            type="file"
+                            id="reference-file-input"
+                            accept=".csv,.xlsx,.xls,.geojson,.json"
+                        >
+
+                    </div>
+
+
+                    <div id="reference-file-name"></div>
+
+
+                    <div
+                        id="reference-coordinate-config"
+                        style="display:none;"
+                    >
+
+                        <div class="sym-select-row">
+
+                            <label for="reference-lat-column">
+                                Latitude Field
+                            </label>
+
+                            <select id="reference-lat-column">
+
+                                <option value="">
+                                    — select latitude —
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="sym-select-row">
+
+                            <label for="reference-lng-column">
+                                Longitude Field
+                            </label>
+
+                            <select id="reference-lng-column">
+
+                                <option value="">
+                                    — select longitude —
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+
+                    <button
+                        id="reference-upload-btn"
+                        class="tool-btn"
+                        type="button"
+                        disabled
+                    >
+                        Upload & Add to Map
+                    </button>
+
+
+                    <div
+                        id="reference-upload-status"
+                        class="spatial-analysis-status"
+                    ></div>
+
+                </div>
+
+
+                <!-- =============================================
+                     UPLOAD FLOW
+                     ============================================= -->
+
+                <div
+                    class="tool-page"
+                    id="page-upload-flow"
+                    style="display:none;"
+                >
+
+                    <div class="analysis-section-label">
+                        Upload Flow Data
+                    </div>
+
+
+                    <div id="upload-drop-zone">
+
+                        <span>
+                            Drop flow data here or click to browse (.csv,.xlsx,.xls,.geojson,.json)
+                        </span>
+
+                        <input
+                            type="file"
+                            id="dash-file-input"
+                            accept=".csv,.xlsx,.xls"
+                        >
+
+                    </div>
+
+
+                    <div id="upload-file-name"></div>
+
+
+                    <div
+                        id="flow-column-mapping"
+                        style="display:none;"
+                    >
+
+                        <div class="analysis-section-label">
+                            Data Upload
+                        </div>
+
+
+                        <div class="tool-hint-text">
+                            Required fields are marked with *.
+                            Optional descriptive fields may be left blank.
+                        </div>
+
+
+                        <div class="sym-select-row">
+                            <label for="map-from-id">From ID *</label>
+                            <select id="map-from-id">
+                                <option value="">— select field —</option>
+                            </select>
+                        </div>
+
+
+                        <div class="sym-select-row">
+                            <label for="map-from-node">From Node</label>
+                            <select id="map-from-node">
+                                <option value="">— optional —</option>
+                            </select>
+                        </div>
+
+
+                        <div class="sym-select-row">
+                            <label for="map-from-city-area">From City / Area</label>
+                            <select id="map-from-city-area">
+                                <option value="">— optional —</option>
+                            </select>
+                        </div>
+
+
+                        <div class="sym-select-row">
+                            <label for="map-from-state">From State</label>
+                            <select id="map-from-state">
+                                <option value="">— optional —</option>
+                            </select>
+                        </div>
+
+
+                        <div class="sym-select-row">
+                            <label for="map-from-latitude">From Latitude *</label>
+                            <select id="map-from-latitude">
+                                <option value="">— select field —</option>
+                            </select>
+                        </div>
+
+
+                        <div class="sym-select-row">
+                            <label for="map-from-longitude">From Longitude *</label>
+                            <select id="map-from-longitude">
+                                <option value="">— select field —</option>
+                            </select>
+                        </div>
+
+
+                        <div class="sym-select-row">
+                            <label for="map-to-id">To ID *</label>
+                            <select id="map-to-id">
+                                <option value="">— select field —</option>
+                            </select>
+                        </div>
+
+
+                        <div class="sym-select-row">
+                            <label for="map-to-node">To Node</label>
+                            <select id="map-to-node">
+                                <option value="">— optional —</option>
+                            </select>
+                        </div>
+
+
+                        <div class="sym-select-row">
+                            <label for="map-to-city-area">To City / Area</label>
+                            <select id="map-to-city-area">
+                                <option value="">— optional —</option>
+                            </select>
+                        </div>
+
+
+                        <div class="sym-select-row">
+                            <label for="map-to-state">To State</label>
+                            <select id="map-to-state">
+                                <option value="">— optional —</option>
+                            </select>
+                        </div>
+
+
+                        <div class="sym-select-row">
+                            <label for="map-to-latitude">To Latitude *</label>
+                            <select id="map-to-latitude">
+                                <option value="">— select field —</option>
+                            </select>
+                        </div>
+
+
+                        <div class="sym-select-row">
+                            <label for="map-to-longitude">To Longitude *</label>
+                            <select id="map-to-longitude">
+                                <option value="">— select field —</option>
+                            </select>
+                        </div>
+
+
+                        <div class="sym-select-row">
+                            <label for="map-quantity">Quantity *</label>
+                            <select id="map-quantity">
+                                <option value="">— select field —</option>
+                            </select>
+                        </div>
+
+
+                        <div class="sym-select-row">
+                            <label for="map-product-type-i">Product Type From</label>
+                            <select id="map-product-type-i">
+                                <option value="">— optional —</option>
+                            </select>
+                        </div>
+
+
+                        <div class="sym-select-row">
+                            <label for="map-product-type-j">Product Type To</label>
+                            <select id="map-product-type-j">
+                                <option value="">— optional —</option>
+                            </select>
+                        </div>
+
+                    </div>
+
+
+                    <button
+                        id="dash-upload-btn"
+                        class="tool-btn"
+                        type="button"
+                        disabled
+                    >
+                        Upload & Process
+                    </button>
+
+
+                    <div
+                        id="dash-upload-status"
+                        class="spatial-analysis-status"
+                    ></div>
+
+                </div>
+
+
+                <!-- =============================================
+                     SYMBOLOGY
+                     ============================================= -->
+
+                <div
+                    class="tool-page"
+                    id="page-symbology"
+                    style="display:none;"
+                >
+
+                    <div class="analysis-section-label">
+                        Symbology
+                    </div>
+
+
+                    <div class="sym-select-row">
+
+                        <label for="sym-layer-select">
+                            Flow Layer
+                        </label>
+
+                        <select id="sym-layer-select">
+                            <option value="">— select a flow layer —</option>
+                        </select>
+
+                    </div>
+
+
+                    <div
+                        id="sym-controls"
+                        style="display:none;"
+                    >
+
+                        <div class="sym-row">
+                            <label for="sym-line-color">Line Color</label>
+                            <input
+                                type="color"
+                                id="sym-line-color"
+                                value="#e74c3c"
+                            >
+                        </div>
+
+
+                        <div class="sym-row">
+                            <label for="sym-point-color">Point Color</label>
+                            <input
+                                type="color"
+                                id="sym-point-color"
+                                value="#3a86ff"
+                            >
+                        </div>
+
+
+                        <div class="sym-row">
+
+                            <label for="sym-weight">
+                                Line Width
+                                <span id="sym-weight-val">3</span>
+                                px
+                            </label>
+
+                            <input
+                                type="range"
+                                id="sym-weight"
+                                min="1"
+                                max="12"
+                                value="3"
+                            >
+
+                        </div>
+
+
+                        <div class="sym-row">
+
+                            <label for="sym-radius">
+                                Point Size
+                                <span id="sym-radius-val">6</span>
+                                px
+                            </label>
+
+                            <input
+                                type="range"
+                                id="sym-radius"
+                                min="2"
+                                max="16"
+                                value="6"
+                            >
+
+                        </div>
+
+
+                        <div class="sym-row">
+
+                            <label for="sym-opacity">
+                                Opacity
+                                <span id="sym-opacity-val">75</span>
+                                %
+                            </label>
+
+                            <input
+                                type="range"
+                                id="sym-opacity"
+                                min="10"
+                                max="100"
+                                value="75"
+                            >
+
+                        </div>
+
+
+                        <button
+                            id="sym-apply-btn"
+                            class="tool-btn"
+                            type="button"
+                        >
+                            Apply
+                        </button>
+
+
+                        <button
+                            id="sym-reset-btn"
+                            class="tool-btn tool-btn-secondary"
+                            type="button"
+                        >
+                            Reset
+                        </button>
+
+                    </div>
+
+
+                    <div
+                        id="sym-empty-msg"
+                        class="toc-empty-msg"
+                    >
+                        Upload a flow layer first.
+                    </div>
+
+                </div>
+
+
+                <!-- =============================================
+                     DASHBOARD LAYOUTS
+                     ============================================= -->
+
+                <div
+                    class="tool-page"
+                    id="page-dashboard-layouts"
+                    style="display:none;"
+                >
+
+                    <div class="analysis-section-label">
+                        Dashboard Layouts
+                    </div>
+
+
+                    <div class="tool-hint-text">
+                        Select how the map and dashboard information
+                        should be arranged on screen.
+                    </div>
+
+
+                    <div
+                        class="template-inline-gallery"
+                        id="dashboard-layout-gallery"
+                    >
+
+                        <button
+                            type="button"
+                            class="gallery-tile active"
+                            data-dashboard="standard"
+                        >
+                            <div class="tile-preview tp-standard">
+                                <div class="tp-map"></div>
+                            </div>
+                            <div class="tile-label">Standard View</div>
+                            <div class="tile-desc">
+                                Standard map with both side panels.
+                            </div>
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="gallery-tile"
+                            data-dashboard="analyst"
+                        >
+                            <div class="tile-preview tp-analyst">
+                                <div class="tp-map"></div>
+                                <div class="tp-side"></div>
+                            </div>
+                            <div class="tile-label">Analyst Workspace</div>
+                            <div class="tile-desc">
+                                Map with analytical information.
+                            </div>
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="gallery-tile"
+                            data-dashboard="executive"
+                        >
+                            <div class="tile-preview tp-executive">
+                                <div class="tp-strip"></div>
+                                <div class="tp-map"></div>
+                            </div>
+                            <div class="tile-label">Executive Overview</div>
+                            <div class="tile-desc">
+                                KPI summary above the map.
+                            </div>
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="gallery-tile"
+                            data-dashboard="operations"
+                        >
+                            <div class="tile-preview tp-operations">
+                                <div class="tp-map"></div>
+                                <div class="tp-table"></div>
+                            </div>
+                            <div class="tile-label">Operations Monitor</div>
+                            <div class="tile-desc">
+                                Map with operational flow table.
+                            </div>
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="gallery-tile"
+                            data-dashboard="presentation"
+                        >
+                            <div class="tile-preview tp-presentation">
+                                <div class="tp-map-full"></div>
+                            </div>
+                            <div class="tile-label">Presentation Mode</div>
+                            <div class="tile-desc">
+                                Full-map presentation layout.
+                            </div>
+                        </button>
+
+                    </div>
+
+
+                    <div id="active-template-tags">
+
+                        <span
+                            class="active-tag"
+                            id="active-dashboard-tag"
+                        >
+                            Dashboard: Standard View
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =============================================
+                     EXPORT LAYOUTS
+                     ============================================= -->
+
+                <div
+                    class="tool-page"
+                    id="page-export-layouts"
+                    style="display:none;"
+                >
+
+                    <div class="analysis-section-label">
+                        Export Layouts
+                    </div>
+
+
+                    <div class="tool-hint-text">
+                        Select an output format and export the
+                        current map view.
+                    </div>
+
+
+                    <div
+                        class="template-inline-gallery"
+                        id="export-layout-gallery"
+                    >
+
+                        <button
+                            type="button"
+                            class="gallery-tile active"
+                            data-layout="a4_portrait"
+                        >
+                            <div class="tile-preview tswatch-a4-portrait">
+                                <div class="page-shape page-portrait"></div>
+                            </div>
+                            <div class="tile-label">A4 Portrait</div>
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="gallery-tile"
+                            data-layout="a4_landscape"
+                        >
+                            <div class="tile-preview tswatch-a4-landscape">
+                                <div class="page-shape page-landscape"></div>
+                            </div>
+                            <div class="tile-label">A4 Landscape</div>
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="gallery-tile"
+                            data-layout="presentation"
+                        >
+                            <div class="tile-preview tswatch-presentation"></div>
+                            <div class="tile-label">Presentation Layout</div>
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="gallery-tile"
+                            data-layout="social"
+                        >
+                            <div class="tile-preview tswatch-social"></div>
+                            <div class="tile-label">Social / Poster</div>
+                        </button>
+
+                    </div>
+
+
+                    <div class="modal-export-fields">
+
+                        <div
+                            class="sym-row"
+                            style="
+                                flex-direction:column;
+                                align-items:stretch;
+                                gap:4px;
+                            "
+                        >
+
+                            <label for="export-title">
+                                Title
+                            </label>
+
+                            <input
+                                type="text"
+                                id="export-title"
+                                value="SENSD Flow Map"
+                                placeholder="Map title"
+                            >
+
+                        </div>
+
+
+                        <div
+                            class="sym-row"
+                            style="
+                                flex-direction:column;
+                                align-items:stretch;
+                                gap:4px;
+                            "
+                        >
+
+                            <label for="export-subtitle">
+                                Subtitle / Source
+                            </label>
+
+                            <input
+                                type="text"
+                                id="export-subtitle"
+                                placeholder="Data source, date, notes..."
+                            >
+
+                        </div>
+
+
+                        <div class="sym-row">
+
+                            <label for="export-include-legend">
+                                Legend
+                            </label>
+
+                            <input
+                                type="checkbox"
+                                id="export-include-legend"
+                                checked
+                            >
+
+                        </div>
+
+
+                        <div class="sym-row">
+
+                            <label for="export-include-north">
+                                North Arrow
+                            </label>
+
+                            <input
+                                type="checkbox"
+                                id="export-include-north"
+                                checked
+                            >
+
+                        </div>
+
+
+                        <div class="sym-row">
+
+                            <label for="export-include-scale">
+                                Scale Bar
+                            </label>
+
+                            <input
+                                type="checkbox"
+                                id="export-include-scale"
+                                checked
+                            >
+
+                        </div>
+
+
+                        <button
+                            id="export-map-btn"
+                            class="tool-btn"
+                            type="button"
+                        >
+                            Export Map
+                        </button>
+
+
+                        <div id="export-status"></div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =============================================
+                     FLOW SUMMARY
+                     ============================================= -->
+
+                <div
+                    class="tool-page"
+                    id="page-flow-summary"
+                    style="display:none;"
+                >
+
+                    <div class="analysis-section-label">
+                        Flow Summary
+                    </div>
+
+
+                    <div class="sym-select-row">
+
+                        <label for="analysis-layer-select">
+                            Flow Layer
+                        </label>
+
+                        <select id="analysis-layer-select">
+                            <option value="">— select a flow layer —</option>
+                        </select>
+
+                    </div>
+
+
+                    <button
+                        id="run-analysis-btn"
+                        class="tool-btn"
+                        type="button"
+                    >
+                        Run Analysis
+                    </button>
+
+
+                    <div
+                        id="analysis-results"
+                        style="display:none;"
+                    >
+
+                        <div class="stat-grid">
+
+                            <div class="stat-card">
+                                <div class="stat-val" id="stat-total-flows">—</div>
+                                <div class="stat-label">Total Flows</div>
+                            </div>
+
+                            <div class="stat-card">
+                                <div class="stat-val" id="stat-total-qty">—</div>
+                                <div class="stat-label">Total Quantity</div>
+                            </div>
+
+                            <div class="stat-card">
+                                <div class="stat-val" id="stat-avg-qty">—</div>
+                                <div class="stat-label">Avg Quantity</div>
+                            </div>
+
+                            <div class="stat-card">
+                                <div class="stat-val" id="stat-max-qty">—</div>
+                                <div class="stat-label">Max Quantity</div>
+                            </div>
+
+                        </div>
+
+
+                        <div class="analysis-section-label">
+                            Product Mix
+                        </div>
+
+                        <div id="product-mix-chart"></div>
+
+
+                        <div class="analysis-section-label">
+                            Top 5 Flows by Quantity
+                        </div>
+
+                        <div id="top-flows-chart"></div>
+
+
+                        <div class="analysis-section-label">
+                            Filter by Product Type
+                        </div>
+
+                        <div id="product-filter-row"></div>
+
+                    </div>
+
+
+                    <div
+                        id="analysis-empty-msg"
+                        class="toc-empty-msg"
+                    >
+                        Upload a flow layer first.
+                    </div>
+
+                </div>
+
+
+                <!-- =============================================
+                     RISK MAP
+                     ============================================= -->
+
+                <div
+                    class="tool-page"
+                    id="page-salmonella-risk"
+                    style="display:none;"
+                >
+
+                    <div class="analysis-section-label">
+                        Risk Map
+                    </div>
+
+
+                    <div class="tool-hint-text">
+                        Calculate cases per 100,000
+                        population and classify locations using
+                        relative percentile-based risk categories.
+                    </div>
+
+
+                    <div class="sym-select-row">
+
+                        <label for="spatial-salmonella-file">
+                            Dataset *
+                        </label>
+
+                        <input
+                            type="file"
+                            id="spatial-salmonella-file"
+                            accept=".geojson,.json"
+                        >
+
+                    </div>
+
+
+                    <div
+                        id="spatial-salmonella-file-name"
+                        class="spatial-analysis-file-name"
+                    ></div>
+
+
+                    <div class="sym-select-row">
+
+                        <label for="spatial-salmonella-geography-column">
+                            Geography Field *
+                        </label>
+
+                        <select id="spatial-salmonella-geography-column">
+                            <option value="">
+                                — select unique geography field —
+                            </option>
+                        </select>
+
+                    </div>
+
+
+                    <div class="sym-select-row">
+
+                        <label for="spatial-salmonella-cases-column">
+                            Salmonella Cases *
+                        </label>
+
+                        <select id="spatial-salmonella-cases-column">
+                            <option value="">
+                                — select cases field —
+                            </option>
+                        </select>
+
+                    </div>
+
+
+                    <div class="sym-select-row">
+
+                        <label for="spatial-salmonella-population-column">
+                            Population *
+                        </label>
+
+                        <select id="spatial-salmonella-population-column">
+                            <option value="">
+                                — select population field —
+                            </option>
+                        </select>
+
+                    </div>
+
+
+                    <button
+                        id="spatial-salmonella-generate-btn"
+                        class="tool-btn"
+                        type="button"
+                        disabled
+                    >
+                        Generate Risk Map
+                    </button>
+
+
+                    <div
+                        id="spatial-salmonella-status"
+                        class="spatial-analysis-status"
+                    ></div>
+
+                </div>
+
+
+                <!-- =============================================
+                     BIVARIATE ANALYSIS
+                     ============================================= -->
+
+                <div
+                    class="tool-page"
+                    id="page-bivariate"
+                    style="display:none;"
+                >
+
+                    <div class="analysis-section-label">
+                        Bivariate Analysis
+                    </div>
+
+
+                    <div class="tool-hint-text">
+                        Compare two numeric variables simultaneously
+                        using a 3 × 3 bivariate classification within
+                        the same geographic unit.
+                    </div>
+
+
+                    <div class="sym-select-row">
+
+                        <label for="spatial-bivariate-file">
+                            Dataset *
+                        </label>
+
+                        <input
+                            type="file"
+                            id="spatial-bivariate-file"
+                            accept=".geojson,.json"
+                        >
+
+                    </div>
+
+
+                    <div
+                        id="spatial-bivariate-file-name"
+                        class="spatial-analysis-file-name"
+                    ></div>
+
+
+                    <div class="sym-select-row">
+
+                        <label for="spatial-bivariate-geography-column">
+                            Geography Field *
+                        </label>
+
+                        <select id="spatial-bivariate-geography-column">
+                            <option value="">
+                                — select unique geography field —
+                            </option>
+                        </select>
+
+                    </div>
+
+
+                    <div class="tool-hint-text">
+                        Use a unique polygon identifier such as GEOID.
+                    </div>
+
+
+                    <div class="sym-select-row">
+
+                        <label for="spatial-bivariate-state-column">
+                            State Name Field
+                        </label>
+
+                        <select id="spatial-bivariate-state-column">
+                            <option value="">— optional —</option>
+                        </select>
+
+                    </div>
+
+
+                    <div class="sym-select-row">
+
+                        <label for="spatial-bivariate-county-column">
+                            County Name Field
+                        </label>
+
+                        <select id="spatial-bivariate-county-column">
+                            <option value="">— optional —</option>
+                        </select>
+
+                    </div>
+
+
+                    <div class="sym-select-row">
+
+                        <label for="spatial-bivariate-x-column">
+                            Variable 1 — X *
+                        </label>
+
+                        <select id="spatial-bivariate-x-column">
+                            <option value="">— select numeric field —</option>
+                        </select>
+
+                    </div>
+
+
+                    <div class="sym-select-row">
+
+                        <label for="spatial-bivariate-y-column">
+                            Variable 2 — Y *
+                        </label>
+
+                        <select id="spatial-bivariate-y-column">
+                            <option value="">— select numeric field —</option>
+                        </select>
+
+                    </div>
+
+
+                    <button
+                        id="spatial-bivariate-generate-btn"
+                        class="tool-btn"
+                        type="button"
+                        disabled
+                    >
+                        Run Bivariate Analysis
+                    </button>
+
+
+                    <div
+                        id="spatial-bivariate-status"
+                        class="spatial-analysis-status"
+                    ></div>
+
+                </div>
+
+
+                <!-- =============================================
+                     LOCAL MORAN
+                     ============================================= -->
+
+                <div
+                    class="tool-page"
+                    id="page-local-moran"
+                    style="display:none;"
+                >
+
+                    <div class="analysis-section-label">
+                        Hotspot Analysis
+                    </div>
+
+
+                    <div
+                        class="spatial-analysis-card"
+                        id="spatial-local-moran-card"
+                    >
+
+                        <div class="spatial-analysis-card-header">
+
+                            <div>
+
+                                <div class="spatial-analysis-card-title">
+                                    Local Hotspot & Spatial Outlier Analysis
+                                </div>
+
+
+                                <div class="spatial-analysis-card-subtitle">
+                                    Local Moran's I (LISA)
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div
+                            class="tool-hint-text"
+                            style="margin-bottom:12px;"
+                        >
+                            Identify statistically significant
+                            high-value clusters, low-value clusters,
+                            and spatial outliers using Local Moran's I.
+                        </div>
+
+
+                        <div class="sym-select-row">
+
+                            <label for="spatial-local-moran-file">
+                                Dataset *
+                            </label>
+
+                            <input
+                                type="file"
+                                id="spatial-local-moran-file"
+                                accept=".geojson,.json"
+                            >
+
+                        </div>
+
+
+                        <div
+                            id="spatial-local-moran-file-name"
+                            class="spatial-analysis-file-name"
+                        ></div>
+
+
+                        <div class="sym-select-row">
+
+                            <label for="spatial-local-moran-geography-column">
+                                Geography Field *
+                            </label>
+
+                            <select id="spatial-local-moran-geography-column">
+                                <option value="">
+                                    — select unique geography field —
+                                </option>
+                            </select>
+
+                        </div>
+
+
+                        <div class="tool-hint-text">
+                            Select a unique polygon identifier such as GEOID.
+                        </div>
+
+
+                        <div class="sym-select-row">
+
+                            <label for="spatial-local-moran-state-column">
+                                State Name Field
+                            </label>
+
+                            <select id="spatial-local-moran-state-column">
+                                <option value="">— optional —</option>
+                            </select>
+
+                        </div>
+
+
+                        <div class="sym-select-row">
+
+                            <label for="spatial-local-moran-county-column">
+                                County Name Field
+                            </label>
+
+                            <select id="spatial-local-moran-county-column">
+                                <option value="">— optional —</option>
+                            </select>
+
+                        </div>
+
+
+                        <div class="sym-select-row">
+
+                            <label for="spatial-local-moran-value-column">
+                                Analysis Variable *
+                            </label>
+
+                            <select id="spatial-local-moran-value-column">
+                                <option value="">— select numeric field —</option>
+                            </select>
+
+                        </div>
+
+
+                        <div class="analysis-section-label">
+                            Method
+                        </div>
+
+
+                        <div class="spatial-analysis-method-box">
+
+                            <div class="spatial-analysis-method-row">
+                                <span>Method</span>
+                                <strong>Local Moran's I (LISA)</strong>
+                            </div>
+
+                        </div>
+
+
+                        <details class="spatial-method-details">
+
+                            <summary
+                                style="
+                                    cursor:pointer;
+                                    padding:7px 0;
+                                    font-size:11px;
+                                    font-weight:600;
+                                "
+                            >
+                                Method Details
+                            </summary>
+
+                            <div class="spatial-analysis-method-box">
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Spatial relationship</span>
+                                    <strong>Queen contiguity</strong>
+                                </div>
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Weight transformation</span>
+                                    <strong>Row-standardized</strong>
+                                </div>
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Inference</span>
+                                    <strong>Conditional permutations</strong>
+                                </div>
+
+                            </div>
+
+                        </details>
+
+
+                        <div class="analysis-section-label">
+                            Statistical Settings
+                        </div>
+
+
+                        <div class="sym-select-row">
+
+                            <label for="spatial-local-moran-permutations">
+                                Permutations
+                            </label>
+
+                            <input
+                                type="number"
+                                id="spatial-local-moran-permutations"
+                                value="999"
+                                min="1"
+                                step="1"
+                            >
+
+                        </div>
+
+
+                        <div class="sym-select-row">
+
+                            <label for="spatial-local-moran-significance">
+                                Significance Level
+                            </label>
+
+                            <select id="spatial-local-moran-significance">
+
+                                <option value="0.10">0.10</option>
+
+                                <option
+                                    value="0.05"
+                                    selected
+                                >
+                                    0.05
+                                </option>
+
+                                <option value="0.01">0.01</option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="sym-select-row">
+
+                            <label for="spatial-local-moran-seed">
+                                Random Seed
+                            </label>
+
+                            <input
+                                type="number"
+                                id="spatial-local-moran-seed"
+                                value="12345"
+                                step="1"
+                            >
+
+                        </div>
+
+
+                        <button
+                            id="spatial-local-moran-generate-btn"
+                            class="tool-btn"
+                            type="button"
+                            disabled
+                        >
+                            Run Hotspot Analysis
+                        </button>
+
+
+                        <div
+                            id="spatial-local-moran-status"
+                            class="spatial-analysis-status"
+                        ></div>
+
+
+                        <div
+                            id="spatial-local-moran-summary"
+                            style="display:none;"
+                        >
+
+                            <div class="analysis-section-label">
+                                Results
+                            </div>
+
+
+                            <div class="stat-grid">
+
+                                <div class="stat-card">
+                                    <div
+                                        class="stat-val"
+                                        id="spatial-local-moran-hotspot-count"
+                                    >
+                                        —
+                                    </div>
+                                    <div class="stat-label">
+                                        Hot Spots
+                                    </div>
+                                </div>
+
+
+                                <div class="stat-card">
+                                    <div
+                                        class="stat-val"
+                                        id="spatial-local-moran-coldspot-count"
+                                    >
+                                        —
+                                    </div>
+                                    <div class="stat-label">
+                                        Cold Spots
+                                    </div>
+                                </div>
+
+
+                                <div class="stat-card">
+                                    <div
+                                        class="stat-val"
+                                        id="spatial-local-moran-hl-count"
+                                    >
+                                        —
+                                    </div>
+                                    <div class="stat-label">
+                                        High-Low Outliers
+                                    </div>
+                                </div>
+
+
+                                <div class="stat-card">
+                                    <div
+                                        class="stat-val"
+                                        id="spatial-local-moran-lh-count"
+                                    >
+                                        —
+                                    </div>
+                                    <div class="stat-label">
+                                        Low-High Outliers
+                                    </div>
+                                </div>
+
+                            </div>
+
+
+                            <div class="spatial-analysis-method-box">
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Significant locations</span>
+                                    <strong id="spatial-local-moran-significant-count">
+                                        —
+                                    </strong>
+                                </div>
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Not significant</span>
+                                    <strong id="spatial-local-moran-ns-count">
+                                        —
+                                    </strong>
+                                </div>
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Isolated polygons</span>
+                                    <strong id="spatial-local-moran-island-count">
+                                        —
+                                    </strong>
+                                </div>
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Mean neighbors</span>
+                                    <strong id="spatial-local-moran-mean-neighbors">
+                                        —
+                                    </strong>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =============================================
+                     SPATIAL ASSOCIATION
+                     ============================================= -->
+
+                <div
+                    class="tool-page"
+                    id="page-spatial-association"
+                    style="display:none;"
+                >
+
+                    <div class="analysis-section-label">
+                        Spatial Association Analysis
+                    </div>
+
+
+                    <div
+                        class="spatial-analysis-card"
+                        id="spatial-association-card"
+                    >
+
+                        <div class="spatial-analysis-card-header">
+
+                            <div>
+
+                                <div class="spatial-analysis-card-title">
+                                    Bivariate Spatial Association
+                                </div>
+
+
+                                <div class="spatial-analysis-card-subtitle">
+                                    Global and Local Bivariate Moran's I
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div
+                            class="tool-hint-text"
+                            style="margin-bottom:12px;"
+                        >
+                            Evaluate whether Variable X in a focal
+                            polygon is spatially associated with
+                            Variable Y in neighboring polygons.
+                        </div>
+
+
+                        <div class="sym-select-row">
+
+                            <label for="spatial-association-file">
+                                Dataset *
+                            </label>
+
+                            <input
+                                type="file"
+                                id="spatial-association-file"
+                                accept=".geojson,.json"
+                            >
+
+                        </div>
+
+
+                        <div
+                            id="spatial-association-file-name"
+                            class="spatial-analysis-file-name"
+                        ></div>
+
+
+                        <div class="sym-select-row">
+
+                            <label for="spatial-association-geography-column">
+                                Geography Field *
+                            </label>
+
+                            <select id="spatial-association-geography-column">
+
+                                <option value="">
+                                    — select unique geography field —
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="sym-select-row">
+
+                            <label for="spatial-association-state-column">
+                                State Name Field
+                            </label>
+
+                            <select id="spatial-association-state-column">
+                                <option value="">
+                                    — optional —
+                                </option>
+                            </select>
+
+                        </div>
+
+
+                        <div class="sym-select-row">
+
+                            <label for="spatial-association-county-column">
+                                County Name Field
+                            </label>
+
+                            <select id="spatial-association-county-column">
+                                <option value="">
+                                    — optional —
+                                </option>
+                            </select>
+
+                        </div>
+
+
+                        <div class="sym-select-row">
+
+                            <label for="spatial-association-x-column">
+                                Variable 1 — X *
+                            </label>
+
+                            <select id="spatial-association-x-column">
+                                <option value="">
+                                    — select numeric field —
+                                </option>
+                            </select>
+
+                        </div>
+
+
+                        <div class="sym-select-row">
+
+                            <label for="spatial-association-y-column">
+                                Variable 2 — Y *
+                            </label>
+
+                            <select id="spatial-association-y-column">
+                                <option value="">
+                                    — select numeric field —
+                                </option>
+                            </select>
+
+                        </div>
+
+
+                        <div class="analysis-section-label">
+                            Analysis Direction
+                        </div>
+
+
+                        <div class="spatial-analysis-method-box">
+
+                            <div class="spatial-analysis-method-row">
+                                <span>Focal variable</span>
+                                <strong>Variable X</strong>
+                            </div>
+
+                            <div class="spatial-analysis-method-row">
+                                <span>Neighboring variable</span>
+                                <strong>Spatial lag of Variable Y</strong>
+                            </div>
+
+                            <div class="spatial-analysis-method-row">
+                                <span>Direction</span>
+                                <strong>X → Neighboring Y</strong>
+                            </div>
+
+                        </div>
+
+
+                        <div class="analysis-section-label">
+                            Method
+                        </div>
+
+
+                        <div class="spatial-analysis-method-box">
+
+                            <div class="spatial-analysis-method-row">
+                                <span>Method</span>
+                                <strong>Bivariate Moran's I</strong>
+                            </div>
+
+                        </div>
+
+
+                        <details class="spatial-method-details">
+
+                            <summary
+                                style="
+                                    cursor:pointer;
+                                    padding:7px 0;
+                                    font-size:11px;
+                                    font-weight:600;
+                                "
+                            >
+                                Method Details
+                            </summary>
+
+                            <div class="spatial-analysis-method-box">
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Global statistic</span>
+                                    <strong>Bivariate Moran's I</strong>
+                                </div>
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Local statistic</span>
+                                    <strong>Local Bivariate Moran's I</strong>
+                                </div>
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Spatial relationship</span>
+                                    <strong>Queen contiguity</strong>
+                                </div>
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Weight transformation</span>
+                                    <strong>Row-standardized</strong>
+                                </div>
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Inference</span>
+                                    <strong>Permutation test</strong>
+                                </div>
+
+                            </div>
+
+                        </details>
+
+
+                        <div class="analysis-section-label">
+                            Statistical Settings
+                        </div>
+
+
+                        <div class="sym-select-row">
+
+                            <label for="spatial-association-permutations">
+                                Permutations
+                            </label>
+
+                            <input
+                                type="number"
+                                id="spatial-association-permutations"
+                                value="999"
+                                min="1"
+                                step="1"
+                            >
+
+                        </div>
+
+
+                        <div class="sym-select-row">
+
+                            <label for="spatial-association-significance">
+                                Significance Level
+                            </label>
+
+                            <select id="spatial-association-significance">
+
+                                <option value="0.10">
+                                    0.10
+                                </option>
+
+                                <option
+                                    value="0.05"
+                                    selected
+                                >
+                                    0.05
+                                </option>
+
+                                <option value="0.01">
+                                    0.01
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="sym-select-row">
+
+                            <label for="spatial-association-seed">
+                                Random Seed
+                            </label>
+
+                            <input
+                                type="number"
+                                id="spatial-association-seed"
+                                value="12345"
+                                step="1"
+                            >
+
+                        </div>
+
+
+                        <button
+                            id="spatial-association-generate-btn"
+                            class="tool-btn"
+                            type="button"
+                            disabled
+                        >
+                            Run Spatial Association Analysis
+                        </button>
+
+
+                        <div
+                            id="spatial-association-status"
+                            class="spatial-analysis-status"
+                        ></div>
+
+
+                        <div
+                            id="spatial-association-summary"
+                            style="display:none;"
+                        >
+
+                            <div class="analysis-section-label">
+                                Global Spatial Association
+                            </div>
+
+
+                            <div class="spatial-analysis-method-box">
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Bivariate Moran's I</span>
+                                    <strong id="spatial-association-global-i">
+                                        —
+                                    </strong>
+                                </div>
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Pseudo p-value</span>
+                                    <strong id="spatial-association-global-p">
+                                        —
+                                    </strong>
+                                </div>
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Permutation z-score</span>
+                                    <strong id="spatial-association-global-z">
+                                        —
+                                    </strong>
+                                </div>
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Direction</span>
+                                    <strong id="spatial-association-global-direction">
+                                        —
+                                    </strong>
+                                </div>
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Statistically significant</span>
+                                    <strong id="spatial-association-global-significant">
+                                        —
+                                    </strong>
+                                </div>
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Same-location Pearson r</span>
+                                    <strong id="spatial-association-pearson">
+                                        —
+                                    </strong>
+                                </div>
+
+                            </div>
+
+
+                            <div
+                                id="spatial-association-global-interpretation"
+                                class="tool-hint-text"
+                            ></div>
+
+
+                            <div class="analysis-section-label">
+                                Local Spatial Association
+                            </div>
+
+
+                            <div class="stat-grid">
+
+                                <div class="stat-card">
+                                    <div
+                                        class="stat-val"
+                                        id="spatial-association-hh-count"
+                                    >
+                                        —
+                                    </div>
+                                    <div class="stat-label">
+                                        High X / High Neighboring Y
+                                    </div>
+                                </div>
+
+
+                                <div class="stat-card">
+                                    <div
+                                        class="stat-val"
+                                        id="spatial-association-ll-count"
+                                    >
+                                        —
+                                    </div>
+                                    <div class="stat-label">
+                                        Low X / Low Neighboring Y
+                                    </div>
+                                </div>
+
+
+                                <div class="stat-card">
+                                    <div
+                                        class="stat-val"
+                                        id="spatial-association-hl-count"
+                                    >
+                                        —
+                                    </div>
+                                    <div class="stat-label">
+                                        High X / Low Neighboring Y
+                                    </div>
+                                </div>
+
+
+                                <div class="stat-card">
+                                    <div
+                                        class="stat-val"
+                                        id="spatial-association-lh-count"
+                                    >
+                                        —
+                                    </div>
+                                    <div class="stat-label">
+                                        Low X / High Neighboring Y
+                                    </div>
+                                </div>
+
+                            </div>
+
+
+                            <div class="spatial-analysis-method-box">
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Significant locations</span>
+                                    <strong id="spatial-association-significant-count">
+                                        —
+                                    </strong>
+                                </div>
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Not significant</span>
+                                    <strong id="spatial-association-ns-count">
+                                        —
+                                    </strong>
+                                </div>
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Isolated polygons</span>
+                                    <strong id="spatial-association-island-count">
+                                        —
+                                    </strong>
+                                </div>
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Mean neighbors</span>
+                                    <strong id="spatial-association-mean-neighbors">
+                                        —
+                                    </strong>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =============================================
+                     SPATIAL REGRESSION
+                     ============================================= -->
+
+                <div
+                    class="tool-page"
+                    id="page-spatial-regression"
+                    style="display:none;"
+                >
+
+                    <div class="analysis-section-label">
+                        Spatial Regression Analysis
+                    </div>
+
+
+                    <div
+                        class="spatial-analysis-card"
+                        id="spatial-regression-card"
+                    >
+
+                        <div class="spatial-analysis-card-header">
+
+                            <div>
+
+                                <div class="spatial-analysis-card-title">
+                                    OLS Regression with Spatial Diagnostics
+                                </div>
+
+
+                                <div class="spatial-analysis-card-subtitle">
+                                    Regression modeling followed by
+                                    residual spatial-dependence tests
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div
+                            class="tool-hint-text"
+                            style="margin-bottom:12px;"
+                        >
+                            Model one dependent variable using one or more
+                            explanatory variables, then evaluate whether
+                            spatial dependence remains in the OLS residuals.
+                        </div>
+
+
+                        <div class="sym-select-row">
+
+                            <label for="spatial-regression-file">
+                                Dataset *
+                            </label>
+
+                            <input
+                                type="file"
+                                id="spatial-regression-file"
+                                accept=".geojson,.json"
+                            >
+
+                        </div>
+
+
+                        <div
+                            id="spatial-regression-file-name"
+                            class="spatial-analysis-file-name"
+                        ></div>
+
+
+                        <div class="sym-select-row">
+
+                            <label for="spatial-regression-geography-column">
+                                Geography Field *
+                            </label>
+
+                            <select id="spatial-regression-geography-column">
+
+                                <option value="">
+                                    — select unique geography field —
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="tool-hint-text">
+                            Use a unique polygon identifier such as GEOID.
+                        </div>
+
+
+                        <div class="sym-select-row">
+
+                            <label for="spatial-regression-state-column">
+                                State Name Field
+                            </label>
+
+                            <select id="spatial-regression-state-column">
+
+                                <option value="">
+                                    — optional —
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="sym-select-row">
+
+                            <label for="spatial-regression-county-column">
+                                County Name Field
+                            </label>
+
+                            <select id="spatial-regression-county-column">
+
+                                <option value="">
+                                    — optional —
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="analysis-section-label">
+                            Regression Variables
+                        </div>
+
+
+                        <div class="sym-select-row">
+
+                            <label for="spatial-regression-dependent-column">
+                                Dependent Variable — Y *
+                            </label>
+
+                            <select id="spatial-regression-dependent-column">
+
+                                <option value="">
+                                    — select numeric field —
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="tool-hint-text">
+                            This is the outcome variable the model
+                            will attempt to explain.
+                        </div>
+
+
+                        <div
+                            class="sym-select-row"
+                            style="
+                                flex-direction:column;
+                                align-items:stretch;
+                                gap:5px;
+                            "
+                        >
+
+                            <label for="spatial-regression-independent-columns">
+                                Independent Variables — X *
+                            </label>
+
+                            <select
+                                id="spatial-regression-independent-columns"
+                                multiple
+                                size="7"
+                            ></select>
+
+                        </div>
+
+
+                        <div class="tool-hint-text">
+                            Select one or more explanatory variables.
+                            Hold Ctrl on Windows or Command on macOS
+                            to select multiple variables.
+                        </div>
+
+
+                        <div
+                            id="spatial-regression-selected-x"
+                            class="tool-hint-text"
+                        >
+                            No independent variables selected.
+                        </div>
+
+
+                        <div class="analysis-section-label">
+                            Method
+                        </div>
+
+
+                        <div class="spatial-analysis-method-box">
+
+                            <div class="spatial-analysis-method-row">
+                                <span>Method</span>
+                                <strong>OLS + Spatial Diagnostics</strong>
+                            </div>
+
+                        </div>
+
+
+                        <details class="spatial-method-details">
+
+                            <summary
+                                style="
+                                    cursor:pointer;
+                                    padding:7px 0;
+                                    font-size:11px;
+                                    font-weight:600;
+                                "
+                            >
+                                Method Details
+                            </summary>
+
+                            <div class="spatial-analysis-method-box">
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Regression model</span>
+                                    <strong>Ordinary Least Squares (OLS)</strong>
+                                </div>
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Spatial relationship</span>
+                                    <strong>Queen contiguity</strong>
+                                </div>
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Weight transformation</span>
+                                    <strong>Row-standardized</strong>
+                                </div>
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Residual Moran's I</span>
+                                    <strong>Residual spatial autocorrelation</strong>
+                                </div>
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>LM Error</span>
+                                    <strong>Spatial error dependence</strong>
+                                </div>
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Robust LM Error</span>
+                                    <strong>Robust spatial error diagnostic</strong>
+                                </div>
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>LM Lag</span>
+                                    <strong>Spatial lag dependence</strong>
+                                </div>
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Robust LM Lag</span>
+                                    <strong>Robust spatial lag diagnostic</strong>
+                                </div>
+
+                            </div>
+
+                        </details>
+
+
+                        <div class="analysis-section-label">
+                            Statistical Settings
+                        </div>
+
+
+                        <div class="sym-select-row">
+
+                            <label for="spatial-regression-significance">
+                                Significance Level
+                            </label>
+
+                            <select id="spatial-regression-significance">
+
+                                <option value="0.10">
+                                    0.10
+                                </option>
+
+                                <option
+                                    value="0.05"
+                                    selected
+                                >
+                                    0.05
+                                </option>
+
+                                <option value="0.01">
+                                    0.01
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="tool-hint-text">
+                            The threshold is used to interpret regression
+                            coefficients and spatial diagnostic p-values.
+                        </div>
+
+
+                        <button
+                            id="spatial-regression-generate-btn"
+                            class="tool-btn"
+                            type="button"
+                            disabled
+                        >
+                            Run Spatial Regression
+                        </button>
+
+
+                        <div
+                            id="spatial-regression-status"
+                            class="spatial-analysis-status"
+                        ></div>
+
+
+                        <div
+                            id="spatial-regression-summary"
+                            style="display:none;"
+                        >
+
+
+                            <div class="analysis-section-label">
+                                Model Fit
+                            </div>
+
+
+                            <div class="stat-grid">
+
+                                <div class="stat-card">
+                                    <div
+                                        class="stat-val"
+                                        id="spatial-regression-r2"
+                                    >
+                                        —
+                                    </div>
+                                    <div class="stat-label">
+                                        R²
+                                    </div>
+                                </div>
+
+
+                                <div class="stat-card">
+                                    <div
+                                        class="stat-val"
+                                        id="spatial-regression-adjusted-r2"
+                                    >
+                                        —
+                                    </div>
+                                    <div class="stat-label">
+                                        Adjusted R²
+                                    </div>
+                                </div>
+
+
+                                <div class="stat-card">
+                                    <div
+                                        class="stat-val"
+                                        id="spatial-regression-aic"
+                                    >
+                                        —
+                                    </div>
+                                    <div class="stat-label">
+                                        AIC
+                                    </div>
+                                </div>
+
+
+                                <div class="stat-card">
+                                    <div
+                                        class="stat-val"
+                                        id="spatial-regression-bic"
+                                    >
+                                        —
+                                    </div>
+                                    <div class="stat-label">
+                                        BIC
+                                    </div>
+                                </div>
+
+                            </div>
+
+
+                            <div class="spatial-analysis-method-box">
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Observations</span>
+                                    <strong id="spatial-regression-observations">
+                                        —
+                                    </strong>
+                                </div>
+
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Independent variables</span>
+                                    <strong id="spatial-regression-predictor-count">
+                                        —
+                                    </strong>
+                                </div>
+
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Log likelihood</span>
+                                    <strong id="spatial-regression-log-likelihood">
+                                        —
+                                    </strong>
+                                </div>
+
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Residual sum of squares</span>
+                                    <strong id="spatial-regression-rss">
+                                        —
+                                    </strong>
+                                </div>
+
+                            </div>
+
+
+                            <div class="analysis-section-label">
+                                Regression Coefficients
+                            </div>
+
+
+                            <div
+                                style="
+                                    overflow-x:auto;
+                                    width:100%;
+                                "
+                            >
+
+                                <table
+                                    id="spatial-regression-coefficient-table"
+                                >
+
+                                    <thead>
+
+                                        <tr>
+                                            <th>Variable</th>
+                                            <th>Coefficient</th>
+                                            <th>Std. Error</th>
+                                            <th>t</th>
+                                            <th>p</th>
+                                        </tr>
+
+                                    </thead>
+
+
+                                    <tbody
+                                        id="spatial-regression-coefficient-body"
+                                    ></tbody>
+
+                                </table>
+
+                            </div>
+
+
+                            <div class="analysis-section-label">
+                                Residual Spatial Autocorrelation
+                            </div>
+
+
+                            <div class="spatial-analysis-method-box">
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Residual Moran's I</span>
+                                    <strong id="spatial-regression-moran-i">
+                                        —
+                                    </strong>
+                                </div>
+
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Expected Moran's I</span>
+                                    <strong id="spatial-regression-moran-expected">
+                                        —
+                                    </strong>
+                                </div>
+
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>z-score</span>
+                                    <strong id="spatial-regression-moran-z">
+                                        —
+                                    </strong>
+                                </div>
+
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>p-value</span>
+                                    <strong id="spatial-regression-moran-p">
+                                        —
+                                    </strong>
+                                </div>
+
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Significant</span>
+                                    <strong id="spatial-regression-moran-significant">
+                                        —
+                                    </strong>
+                                </div>
+
+                            </div>
+
+
+                            <div class="analysis-section-label">
+                                Lagrange Multiplier Diagnostics
+                            </div>
+
+
+                            <div class="spatial-analysis-method-box">
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>LM Error</span>
+                                    <strong id="spatial-regression-lm-error">
+                                        —
+                                    </strong>
+                                </div>
+
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>LM Error p-value</span>
+                                    <strong id="spatial-regression-lm-error-p">
+                                        —
+                                    </strong>
+                                </div>
+
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Robust LM Error</span>
+                                    <strong id="spatial-regression-rlm-error">
+                                        —
+                                    </strong>
+                                </div>
+
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Robust LM Error p-value</span>
+                                    <strong id="spatial-regression-rlm-error-p">
+                                        —
+                                    </strong>
+                                </div>
+
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>LM Lag</span>
+                                    <strong id="spatial-regression-lm-lag">
+                                        —
+                                    </strong>
+                                </div>
+
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>LM Lag p-value</span>
+                                    <strong id="spatial-regression-lm-lag-p">
+                                        —
+                                    </strong>
+                                </div>
+
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Robust LM Lag</span>
+                                    <strong id="spatial-regression-rlm-lag">
+                                        —
+                                    </strong>
+                                </div>
+
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Robust LM Lag p-value</span>
+                                    <strong id="spatial-regression-rlm-lag-p">
+                                        —
+                                    </strong>
+                                </div>
+
+                            </div>
+
+
+                            <div class="analysis-section-label">
+                                Diagnostic Interpretation
+                            </div>
+
+
+                            <div class="spatial-analysis-method-box">
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Model indication</span>
+                                    <strong id="spatial-regression-model-indication">
+                                        —
+                                    </strong>
+                                </div>
+
+
+                                <div class="spatial-analysis-method-row">
+                                    <span>Residual spatial dependence</span>
+                                    <strong id="spatial-regression-residual-dependence">
+                                        —
+                                    </strong>
+                                </div>
+
+                            </div>
+
+
+                            <div
+                                id="spatial-regression-diagnostic-interpretation"
+                                class="tool-hint-text"
+                                style="margin-top:8px;"
+                            ></div>
+
+
+                            <div class="analysis-section-label">
+                                Residual Map
+                            </div>
+
+
+                            <div class="tool-hint-text">
+                                The map displays standardized OLS residuals.
+                                Positive residuals indicate locations where the
+                                observed value is greater than predicted;
+                                negative residuals indicate locations where the
+                                observed value is lower than predicted.
+                            </div>
+
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+
+
+{% block js %}
+
+{{ map_tile_config|json_script:"map-tile-config" }}
+
+<script
+    src="{% static 'mapsapp/vendor/leaflet/leaflet.js' %}?v=1.9.4"
+></script>
+
+<script
+    src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
+></script>
+
+
+<script>
+
+    const SENSD_CSRF_TOKEN = "{{ csrf_token }}";
+    const SENSD_NATIVE_FETCH = window.fetch.bind(window);
+
+    window.fetch = function (resource, options = {}) {
+        const requestOptions = { ...options };
+        const method = String(requestOptions.method || "GET").toUpperCase();
+
+        if (!["GET", "HEAD", "OPTIONS", "TRACE"].includes(method)) {
+            const headers = new Headers(requestOptions.headers || {});
+            headers.set("X-CSRFToken", SENSD_CSRF_TOKEN);
+            requestOptions.headers = headers;
+            requestOptions.credentials = "same-origin";
+        }
+
+        return SENSD_NATIVE_FETCH(resource, requestOptions);
+    };
+
+    const SENSD_API = {
+
+        usStates:
+            "{% url 'us_states_geojson' %}",
+
+        inspectColumns:
+            "{% url 'spatial_inspect_columns_api' %}",
+
+        uploadFlow:
+            "{% url 'spatial_upload_flow_api' %}",
+
+        uploadReference:
+            "{% url 'spatial_upload_reference_api' %}",
+
+        salmonellaRisk:
+            "{% url 'spatial_salmonella_risk_map_api' %}",
+
+        bivariate:
+            "{% url 'spatial_bivariate_map_api' %}",
+
+        localMoran:
+            "{% url 'spatial_local_moran_api' %}",
+
+        spatialAssociation:
+            "{% url 'spatial_association_api' %}",
+
+        spatialRegression:
+            "{% url 'spatial_regression_api' %}",
+
+        countySalmonella:
+            "{% url 'spatial_county_salmonella_risk_api' %}",
+
+        geographyValues:
+            "{% url 'spatial_analysis_geography_values_api' %}"
+
+    };
+
+</script>
+
+
+<script
+    src="{% static 'mapsapp/js/spatial_analysis.js' %}?v=20260917"
+></script>
+
+{% endblock %}

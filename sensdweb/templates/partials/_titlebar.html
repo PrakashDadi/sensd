@@ -20,6 +20,7 @@
           </ul>
         </li>
         <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'user_requests' %}active{% endif %}" href="{% url 'user_requests' %}">All requests</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'poultrydashboard:home' %}">Poultry Dashboard</a></li>
       </ul>
       <ul class="navbar-nav gap-lg-1">
         <li class="nav-item"><a class="nav-link" href="{% url 'gis-home' %}">Tools</a></li>

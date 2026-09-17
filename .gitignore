@@ -65,9 +65,12 @@ docs/*
 .env.*
 *.pem
 *.key
+*.lic
 sensdweb/ssl/
 sensdweb/media/
 media/
 nginx-1.26.2/
 .mcp.json
 CLAUDE.md
+# Source/import archives are local handoff material, not application assets.
+*.zip
