@@ -122,7 +122,18 @@ textarea {
     min-width: 0;
     min-height: 0;
 
-    background: #dbe2e8;
+    background:
+        radial-gradient(circle at 50% 45%, #f8fafc 0%, #dce8f2 72%, #c7d8e5 100%);
+}
+
+.sensd-state-tooltip {
+    border: 0;
+    border-radius: 7px;
+    background: rgba(15, 23, 42, 0.94);
+    color: #f8fafc;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.22);
 }
 
 
