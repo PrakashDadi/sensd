@@ -253,11 +253,21 @@ SECURE_SSL_REDIRECT = env_bool(
 SESSION_COOKIE_SECURE = SECURE_SSL_REDIRECT
 CSRF_COOKIE_SECURE = SECURE_SSL_REDIRECT
 
-# Optional raster basemap for mapsapp. Keep provider credentials in the
-# environment, not in source control. When unset, spatial analysis uses the
-# state boundaries already stored in SENSD instead of external raster tiles.
-MAP_TILE_URL = os.getenv("MAP_TILE_URL", "").strip()
-MAP_TILE_ATTRIBUTION = os.getenv("MAP_TILE_ATTRIBUTION", "").strip()
+# OSM requires normal browser requests to include the website origin as the
+# HTTP Referer. This policy preserves that origin without exposing URL paths.
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+
+# OpenStreetMap Standard is the default Leaflet basemap. These remain
+# configurable so production can move to a hosted/self-managed provider if
+# its usage grows beyond OSM's community tile-service policy.
+MAP_TILE_URL = os.getenv(
+    "MAP_TILE_URL",
+    "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+).strip()
+MAP_TILE_ATTRIBUTION = os.getenv(
+    "MAP_TILE_ATTRIBUTION",
+    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+).strip()
 MAP_TILE_MAX_ZOOM = int(os.getenv("MAP_TILE_MAX_ZOOM", "19"))
 
 # Trust the Nginx reverse proxy for HTTPS

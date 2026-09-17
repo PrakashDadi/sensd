@@ -458,9 +458,29 @@ if (tileConfig.url) {
         tileConfig.url,
         {
             attribution: tileConfig.attribution || "",
-            maxZoom: Number(tileConfig.maxZoom) || 19
+            maxZoom: Number(tileConfig.maxZoom) || 19,
+            updateWhenIdle: true,
+            keepBuffer: 2
         }
     );
+
+    let tileErrorCount = 0;
+
+    basemapLayers.configured.on("tileerror", () => {
+        tileErrorCount += 1;
+
+        if (tileErrorCount === 3 && map.hasLayer(basemapLayers.configured)) {
+            console.warn(
+                "OpenStreetMap tiles are unavailable; using SENSD state boundaries."
+            );
+            setBasemap("states");
+
+            const basemapSelect = getEl("basemap-select");
+            if (basemapSelect) {
+                basemapSelect.value = "states";
+            }
+        }
+    });
 }
 
 let activeBasemapLayer = basemapLayers.configured || basemapLayers.states;
