@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 
 def index(request):
-    return redirect('gis-home')
+    return render(request, 'dashboard/platform_home.html')
 
 def adminindex(request):  
     uservalues = request.session.get('uservalues', None)

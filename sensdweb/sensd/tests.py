@@ -59,3 +59,30 @@ class SharedProfileTests(TestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertIn(reverse('login'), response['Location'])
+
+
+class PlatformHomeTests(TestCase):
+    def setUp(self):
+        self.user = CustomUser.objects.create_user(
+            username='platform-user',
+            email='platform@example.test',
+            password='test-password-only',
+        )
+
+    def test_authenticated_root_renders_three_workspace_choices(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('index'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'GIS Visualization')
+        self.assertContains(response, 'SENSD Optimization Tools')
+        self.assertContains(response, 'Poultry Analytics')
+        self.assertContains(response, reverse('gis-home'))
+        self.assertContains(response, reverse('sensd'))
+        self.assertContains(response, reverse('poultrydashboard:home'))
+
+    def test_anonymous_root_still_uses_existing_login_flow(self):
+        response = self.client.get(reverse('index'))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse('login'), response['Location'])

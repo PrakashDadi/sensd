@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}SENSD Platform{% endblock %}
+{% block titlebar %}{% include 'partials/_platform_titlebar.html' %}{% endblock %}
+
+{% block content %}
+<main class="sensd-page">
+  {% include 'partials/_messages.html' %}
+
+  <section class="platform-hero">
+    <div class="sensd-eyebrow">Decision support platform</div>
+    <h1>Choose your workspace</h1>
+    <p>Explore geospatial information, run SENSD optimization models, or work with poultry sensor analytics.</p>
+  </section>
+
+  <section class="row g-4" aria-label="SENSD workspaces">
+    <div class="col-lg-4">
+      <article class="sensd-tool-card">
+        <div class="sensd-tool-icon"><i class="bi bi-map"></i></div>
+        <h2>GIS Visualization</h2>
+        <p>Explore geographic layers, store locations, network flows, spatial relationships, and uploaded datasets.</p>
+        <ul class="text-muted small ps-3 mb-4">
+          <li>Maps and geographic layers</li>
+          <li>Flow and spatial analysis</li>
+          <li>Data mapping and grid analysis</li>
+        </ul>
+        <div class="sensd-actions">
+          <a href="{% url 'gis-home' %}" class="btn btn-sensd">Open GIS</a>
+        </div>
+      </article>
+    </div>
+
+    <div class="col-lg-4">
+      <article class="sensd-tool-card">
+        <div class="sensd-tool-icon"><i class="bi bi-diagram-3"></i></div>
+        <h2>SENSD Optimization Tools</h2>
+        <p>Run predictive optimization workflows for sensor placement and intelligent distribution decisions.</p>
+        <ul class="text-muted small ps-3 mb-4">
+          <li>Sensor Placement Optimization</li>
+          <li>Intelligent Distribution Optimization</li>
+          <li>Requests, results, and downloads</li>
+        </ul>
+        <div class="sensd-actions">
+          <a href="{% url 'sensd' %}" class="btn btn-sensd">Open Optimization</a>
+        </div>
+      </article>
+    </div>
+
+    <div class="col-lg-4">
+      <article class="sensd-tool-card">
+        <div class="sensd-tool-icon"><i class="bi bi-thermometer-half"></i></div>
+        <h2>Poultry Analytics</h2>
+        <p>Monitor poultry sensor data and use prescriptive temperature, shelf-life, visualization, and AI tools.</p>
+        <ul class="text-muted small ps-3 mb-4">
+          <li>Sensor connection and live feed</li>
+          <li>Temperature visualizations</li>
+          <li>AI estimation and assistance</li>
+        </ul>
+        <div class="sensd-actions">
+          <a href="{% url 'poultrydashboard:home' %}" class="btn btn-sensd">Open Poultry Analytics</a>
+        </div>
+      </article>
+    </div>
+  </section>
+</main>
+{% endblock %}
