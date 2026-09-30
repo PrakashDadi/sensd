@@ -10,7 +10,9 @@ body {
 }
 
 .platform-global-nav { min-height:48px; display:flex; align-items:center; gap:1rem; padding:.45rem 1.25rem; background:#fff; border-bottom:1px solid #dce3df; position:relative; z-index:50; }
-.platform-global-brand { color:#194333; font-weight:800; letter-spacing:.05em; text-decoration:none; }
+.platform-global-brand { display:flex; align-items:center; gap:.5rem; color:#194333; font-weight:800; letter-spacing:.05em; text-decoration:none; white-space:nowrap; }
+.platform-global-brand:hover { color:#245c46; }
+.platform-global-mark { display:grid; place-items:center; width:30px; height:30px; border:1px solid #c9dbd2; border-radius:8px; background:#e9f1ed; color:#194333; font-size:.9rem; font-weight:800; box-shadow:0 2px 6px rgba(24,48,38,.08); }
 .platform-global-links, .platform-global-account { display:flex; align-items:center; gap:.25rem; }
 .platform-global-links { flex:1; }
 .platform-global-link { color:#52615a; padding:.42rem .65rem; border-radius:7px; font-size:.9rem; font-weight:600; text-decoration:none; white-space:nowrap; }

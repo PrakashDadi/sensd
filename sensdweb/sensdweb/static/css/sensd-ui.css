@@ -13,7 +13,9 @@
 
 body.sensd-app { background: var(--sensd-bg); color: var(--sensd-ink); }
 .platform-global-nav { min-height:48px; display:flex; align-items:center; gap:1rem; padding:.45rem 1.25rem; background:#fff; border-bottom:1px solid var(--sensd-border); position:relative; z-index:1040; }
-.platform-global-brand { color:var(--sensd-green-dark); font-weight:800; letter-spacing:.05em; text-decoration:none; }
+.platform-global-brand { display:flex; align-items:center; gap:.5rem; color:var(--sensd-green-dark); font-weight:800; letter-spacing:.05em; text-decoration:none; white-space:nowrap; }
+.platform-global-brand:hover { color:var(--sensd-green); }
+.platform-global-mark { display:grid; place-items:center; width:30px; height:30px; border:1px solid #c9dbd2; border-radius:8px; background:var(--sensd-green-soft); color:var(--sensd-green-dark); font-size:.9rem; font-weight:800; box-shadow:0 2px 6px rgba(24,48,38,.08); }
 .platform-global-links, .platform-global-account { display:flex; align-items:center; gap:.25rem; }
 .platform-global-links { flex:1; }
 .platform-global-link { color:#52615a; padding:.42rem .65rem; border-radius:7px; font-size:.9rem; font-weight:600; text-decoration:none; white-space:nowrap; }

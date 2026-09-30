@@ -81,6 +81,8 @@ class PlatformHomeTests(TestCase):
         self.assertContains(response, reverse('sensd'))
         self.assertContains(response, reverse('poultrydashboard:home'))
         self.assertContains(response, 'SENSD platform navigation')
+        self.assertContains(response, 'platform-global-mark')
+        self.assertContains(response, 'sensd-ui.css?v=20260930-2')
 
     def test_global_navigation_is_available_in_each_workspace_shell(self):
         self.client.force_login(self.user)
@@ -134,6 +136,7 @@ class OptimizationWorkspaceTests(TestCase):
         self.assertNotContains(response, '<h2>Poultry Dashboard</h2>', html=True)
         self.assertContains(response, 'navbar-light sensd-navbar')
         self.assertNotContains(response, 'navbar-dark sensd-navbar')
+        self.assertContains(response, 'platform-global-mark')
 
     def test_optimization_navigation_preserves_existing_workflow_routes(self):
         response = self.client.get(reverse('sensd'))

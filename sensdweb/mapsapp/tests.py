@@ -32,3 +32,5 @@ class GisWorkspaceNavigationTests(TestCase):
             self.assertContains(response, "GIS workspace navigation")
             self.assertContains(response, "navbar-light sensd-navbar")
             self.assertNotContains(response, "navbar-dark sensd-navbar")
+            self.assertContains(response, "platform-global-mark")
+            self.assertContains(response, "sensd-ui.css?v=20260930-2")

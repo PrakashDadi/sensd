@@ -90,6 +90,8 @@ class PoultryDashboardTests(TestCase):
                 self.assertContains(response, 'Poultry workspace navigation')
                 self.assertContains(response, 'aria-current="page"', count=1)
                 self.assertNotContains(response, 'Poultry Profile')
+                self.assertContains(response, 'platform-global-mark')
+                self.assertContains(response, 'site.css?v=20260930-2')
                 for destination in page_names:
                     self.assertContains(response, reverse(f"poultrydashboard:{destination}"))
 

@@ -1,5 +1,8 @@
 <nav class="platform-global-nav" aria-label="SENSD platform navigation">
-  <a class="platform-global-brand" href="{% url 'index' %}">SENSD</a>
+  <a class="platform-global-brand" href="{% url 'index' %}" aria-label="SENSD platform home">
+    <span class="platform-global-mark" aria-hidden="true">S</span>
+    <span>SENSD</span>
+  </a>
   <div class="platform-global-links">
     <a class="platform-global-link {% if active_workspace == 'home' %}active{% endif %}" href="{% url 'index' %}">Home</a>
     <a class="platform-global-link {% if active_workspace == 'gis' %}active{% endif %}" href="{% url 'gis-home' %}">GIS</a>
