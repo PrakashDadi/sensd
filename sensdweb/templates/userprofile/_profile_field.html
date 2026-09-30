@@ -1,0 +1,6 @@
+<div class="{{ column|default:'col-12' }}">
+  <label class="form-label" for="{{ field.id_for_label }}">{{ label }}</label>
+  <input class="form-control{% if field.errors %} is-invalid{% endif %}" type="{{ type|default:'text' }}"
+         name="{{ field.html_name }}" id="{{ field.id_for_label }}" value="{{ field.value|default:'' }}">
+  {% for error in field.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+</div>

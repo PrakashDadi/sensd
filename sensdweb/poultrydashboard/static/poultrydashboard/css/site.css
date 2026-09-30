@@ -8,3 +8,23 @@ body {
   margin: 0;
   background: #ffffff;
 }
+
+.poultry-nav-link {
+  display:block;
+  border-radius:.5rem;
+  padding:.6rem .75rem;
+  color:#475569;
+  font-weight:500;
+  transition:background-color .15s ease, color .15s ease;
+}
+
+.poultry-nav-link:hover {
+  background:#f1f5f9;
+  color:#0b2341;
+}
+
+.poultry-nav-active {
+  background:#fff3e8;
+  color:#9a430d;
+  box-shadow:inset 3px 0 0 #ea711a;
+}

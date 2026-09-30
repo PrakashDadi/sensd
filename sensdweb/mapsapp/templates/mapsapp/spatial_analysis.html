@@ -26,6 +26,16 @@
 
 {% block content %}
 
+{% if selected_spatial_tool %}
+<div
+    id="spatial-mode-config"
+    data-selected-tool="{{ selected_spatial_tool.tool_name }}"
+    data-selected-title="{{ selected_spatial_tool.title }}"
+    data-sample-url="{% url 'spatial_sample_dataset' %}"
+    hidden
+></div>
+{% endif %}
+
 <div id="dashboard-wrapper">
 
 
@@ -195,6 +205,21 @@
     <div id="dashboard-map-wrapper">
 
         <div id="dashboard-map"></div>
+
+        {% if selected_spatial_tool %}
+        <section id="spatial-sample-prompt" class="spatial-sample-prompt" aria-live="polite">
+            <div>
+                <strong>{{ selected_spatial_tool.title }}</strong>
+                <span>Use your own upload, or load the SENSD county sample.</span>
+            </div>
+            <button id="load-spatial-sample" type="button">
+                <i class="bi bi-play-fill" aria-hidden="true"></i>
+                Load sample analysis
+            </button>
+            <a href="{% url 'grid_view' %}">Back to tools</a>
+            <span id="spatial-sample-status" role="status"></span>
+        </section>
+        {% endif %}
 
 
         <!-- Spatial analysis legend -->

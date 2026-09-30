@@ -11331,6 +11331,168 @@ updateSpatialRegressionSelectedVariables();
 updateSymbologyLabels();
 
 
+// ============================================================
+// SPATIAL TOOL CATALOGUE MODE
+// ============================================================
+
+const spatialModeConfig = getEl("spatial-mode-config");
+
+function setSpatialSampleStatus(message, isError = false) {
+    const status = getEl("spatial-sample-status");
+    if (!status) return;
+    status.textContent = message;
+    status.style.color = isError ? "var(--sensd-danger)" : "var(--sensd-text-secondary)";
+}
+
+async function getSpatialSampleFile() {
+    const sampleUrl = spatialModeConfig?.dataset.sampleUrl;
+    if (!sampleUrl) throw new Error("The sample dataset URL is unavailable.");
+
+    const response = await fetch(sampleUrl, { credentials: "same-origin" });
+    if (!response.ok) {
+        throw new Error(`Could not load the sample dataset (${response.status}).`);
+    }
+
+    return new File(
+        [await response.blob()],
+        "US_Counties_Sample_Data_v4.geojson",
+        { type: "application/geo+json" }
+    );
+}
+
+function buildSpatialSampleRequest(toolName, sampleFile) {
+    const formData = new FormData();
+    formData.append("file", sampleFile);
+    formData.append("geography_column", "GEOID");
+
+    const requests = {
+        "salmonella-risk": {
+            endpoint: SENSD_API.salmonellaRisk,
+            fields: {
+                cases_column: "Salmonella_Cases",
+                population_column: "Population"
+            }
+        },
+        bivariate: {
+            endpoint: SENSD_API.bivariate,
+            fields: {
+                x_column: "Poverty_Rate",
+                y_column: "Overall_Food_Insecurity"
+            }
+        },
+        "local-moran": {
+            endpoint: SENSD_API.localMoran,
+            fields: {
+                value_column: "Overall_Food_Insecurity",
+                permutations: "99",
+                significance_level: "0.05",
+                seed: "42"
+            }
+        },
+        "spatial-association": {
+            endpoint: SENSD_API.spatialAssociation,
+            fields: {
+                x_column: "Poverty_Rate",
+                y_column: "Overall_Food_Insecurity",
+                permutations: "99",
+                significance_level: "0.05",
+                seed: "42"
+            }
+        },
+        "spatial-regression": {
+            endpoint: SENSD_API.spatialRegression,
+            fields: {
+                dependent_column: "Overall_Food_Insecurity",
+                independent_columns_json: JSON.stringify([
+                    "Poverty_Rate",
+                    "Unemployment_Rate",
+                    "Median_Household_Income",
+                    "Healthcare_Access_Index"
+                ]),
+                significance_level: "0.05"
+            }
+        }
+    };
+
+    const request = requests[toolName];
+    if (!request) throw new Error("This sample analysis is not configured.");
+    Object.entries(request.fields).forEach(([name, value]) => formData.append(name, value));
+    return { formData, endpoint: request.endpoint };
+}
+
+function renderSpatialSampleResult(toolName, data) {
+    if (!data.geojson) throw new Error("The analysis returned no map geometry.");
+
+    if (toolName === "salmonella-risk") {
+        renderSalmonellaRiskLayer(data.geojson, "Sample Risk Map", data.dataset_id);
+    } else if (toolName === "bivariate") {
+        renderBivariateLayer(
+            data.geojson,
+            "Sample Bivariate Analysis",
+            data.dataset_id,
+            data.x_column || "Poverty_Rate",
+            data.y_column || "Overall_Food_Insecurity"
+        );
+    } else if (toolName === "local-moran") {
+        renderLocalMoranLayer(
+            data.geojson,
+            "Sample Hotspot Analysis",
+            data.dataset_id,
+            data.value_column || "Overall_Food_Insecurity"
+        );
+        updateLocalMoranSummary(data.summary || {});
+    } else if (toolName === "spatial-association") {
+        renderSpatialAssociationLayer(
+            data.geojson,
+            "Sample Spatial Association",
+            data.dataset_id,
+            data.x_column || "Poverty_Rate",
+            data.y_column || "Overall_Food_Insecurity"
+        );
+        updateSpatialAssociationSummary(data.summary || {});
+    } else if (toolName === "spatial-regression") {
+        renderSpatialRegressionLayer(
+            data.geojson,
+            "Sample Spatial Regression",
+            data.dataset_id,
+            data.dependent_column || "Overall_Food_Insecurity"
+        );
+        updateSpatialRegressionSummary(data.summary || {}, data.coefficients || []);
+    }
+}
+
+async function runSpatialSampleAnalysis() {
+    const button = getEl("load-spatial-sample");
+    const toolName = spatialModeConfig?.dataset.selectedTool;
+    if (!button || !toolName) return;
+
+    button.disabled = true;
+    setSpatialSampleStatus("Running sample analysis...");
+
+    try {
+        const sampleFile = await getSpatialSampleFile();
+        const { formData, endpoint } = buildSpatialSampleRequest(toolName, sampleFile);
+        const response = await fetch(endpoint, { method: "POST", body: formData });
+        const data = await readJsonResponse(response);
+        renderSpatialSampleResult(toolName, data);
+        setSpatialSampleStatus("Sample analysis loaded.");
+    } catch (error) {
+        console.error("Sample spatial analysis failed:", error);
+        setSpatialSampleStatus(error.message || "Sample analysis failed.", true);
+    } finally {
+        button.disabled = false;
+    }
+}
+
+if (spatialModeConfig) {
+    openToolPage(
+        spatialModeConfig.dataset.selectedTool,
+        spatialModeConfig.dataset.selectedTitle
+    );
+    getEl("load-spatial-sample")?.addEventListener("click", runSpatialSampleAnalysis);
+}
+
+
 setTimeout(
     () => {
 

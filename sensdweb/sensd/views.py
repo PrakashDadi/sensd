@@ -11,8 +11,8 @@ from sensdrequests.models import Request as RequestModel, ResultModel
 from isdrequests.models import Request as DistributionRequest
 
 
-from .models import UserDetails
-from .forms import UserDetailsForm
+from .models import UserDetails, UserProfile
+from .forms import UserDetailsForm, UserProfileForm
 
 
 from django.utils.encoding import force_bytes , DjangoUnicodeDecodeError , force_str
@@ -108,51 +108,102 @@ def add_user_request(request):
 def request_history(request):
     return render(request, 'userrequests/requests_list_history.html')
 
-def create_user_profile(request, encoded_email):
-    print(request.method)
-    if request.method == "POST":
-        form = UserDetailsForm(request.POST)
-        # decoded_email = force_str(urlsafe_base64_decode(encoded_email))
-        # print("decoded email",decoded_email)
-        # print("form email",form['email'].value())   
-        print(f"Raw POST data: {request.POST}")  
-        if form.is_valid():
-            form.save()
-            # return redirect('success_page')
-            # print("its here")             
-            return render(request, 'userprofile/userprofile.html', {'user': form, 'encoded_email': encoded_email})
-        else:
-            print(" its in else")
-            logger.error(f"Form errors: {form.errors}")
-            # Alternatively, you can use print to output errors to the console
-            print(f"Form errors: {form.errors}")
-            form = UserDetailsForm()
-            messages.error(request, 'In Valid Information')
-            return render(request, 'userprofile/editUserprofile.html', {'form': form, 'user': form, 'encoded_email': encoded_email})
-    messages.error(request, 'In Valid Information')
-    return render(request, 'userprofile/editUserprofile.html', {'form': form, 'user': form, 'encoded_email': encoded_email})
+def _account_identity(request):
+    """Return the decrypted login identity without changing authentication storage."""
+    session_identity = request.session.get('uservalues') or {}
+    username = session_identity.get('username')
+    email = session_identity.get('email')
+    if username and email:
+        return username, email
 
-def redirect_edit(request, pk):    
-    return render(request, 'userprofile/editUserprofile.html' , {'pk': pk})
+    try:
+        user_key = UserKey.objects.get(user=request.user)
+        username = decrypt_data(user_key.private_key, json.loads(request.user.username))
+        email = decrypt_data(user_key.private_key, json.loads(request.user.email))
+        return username, email
+    except (UserKey.DoesNotExist, TypeError, ValueError, json.JSONDecodeError, KeyError):
+        # Tests and conventionally-created accounts may contain ordinary text.
+        return str(request.user.username or ''), str(request.user.email or '')
 
-def edit_user_profile(request, pk):
-    user = get_object_or_404(UserDetails, pk=pk)
-    if request.method == "POST":
-        form = UserDetailsForm(request.POST, instance=user)
+
+def _profile_for_user(user, account_email):
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+    changed = False
+    legacy = UserDetails.objects.filter(email__iexact=account_email).first() if account_email else None
+    if legacy:
+        for field, value in (
+            ('first_name', legacy.firstname), ('last_name', legacy.lastname),
+            ('phone', legacy.phonenumber), ('address', legacy.address),
+            ('city', legacy.city), ('state', legacy.state),
+            ('postal_code', legacy.pincode),
+        ):
+            if not getattr(profile, field) and value:
+                setattr(profile, field, value)
+                changed = True
+    poultry = getattr(user, 'poultry_profile', None)
+    if poultry:
+        for field, value in (
+            ('first_name', poultry.first_name), ('last_name', poultry.last_name),
+            ('photo_data_url', poultry.photo_data_url),
+        ):
+            if not getattr(profile, field) and value:
+                setattr(profile, field, value)
+                changed = True
+    if changed:
+        profile.save()
+    return profile
+
+
+def _sync_existing_poultry_profile(user, profile, account_email):
+    poultry = getattr(user, 'poultry_profile', None)
+    if poultry:
+        poultry.first_name = profile.first_name
+        poultry.last_name = profile.last_name
+        poultry.email = account_email
+        poultry.photo_data_url = profile.photo_data_url or ''
+        poultry.save()
+
+
+@login_required
+@cache_control(no_cache=True, no_store=True, must_revalidate=True)
+def profile(request):
+    account_username, account_email = _account_identity(request)
+    user_profile = _profile_for_user(request.user, account_email)
+    if request.method == 'POST':
+        form = UserProfileForm(request.POST, instance=user_profile)
         if form.is_valid():
-            form.save()
-            encoded_email = urlsafe_base64_encode(force_bytes(form.cleaned_data.get('email')))
-            return render(request, 'userprofile/userprofile.html', {'user': form, 'encoded_email' : encoded_email})
+            user_profile = form.save()
+            _sync_existing_poultry_profile(request.user, user_profile, account_email)
+            messages.success(request, 'Your profile has been updated.')
+            return redirect('profile')
     else:
-        form = UserDetailsForm(instance=user)
-        logger.error(f"Form errors: {form.errors}")
-        # Alternatively, you can use print to output errors to the console
-        print(f"Form errors: {form.errors}")
-        form = UserDetailsForm()
-        messages.error(request, 'In Valid Information')
-        return render(request, 'userprofile/editUserprofile.html', {'form': form , 'user': form})
-    messages.error(request, 'In Valid Information')
-    return render(request, 'userprofile/editUserprofile.html', {'form': form, 'user': form})
+        form = UserProfileForm(instance=user_profile)
+    display_name = ' '.join(filter(None, [user_profile.first_name, user_profile.last_name]))
+    return render(request, 'userprofile/userprofile.html', {
+        'form': form,
+        'profile': user_profile,
+        'account_email': account_email,
+        'account_username': account_username,
+        'display_name': display_name or account_username or 'Your profile',
+        'profile_initials': ((user_profile.first_name or account_username or '?')[:1]
+                             + (user_profile.last_name or '')[:1]).upper(),
+    })
+
+
+@login_required
+@cache_control(no_cache=True, no_store=True, must_revalidate=True)
+def create_user_profile(request, encoded_email):
+    return redirect('profile')
+
+
+@login_required
+def redirect_edit(request, pk):
+    return redirect('profile')
+
+
+@login_required
+def edit_user_profile(request, pk):
+    return redirect('profile')
 
 def profiles_list(request):
     users = UserDetails.objects.all()
@@ -160,22 +211,7 @@ def profiles_list(request):
 
 
 
+@login_required
 def profile_details(request, encoded_email):
-       print(encoded_email)
-       email = force_str(urlsafe_base64_decode(encoded_email))
-       if UserDetails.objects.filter(email = email).exists():
-           print("its here")
-           user = UserDetails.objects.get(email = email)
-           return render(request, 'userprofile/userprofile.html', {'user': user})
-       else:
-           print("it is correct place")
-           user = None
-           print(user)
-           return render(request, 'userprofile/editUserprofile.html', {'user_details': user, 'encoded_email': encoded_email})
-
-def profile(request):
-    uservalues =  request.session.get('uservalues', None)
-    email = uservalues['email']
-    encoded_email = urlsafe_base64_encode(force_bytes(email))
-    return redirect(reverse('profile_details', kwargs={'encoded_email': encoded_email}))
+    return redirect('profile')
 

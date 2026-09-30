@@ -92,7 +92,10 @@ def connect(request):
 @ensure_csrf_cookie
 @login_required
 def profile(request):
-    return render(request, "poultrydashboard/profile.html")
+    # Reuse the canonical SENSD profile view while keeping this legacy URL valid.
+    from sensd.views import profile as shared_profile
+
+    return shared_profile(request)
 
 
 @ensure_csrf_cookie

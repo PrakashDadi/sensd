@@ -12,6 +12,7 @@
 }
 
 body.sensd-app { background: var(--sensd-bg); color: var(--sensd-ink); }
+.bd-mode-toggle { display:none !important; }
 body.sensd-app .main-content { height:auto; min-height:calc(100vh - 64px); overflow:visible; padding:0; }
 .sensd-navbar { background: #17251f; min-height: 64px; border-bottom: 1px solid rgba(255,255,255,.1); }
 .sensd-navbar .navbar-brand { font-weight: 700; letter-spacing: .04em; }
@@ -59,6 +60,12 @@ body.sensd-app .theme-banner .lead,
 body.sensd-app .theme-banner .subtext { color:var(--sensd-muted) !important; font-size:1rem; }
 body.sensd-app .card { border-color:var(--sensd-border); border-radius:var(--sensd-radius); box-shadow:var(--sensd-shadow); }
 body.sensd-app .card-header { border-bottom-color:var(--sensd-border); }
+body.sensd-app .table-dark,
+body.sensd-app .table-dark > tr > * {
+  --bs-table-bg:#edf3f0;
+  --bs-table-color:#304139;
+  --bs-table-border-color:var(--sensd-border);
+}
 body.sensd-app .form-control,
 body.sensd-app .form-select { border-color:#cfd8d3; min-height:42px; }
 body.sensd-app .form-control:focus,

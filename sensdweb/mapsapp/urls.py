@@ -15,6 +15,16 @@ urlpatterns = [
         name="spatial_analysis",
     ),
     path(
+        "spatial-analysis/<slug:tool_slug>/",
+        spatial_views.spatial_tool_view,
+        name="spatial_analysis_tool",
+    ),
+    path(
+        "api/spatial/sample-dataset/",
+        spatial_views.spatial_sample_dataset,
+        name="spatial_sample_dataset",
+    ),
+    path(
         "api/spatial/inspect-columns/",
         spatial_views.inspect_columns_api,
         name="spatial_inspect_columns_api",

@@ -10,10 +10,11 @@ import numpy as np
 import pandas as pd
 
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
 from django.contrib.gis.geos import GEOSGeometry
-from django.http import JsonResponse
+from django.http import FileResponse, Http404, JsonResponse
 from django.shortcuts import render
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_GET, require_http_methods
 
 from .analysis.bivariate import calculate_bivariate_map
 from .analysis.local_moran import calculate_local_moran
@@ -33,6 +34,7 @@ from .models import (
     UploadedDataset,
     UploadedFeature,
 )
+from .spatial_tools import SPATIAL_TOOLS
 
 
 # ============================================================
@@ -78,6 +80,46 @@ def flow_analysis_view(request):
                 "maxZoom": settings.MAP_TILE_MAX_ZOOM,
             }
         },
+    )
+
+
+@login_required
+def spatial_tool_view(request, tool_slug):
+    """Open the existing secure workspace focused on one approved tool."""
+    tool = SPATIAL_TOOLS.get(tool_slug)
+    if tool is None:
+        raise Http404("Spatial analysis tool not found.")
+
+    return render(
+        request,
+        "mapsapp/spatial_analysis.html",
+        {
+            "map_tile_config": {
+                "url": settings.MAP_TILE_URL,
+                "attribution": settings.MAP_TILE_ATTRIBUTION,
+                "maxZoom": settings.MAP_TILE_MAX_ZOOM,
+            },
+            "selected_spatial_tool": dict(tool, slug=tool_slug),
+        },
+    )
+
+
+@login_required
+@require_GET
+def spatial_sample_dataset(request):
+    """Serve the fixed demonstration dataset only to authenticated users."""
+    sample_path = (
+        settings.BASE_DIR.parent
+        / "geoJson_files"
+        / "US_Counties_Sample_Data_v4.geojson"
+    )
+    if not sample_path.is_file():
+        raise Http404("The spatial-analysis sample dataset is unavailable.")
+
+    return FileResponse(
+        sample_path.open("rb"),
+        content_type="application/geo+json",
+        filename=sample_path.name,
     )
 
 

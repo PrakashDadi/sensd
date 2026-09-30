@@ -1,105 +1,102 @@
 {% extends 'base.html' %}
 
+{% block title %}Profile | SENSD{% endblock %}
 {% block content %}
-
-<header class="bg-primary text-white text-center py-4 mb-4">
-    <div class="container">
-        <h2 class="fw-light">SENSD USER-PROFILE</h2>
+<main class="sensd-page">
+  {% include 'partials/_messages.html' %}
+  <div class="sensd-page-header">
+    <div>
+      <div class="sensd-eyebrow">Account</div>
+      <h1 class="sensd-page-title">Your profile</h1>
+      <p class="sensd-page-copy">One profile shared across SENSD, GIS, and the Poultry Dashboard.</p>
     </div>
-</header>
+  </div>
 
-<div class="container">
-    
+  <form method="post" class="row g-4" id="profile-form" novalidate>
     {% csrf_token %}
-
-    {% include 'partials/_messages.html' %}
-    <div class="container">
-        <div class="row mb-4">
+    {{ form.photo_data_url }}
+    {% for error in form.photo_data_url.errors %}<div class="col-12"><div class="alert alert-danger mb-0">{{ error }}</div></div>{% endfor %}
+    <div class="col-lg-4">
+      <section class="sensd-panel p-4 text-center h-100">
+        <div id="profile-avatar" class="profile-avatar mx-auto mb-3">
+          {% if profile.photo_data_url %}<img src="{{ profile.photo_data_url }}" alt="Profile photo">
+          {% else %}{{ profile_initials }}{% endif %}
         </div>
+        <h2 class="h4 mb-1">{{ display_name }}</h2>
+        <p class="text-muted mb-3">{{ account_email }}</p>
+        <label class="btn btn-outline-sensd btn-sm" for="profile-photo-input">Choose photo</label>
+        <input class="visually-hidden" type="file" id="profile-photo-input" accept="image/png,image/jpeg,image/webp">
+        <p class="small text-muted mt-3 mb-0">JPG, PNG, or WebP up to 2 MB.</p>
+      </section>
     </div>
-    <div class="container mt-5">
-        {% if user %}
-            <div class="row">
-                <div class="col-lg-8 offset-lg-2">
-                    <div class="card">
-                        <div class="card-header">
-                            <h2 class="card-title">{{ user.fullname }}</h2>
-                        </div>
-                        <div class="card-body">
-                            <div class="row mb-3">
-                                <div class="col-md-4">
-                                    <strong>Email:</strong>
-                                </div>
-                                <div class="col-md-8">
-                                    {{ user.email }}
-                                </div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-md-4">
-                                    <strong>Phone:</strong>
-                                </div>
-                                <div class="col-md-8">
-                                    {{ user.phonenumber }}
-                                </div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-md-4">
-                                    <strong>Role:</strong>
-                                </div>
-                                <div class="col-md-8">
-                                    {{ user.get_role_display }}
-                                </div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-md-4">
-                                    <strong>Address:</strong>
-                                </div>
-                                <div class="col-md-8">
-                                    {{ user.address }}
-                                </div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-md-4">
-                                    <strong>City:</strong>
-                                </div>
-                                <div class="col-md-8">
-                                    {{ user.city }}
-                                </div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-md-4">
-                                    <strong>State:</strong>
-                                </div>
-                                <div class="col-md-8">
-                                    {{ user.state }}
-                                </div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-md-4">
-                                    <strong>Pincode:</strong>
-                                </div>
-                                <div class="col-md-8">
-                                    {{ user.pincode }}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-footer text-right">
-                            <a href="{% url 'edit_profile_redirect' user.pk %}" class="btn btn-primary">Edit Profile</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        {% else %}
-            <div class="row">
-                <div class="col-lg-8 offset-lg-2 text-center">
-                    <div class="alert alert-warning" role="alert">
-                        Sorry, no profile found. Please create one.
-                    </div>
-                    <a href="" class="btn btn-primary">Create Profile</a>
-                </div>
-            </div>
-        {% endif %}
-    </div>
-</div>
 
-{% endblock content%}
+    <div class="col-lg-8">
+      <section class="sensd-panel p-4">
+        <h2 class="sensd-section-title mb-4">Personal information</h2>
+        {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+        <div class="row g-3">
+          {% include 'userprofile/_profile_field.html' with field=form.first_name label='First name' column='col-md-6' %}
+          {% include 'userprofile/_profile_field.html' with field=form.last_name label='Last name' column='col-md-6' %}
+          <div class="col-12">
+            <label class="form-label" for="profile-email">Email</label>
+            <input class="form-control" id="profile-email" type="email" value="{{ account_email }}" readonly>
+            <div class="form-text">Your email belongs to your login account and cannot be changed here.</div>
+          </div>
+          {% include 'userprofile/_profile_field.html' with field=form.phone label='Phone' column='col-md-6' type='tel' %}
+          <div class="col-md-6">
+            <label class="form-label" for="profile-role">Role</label>
+            <input class="form-control" id="profile-role" value="{% if request.user.is_superuser %}Administrator{% elif request.user.is_staff %}Staff{% else %}User{% endif %}" readonly>
+          </div>
+        </div>
+        <hr class="my-4">
+        <h2 class="sensd-section-title mb-4">Contact information</h2>
+        <div class="row g-3">
+          {% include 'userprofile/_profile_field.html' with field=form.address label='Address' column='col-12' %}
+          {% include 'userprofile/_profile_field.html' with field=form.city label='City' column='col-md-5' %}
+          {% include 'userprofile/_profile_field.html' with field=form.state label='State' column='col-md-4' %}
+          {% include 'userprofile/_profile_field.html' with field=form.postal_code label='Postal code' column='col-md-3' %}
+        </div>
+        <div class="d-flex justify-content-end mt-4">
+          <button type="submit" class="btn btn-sensd px-4">Save profile</button>
+        </div>
+      </section>
+    </div>
+  </form>
+</main>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .profile-avatar { width:92px; height:92px; display:grid; place-items:center; overflow:hidden; border-radius:50%; background:var(--sensd-green-soft); border:2px solid #c9dacf; color:var(--sensd-green); font-size:1.55rem; font-weight:700; }
+  .profile-avatar img { width:100%; height:100%; object-fit:cover; }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(() => {
+  const input = document.getElementById('profile-photo-input');
+  const stored = document.getElementById('{{ form.photo_data_url.id_for_label }}');
+  const avatar = document.getElementById('profile-avatar');
+  if (!input || !stored || !avatar) return;
+  input.addEventListener('change', () => {
+    const file = input.files && input.files[0];
+    if (!file || file.size > 2 * 1024 * 1024) {
+      if (file) window.alert('Please choose an image smaller than 2 MB.');
+      input.value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      stored.value = reader.result;
+      avatar.innerHTML = '';
+      const image = document.createElement('img');
+      image.src = reader.result;
+      image.alt = 'Selected profile photo';
+      avatar.appendChild(image);
+    };
+    reader.readAsDataURL(file);
+  });
+})();
+</script>
+{% endblock %}

@@ -15,6 +15,7 @@ from mapsapp.analysis.salmonella import calculate_salmonella_risk_map
 from mapsapp.analysis.spatial_association import calculate_spatial_association
 from mapsapp.analysis.spatial_regression import calculate_spatial_regression
 from mapsapp.models import AnalysisRun, UploadedDataset, UploadedFeature
+from mapsapp.spatial_tools import SPATIAL_TOOLS
 
 
 def randomized_spatial_data(seed=20260913, width=5, height=5):
@@ -152,6 +153,48 @@ class SpatialApiTests(TestCase):
         self.assertContains(response, "SENSD U.S. States")
         self.assertContains(response, reverse("us_states_geojson"))
         self.assertContains(response, "Blank (No Basemap)")
+
+    def test_spatial_tool_gallery_links_to_all_supported_tools(self):
+        response = self.client.get(reverse("grid_view"))
+
+        self.assertEqual(response.status_code, 200)
+        for slug, tool in SPATIAL_TOOLS.items():
+            self.assertContains(response, tool["title"])
+            self.assertContains(
+                response,
+                reverse("spatial_analysis_tool", kwargs={"tool_slug": slug}),
+            )
+            self.assertContains(response, tool["preview"])
+
+    def test_tool_pages_select_workspace_without_creating_records(self):
+        for slug, tool in SPATIAL_TOOLS.items():
+            response = self.client.get(
+                reverse("spatial_analysis_tool", kwargs={"tool_slug": slug})
+            )
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, f'data-selected-tool="{tool["tool_name"]}"')
+            self.assertContains(response, "Load sample analysis")
+            self.assertContains(response, reverse("spatial_sample_dataset"))
+
+        self.assertEqual(UploadedDataset.objects.count(), 0)
+        self.assertEqual(AnalysisRun.objects.count(), 0)
+
+    def test_invalid_tool_slug_returns_not_found(self):
+        response = self.client.get(
+            reverse("spatial_analysis_tool", kwargs={"tool_slug": "not-a-tool"})
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_sample_dataset_is_authenticated_and_streamed(self):
+        response = self.client.get(reverse("spatial_sample_dataset"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/geo+json")
+        self.assertIn("US_Counties_Sample_Data_v4.geojson", response["Content-Disposition"])
+
+        self.client.logout()
+        anonymous_response = self.client.get(reverse("spatial_sample_dataset"))
+        self.assertEqual(anonymous_response.status_code, 302)
+        self.assertIn(reverse("login"), anonymous_response["Location"])
 
     def test_column_inspection_supports_csv_excel_and_geojson(self):
         csv_bytes = self.dataframe.to_csv(index=False).encode("utf-8")

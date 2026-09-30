@@ -15,6 +15,7 @@ from mapsapp.models import (
     USStates,
     UploadedLayer,
 )
+from mapsapp.spatial_tools import spatial_tool_cards
 
 
 def home(request):
@@ -30,7 +31,11 @@ def maps_view(request):
 
 
 def grid_view(request):
-    return render(request, "gisdashboards/grid_view.html")
+    return render(
+        request,
+        "gisdashboards/grid_view.html",
+        {"spatial_tools": spatial_tool_cards()},
+    )
 
 
 def data_mapping_tool_view(request):

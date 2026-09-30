@@ -58,3 +58,33 @@
     scrollbar-width: none; /* Firefox */
     overflow-y: scroll; /* Keep scrollable even when hidden */
   }
+/* Light, restrained shell for legacy authentication and administration pages. */
+.sensd-legacy-shell {
+  background:#f5f7f6;
+  color:#17211d;
+}
+
+.sensd-legacy-shell .bd-mode-toggle { display:none !important; }
+
+.sensd-legacy-header {
+  min-height:56px;
+  background:#ffffff;
+  border-bottom:1px solid #dce3df;
+}
+
+.sensd-legacy-header .navbar-brand,
+.sensd-legacy-header .nav-link {
+  color:#245c46 !important;
+}
+
+.sensd-legacy-header .navbar-brand {
+  background:transparent;
+  box-shadow:none;
+}
+
+.sensd-legacy-shell .table-dark,
+.sensd-legacy-shell .table-dark > tr > * {
+  --bs-table-bg:#edf3f0;
+  --bs-table-color:#304139;
+  --bs-table-border-color:#dce3df;
+}

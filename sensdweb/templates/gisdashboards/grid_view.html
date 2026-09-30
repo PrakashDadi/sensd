@@ -1,16 +1,61 @@
 {% extends "gisdashboards/gisbase.html" %}
 {% load static %}
 
-{% block title %}SENSD - Grid View{% endblock %}
+{% block title %}SENSD - Spatial Analysis Tools{% endblock %}
 
 {% block css %}
-<link rel="stylesheet" href="{% static 'css/grid_view.css' %}">
+<link rel="stylesheet" href="{% static 'css/grid_view.css' %}?v=20260929">
 {% endblock %}
 
 {% block content %}
-<div id="grid-container"></div>
+<main class="spatial-grid-page">
+    <header class="grid-header">
+        <p class="grid-eyebrow">Decision Support System</p>
+        <h1>Spatial Analysis Tools</h1>
+        <p class="grid-description">
+            Select an analysis to open the secure SENSD workspace. Upload your own data or explicitly run the county demonstration dataset.
+        </p>
+    </header>
+
+    <section class="grid-controls" aria-label="Filter spatial analysis tools">
+        <label class="grid-search">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <span class="visually-hidden">Search tools</span>
+            <input id="tool-search" type="search" placeholder="Search spatial tools" autocomplete="off">
+        </label>
+        <div class="grid-filters" role="group" aria-label="Tool categories">
+            <button class="filter-btn active" type="button" data-filter="all">All</button>
+            <button class="filter-btn" type="button" data-filter="risk">Risk</button>
+            <button class="filter-btn" type="button" data-filter="association">Association</button>
+            <button class="filter-btn" type="button" data-filter="hotspot">Hotspot</button>
+            <button class="filter-btn" type="button" data-filter="regression">Regression</button>
+        </div>
+    </section>
+
+    <section id="analysis-grid" class="analysis-grid" aria-live="polite">
+        {% for tool in spatial_tools %}
+        <article class="analysis-card" data-category="{{ tool.category }}" data-search="{{ tool.title|lower }} {{ tool.description|lower }}">
+            <div class="card-top">
+                <span class="tool-icon"><i class="bi {{ tool.icon }}" aria-hidden="true"></i></span>
+                <span class="tool-category">{{ tool.category_label }}</span>
+            </div>
+            <h2>{{ tool.title }}</h2>
+            <div class="tool-preview">
+                <img src="{% static tool.preview %}" alt="{{ tool.title }} preview" loading="lazy">
+            </div>
+            <p>{{ tool.description }}</p>
+            <a class="open-tool-link" href="{% url 'spatial_analysis_tool' tool.slug %}">
+                Open {{ tool.title }}
+                <i class="bi bi-arrow-right" aria-hidden="true"></i>
+            </a>
+        </article>
+        {% endfor %}
+    </section>
+
+    <p id="no-tool-results" class="no-tool-results" hidden>No tools match this search.</p>
+</main>
 {% endblock %}
 
 {% block js %}
-<script src="{% static 'js/grid_view.js' %}"></script>
+<script src="{% static 'js/grid_view.js' %}?v=20260929"></script>
 {% endblock %}
