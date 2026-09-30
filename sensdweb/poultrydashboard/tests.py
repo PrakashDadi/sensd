@@ -70,6 +70,39 @@ class PoultryDashboardTests(TestCase):
         self.assertEqual(measurements.status_code, 200)
         self.assertGreater(len(measurements.json()["points"]), 0)
 
+    def test_local_navigation_is_poultry_only_and_marks_current_page(self):
+        self.connect_demo()
+        page_names = [
+            "home",
+            "connect",
+            "sensor_feed",
+            "visualizations",
+            "ai",
+            "ai_chat",
+            "faq",
+            "contact",
+        ]
+
+        for page_name in page_names:
+            with self.subTest(page_name=page_name):
+                response = self.client.get(reverse(f"poultrydashboard:{page_name}"))
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, 'Poultry workspace navigation')
+                self.assertContains(response, 'aria-current="page"', count=1)
+                self.assertNotContains(response, 'Poultry Profile')
+                for destination in page_names:
+                    self.assertContains(response, reverse(f"poultrydashboard:{destination}"))
+
+    def test_home_is_a_launch_point_for_poultry_analytics_tools(self):
+        response = self.client.get(reverse("poultrydashboard:home"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Poultry analytics tools")
+        self.assertContains(response, "Live sensor feed")
+        self.assertContains(response, "Temperature visualizations")
+        self.assertContains(response, "Shelf-life estimation")
+        self.assertContains(response, "AI sensor summary")
+
     def test_sensitive_profile_note_and_credentials_are_encrypted(self):
         self.connect_demo()
         profile_response = self.client.post(

@@ -33,6 +33,21 @@ body {
   transition:background-color .15s ease, color .15s ease;
 }
 
+.poultry-sidebar-brand strong,
+.poultry-sidebar-brand small { display:block; }
+.poultry-sidebar-brand strong { color:#0b2341; font-size:1.05rem; }
+.poultry-sidebar-brand small { margin-top:.15rem; color:#64748b; font-size:.72rem; font-weight:500; }
+.poultry-nav-group { padding:.75rem 0 .2rem; }
+.poultry-nav-label { display:block; padding:0 .75rem .35rem; color:#94a3b8; font-size:.68rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+.poultry-sidebar-footer { display:flex; align-items:center; justify-content:space-between; gap:.5rem; }
+.poultry-disconnect { color:#9a430d; font-weight:600; }
+.poultry-disconnect:hover { text-decoration:underline; }
+.poultry-home-tool { display:flex; flex-direction:column; min-height:150px; padding:1.25rem; background:#fff; border:1px solid #e2e8f0; border-radius:1rem; box-shadow:0 4px 14px rgba(15,23,42,.05); color:#334155; text-decoration:none; transition:border-color .15s ease, transform .15s ease; }
+.poultry-home-tool:hover { border-color:#94a3b8; transform:translateY(-1px); }
+.poultry-home-tool span { color:#9a430d; font-size:.72rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase; }
+.poultry-home-tool strong { margin-top:.35rem; color:#0b2341; font-size:1.05rem; }
+.poultry-home-tool p { margin-top:.4rem; color:#64748b; font-size:.88rem; line-height:1.5; }
+
 .poultry-nav-link:hover {
   background:#f1f5f9;
   color:#0b2341;
@@ -42,4 +57,16 @@ body {
   background:#fff3e8;
   color:#9a430d;
   box-shadow:inset 3px 0 0 #ea711a;
+}
+
+@media (max-width: 900px) {
+  .poultry-workspace { flex-direction:column; }
+  .poultry-sidebar { position:static; width:100%; height:auto; border-right:0; border-bottom:1px solid #e2e8f0; box-shadow:none; }
+  .poultry-sidebar-brand { padding:.75rem 1rem; }
+  .poultry-local-nav { display:flex; gap:.25rem; padding:.4rem .65rem; overflow-x:auto; }
+  .poultry-nav-group { display:flex; flex:0 0 auto; gap:.25rem; padding:0; }
+  .poultry-nav-label { display:none; }
+  .poultry-nav-link { white-space:nowrap; padding:.5rem .65rem; }
+  .poultry-sidebar-footer { display:none; }
+  .poultry-header-title { position:static; transform:none; max-width:none; }
 }

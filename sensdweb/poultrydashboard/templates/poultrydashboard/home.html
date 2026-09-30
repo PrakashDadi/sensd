@@ -37,6 +37,18 @@
     </div>
   </div>
 
+  <section class="mt-6" aria-labelledby="poultry-tools-title">
+    <div class="flex items-end justify-between gap-4 mb-3">
+      <div><h2 id="poultry-tools-title" class="text-xl font-semibold text-auburn">Poultry analytics tools</h2><p class="text-sm text-slate-600 mt-1">Choose the task you want to perform.</p></div>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <a href="{% url 'poultrydashboard:sensor_feed' %}" class="poultry-home-tool"><span>Monitor</span><strong>Live sensor feed</strong><p>Review connected logger readings and current conditions.</p></a>
+      <a href="{% url 'poultrydashboard:visualizations' %}" class="poultry-home-tool"><span>Analyze</span><strong>Temperature visualizations</strong><p>Explore uploaded and live sensor history in charts.</p></a>
+      <a href="{% url 'poultrydashboard:ai' %}" class="poultry-home-tool"><span>Decision support</span><strong>Shelf-life estimation</strong><p>Use temperature information to support product decisions.</p></a>
+      <a href="{% url 'poultrydashboard:ai_chat' %}" class="poultry-home-tool"><span>Assistant</span><strong>AI sensor summary</strong><p>Ask questions about available poultry sensor information.</p></a>
+    </div>
+  </section>
+
   <div id="home-alerts" class="mt-6 bg-white border border-auburn/30 rounded-2xl shadow-sm p-6 hidden">
     <div class="flex items-center justify-between">
       <h3 class="text-lg font-semibold text-auburn">Quick Alerts</h3>

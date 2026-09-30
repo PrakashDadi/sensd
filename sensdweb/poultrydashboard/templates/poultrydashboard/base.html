@@ -24,48 +24,51 @@
   <body class="min-h-screen w-full bg-gray-50 text-slate-900">
     <div class="min-h-screen w-full bg-gray-50 text-slate-900 flex flex-col">
       {% include 'partials/_global_nav.html' with active_workspace='poultry' %}
-      <div class="flex flex-1 min-h-0">
-      <aside class="w-60 bg-white text-slate-700 border-r border-slate-200 sticky top-0 h-[100dvh] flex flex-col shadow-sm">
-        <div class="px-4 py-4 text-lg font-semibold text-auburn border-b border-slate-100">
-          Auburn University
+      <div class="poultry-workspace flex flex-1 min-h-0">
+      <aside class="poultry-sidebar w-60 bg-white text-slate-700 border-r border-slate-200 sticky top-0 h-[100dvh] flex flex-col shadow-sm">
+        <div class="poultry-sidebar-brand px-4 py-4 border-b border-slate-100">
+          <strong>Poultry Analytics</strong>
+          <small>Prescriptive decision support</small>
         </div>
 
-        <nav class="px-2 space-y-1 overflow-y-auto flex-1">
-          {% with path=request.path %}
-          <a href="{% url 'poultrydashboard:home' %}" class="poultry-nav-link {% if path == '/poultry/' %}poultry-nav-active{% endif %}">Poultry Home</a>
-          <a href="{% url 'poultrydashboard:connect' %}" class="poultry-nav-link {% if path == '/poultry/connect/' %}poultry-nav-active{% endif %}">Sensor Connection</a>
-          <a href="{% url 'poultrydashboard:sensor_feed' %}" class="poultry-nav-link {% if path == '/poultry/sensor-feed/' %}poultry-nav-active{% endif %}">Sensor Feed</a>
-          <a href="{% url 'poultrydashboard:visualizations' %}" class="poultry-nav-link {% if path == '/poultry/visualizations/' %}poultry-nav-active{% endif %}">Visualizations</a>
-          <a href="{% url 'poultrydashboard:ai' %}" class="poultry-nav-link {% if path == '/poultry/ai-estimation/' %}poultry-nav-active{% endif %}">AI Estimation</a>
-          <a href="{% url 'poultrydashboard:ai_chat' %}" class="poultry-nav-link {% if path == '/poultry/ai-chat/' %}poultry-nav-active{% endif %}">AI ChatBot</a>
-          <a href="{% url 'poultrydashboard:faq' %}" class="poultry-nav-link {% if path == '/poultry/faq/' %}poultry-nav-active{% endif %}">FAQ</a>
+        <nav class="poultry-local-nav px-2 overflow-y-auto flex-1" aria-label="Poultry workspace navigation">
+          {% with page=request.resolver_match.url_name %}
+          <div class="poultry-nav-group">
+            <span class="poultry-nav-label">Overview</span>
+            <a href="{% url 'poultrydashboard:home' %}" class="poultry-nav-link {% if page == 'home' %}poultry-nav-active{% endif %}" {% if page == 'home' %}aria-current="page"{% endif %}>Workspace home</a>
+          </div>
+          <div class="poultry-nav-group">
+            <span class="poultry-nav-label">Monitor</span>
+            <a href="{% url 'poultrydashboard:connect' %}" class="poultry-nav-link {% if page == 'connect' %}poultry-nav-active{% endif %}" {% if page == 'connect' %}aria-current="page"{% endif %}>Connect sensors</a>
+            <a href="{% url 'poultrydashboard:sensor_feed' %}" class="poultry-nav-link {% if page == 'sensor_feed' %}poultry-nav-active{% endif %}" {% if page == 'sensor_feed' %}aria-current="page"{% endif %}>Live sensor feed</a>
+            <a href="{% url 'poultrydashboard:visualizations' %}" class="poultry-nav-link {% if page == 'visualizations' %}poultry-nav-active{% endif %}" {% if page == 'visualizations' %}aria-current="page"{% endif %}>Visualizations</a>
+          </div>
+          <div class="poultry-nav-group">
+            <span class="poultry-nav-label">Decision support</span>
+            <a href="{% url 'poultrydashboard:ai' %}" class="poultry-nav-link {% if page == 'ai' %}poultry-nav-active{% endif %}" {% if page == 'ai' %}aria-current="page"{% endif %}>Shelf-life estimation</a>
+            <a href="{% url 'poultrydashboard:ai_chat' %}" class="poultry-nav-link {% if page == 'ai_chat' %}poultry-nav-active{% endif %}" {% if page == 'ai_chat' %}aria-current="page"{% endif %}>AI assistant</a>
+          </div>
+          <div class="poultry-nav-group">
+            <span class="poultry-nav-label">Help</span>
+            <a href="{% url 'poultrydashboard:faq' %}" class="poultry-nav-link {% if page == 'faq' %}poultry-nav-active{% endif %}" {% if page == 'faq' %}aria-current="page"{% endif %}>FAQ</a>
+            <a href="{% url 'poultrydashboard:contact' %}" class="poultry-nav-link {% if page == 'contact' %}poultry-nav-active{% endif %}" {% if page == 'contact' %}aria-current="page"{% endif %}>Contact</a>
+          </div>
           {% endwith %}
         </nav>
 
-        <footer class="px-4 py-3 text-xs text-slate-500 mt-auto border-t border-slate-200">
-          <a href="{% url 'poultrydashboard:profile' %}" class="hover:underline">Poultry Profile</a>
-          <span class="mx-1">|</span>
-          <button type="button" class="hover:underline" data-bu-logout>Disconnect sensors</button>
-          <span class="mx-1">|</span>
-          <a href="{% url 'logout' %}" class="hover:underline">Log out</a>
-          <span class="mx-1">|</span>
-          <a href="{% url 'poultrydashboard:contact' %}" class="hover:underline">Contact</a>
+        <footer class="poultry-sidebar-footer px-4 py-3 text-xs text-slate-500 mt-auto border-t border-slate-200">
+          <span>Sensor session</span>
+          <button type="button" class="poultry-disconnect" data-bu-logout>Disconnect</button>
         </footer>
       </aside>
 
       <div class="flex-1 flex flex-col">
         <header class="sticky top-0 z-10 bg-white border-b w-full">
           <div class="relative flex items-center px-6 h-14 w-full">
-            <h3 class="absolute left-1/2 -translate-x-1/2 whitespace-nowrap truncate max-w-[calc(100%-6rem)] text-auburn font-semibold text-xl md:text-2xl">
-              Auburn University - College of Agriculture
+            <h3 class="poultry-header-title absolute left-1/2 -translate-x-1/2 whitespace-nowrap truncate max-w-[calc(100%-6rem)] text-auburn font-semibold text-xl md:text-2xl">
+              Poultry Sensor Decision Support
             </h3>
-            <a href="{% url 'poultrydashboard:profile' %}" class="ml-auto" aria-label="Open profile">
-              <img
-                src="{% static 'poultrydashboard/img/icons8-user-48.png' %}"
-                alt="Profile"
-                class="h-8 w-8 rounded-full ring-2 ring-auburn object-cover"
-              />
-            </a>
+            <span class="ml-auto text-xs text-slate-500">Auburn University</span>
           </div>
         </header>
 
