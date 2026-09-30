@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
 
-from authentication.models import CustomUser
+from authentication.models import CustomUser, UserKey
 from poultrydashboard.models import PoultryProfile
 
 from .models import UserProfile
@@ -99,3 +99,51 @@ class PlatformHomeTests(TestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertIn(reverse('login'), response['Location'])
+
+
+class OptimizationWorkspaceTests(TestCase):
+    def setUp(self):
+        self.user = CustomUser.objects.create_user(
+            username='optimization-user',
+            email='optimization@example.test',
+            password='test-password-only',
+        )
+        public_key, private_key = UserKey.generate_key_pair()
+        UserKey.objects.create(
+            user=self.user,
+            public_key=public_key,
+            private_key=private_key,
+        )
+        self.client.force_login(self.user)
+        session = self.client.session
+        session['uservalues'] = {
+            'pk': self.user.pk,
+            'username': 'optimization-user',
+            'email': 'optimization@example.test',
+            'isactive': True,
+        }
+        session.save()
+
+    def test_dashboard_is_limited_to_optimization_tools(self):
+        response = self.client.get(reverse('sensd'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Sensor Placement Optimization')
+        self.assertContains(response, 'Intelligent Distribution Optimization')
+        self.assertContains(response, 'Recent Sensor Placement results')
+        self.assertNotContains(response, '<h2>Poultry Dashboard</h2>', html=True)
+
+    def test_optimization_navigation_preserves_existing_workflow_routes(self):
+        response = self.client.get(reverse('sensd'))
+
+        self.assertContains(response, 'Sensor Placement')
+        self.assertContains(response, 'Optimization activity')
+        for route_name in ('new_request', 'upload_excel', 'user_requests', 'isdrequests_home', 'requests_list'):
+            self.assertContains(response, reverse(route_name))
+
+    def test_sensor_upload_uses_sensor_placement_language(self):
+        response = self.client.get(reverse('upload_excel'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Sensor Placement Optimization')
+        self.assertContains(response, 'Upload optimization workbook')

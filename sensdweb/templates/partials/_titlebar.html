@@ -1,15 +1,16 @@
 <nav class="navbar navbar-expand-lg navbar-dark sensd-navbar sticky-top" aria-label="Optimization navigation">
   <div class="container-fluid px-lg-4">
-    <a class="navbar-brand" href="{% url 'gis-home' %}">SENSD <span class="fw-normal opacity-75">Optimization</span></a>
+    <a class="navbar-brand" href="{% url 'sensd' %}">SENSD <span class="fw-normal opacity-75">Optimization</span></a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sensdNav" aria-controls="sensdNav" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
     <div class="collapse navbar-collapse" id="sensdNav">
       <ul class="navbar-nav mx-auto gap-lg-1">
-        <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'sensd' %}active{% endif %}" href="{% url 'sensd' %}">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'sensd' %}active{% endif %}" href="{% url 'sensd' %}">Overview</a></li>
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Sensor Data</a>
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Sensor Placement</a>
           <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="{% url 'new_request' %}">Manual input</a></li>
-            <li><a class="dropdown-item" href="{% url 'upload_excel' %}">Upload sensor data</a></li>
+            <li><a class="dropdown-item" href="{% url 'new_request' %}">New manual request</a></li>
+            <li><a class="dropdown-item" href="{% url 'upload_excel' %}">Upload workbook</a></li>
+            <li><a class="dropdown-item" href="{% url 'user_requests' %}">Requests and results</a></li>
           </ul>
         </li>
         <li class="nav-item dropdown">
@@ -19,13 +20,7 @@
             <li><a class="dropdown-item" href="{% url 'requests_list' %}">Requests and results</a></li>
           </ul>
         </li>
-        <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'user_requests' %}active{% endif %}" href="{% url 'user_requests' %}">All requests</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'poultrydashboard:home' %}">Poultry Dashboard</a></li>
-      </ul>
-      <ul class="navbar-nav gap-lg-1">
-        <li class="nav-item"><a class="nav-link" href="{% url 'gis-home' %}">Tools</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'profile' %}">Profile</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Logout</a></li>
+        <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'user_requests' %}active{% endif %}" href="{% url 'user_requests' %}">Optimization activity</a></li>
       </ul>
     </div>
   </div>
