@@ -1,4 +1,4 @@
-{% extends 'base_auth.html' %}
+{% extends 'base.html' %}
 {% block content %}
 
 <!-- Custom Styles -->
@@ -34,6 +34,10 @@
         <p class="lead subtext mt-2">View and manage all nodes for this request</p>
     </div>
 </header>
+
+<div class="container mb-4">
+    {% include 'userrequests/_manual_workflow_steps.html' with current_step=1 %}
+</div>
 
 <div class="container mb-4">
     <div class="card shadow-sm">

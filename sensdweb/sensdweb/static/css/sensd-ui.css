@@ -83,6 +83,18 @@ body.sensd-app .container > .card-body > table,
 body.sensd-app .card-body > table { display:block; max-width:100%; overflow-x:auto; white-space:nowrap; }
 body.sensd-app a:focus-visible,
 body.sensd-app button:focus-visible { outline:3px solid rgba(36,92,70,.35); outline-offset:2px; }
+.sensd-workflow { background:#fff; border:1px solid var(--sensd-border); border-radius:var(--sensd-radius); box-shadow:var(--sensd-shadow); padding:1rem; }
+.sensd-workflow-heading { display:flex; align-items:flex-end; justify-content:space-between; gap:1rem; margin-bottom:.85rem; }
+.sensd-workflow-heading strong { display:block; color:var(--sensd-ink); font-size:1rem; }
+.sensd-workflow-request { color:var(--sensd-muted); font-size:.82rem; overflow-wrap:anywhere; }
+.sensd-workflow-steps { display:grid; grid-template-columns:repeat(7, minmax(110px, 1fr)); gap:.45rem; list-style:none; margin:0; padding:0; overflow-x:auto; }
+.sensd-workflow-step { display:flex; align-items:center; gap:.45rem; min-height:44px; padding:.55rem .6rem; border:1px solid var(--sensd-border); border-radius:8px; color:#59665f; font-size:.78rem; font-weight:650; line-height:1.2; text-decoration:none; }
+.sensd-workflow-step span { flex:0 0 auto; display:grid; place-items:center; width:24px; height:24px; border-radius:50%; background:#eef2f0; color:#52615a; font-size:.72rem; }
+.sensd-workflow-step:hover { color:var(--sensd-green-dark); border-color:#abc2b7; background:#f8faf9; }
+.sensd-workflow-step.complete { color:var(--sensd-green); background:#f4f8f6; }
+.sensd-workflow-step.complete span { background:var(--sensd-green-soft); color:var(--sensd-green-dark); }
+.sensd-workflow-step.active { color:#fff; background:var(--sensd-green); border-color:var(--sensd-green); }
+.sensd-workflow-step.active span { background:#fff; color:var(--sensd-green-dark); }
 
 @media (max-width: 991.98px) {
   .sensd-navbar .navbar-collapse { padding: .75rem 0 1rem; }
@@ -97,4 +109,6 @@ body.sensd-app button:focus-visible { outline:3px solid rgba(36,92,70,.35); outl
   .sensd-page-header .btn { width:100%; }
   .sensd-tool-card { padding:1.2rem; }
   .sensd-actions .btn { flex:1 1 100%; }
+  .sensd-workflow-heading { align-items:flex-start; flex-direction:column; }
+  .sensd-workflow-steps { grid-template-columns:repeat(7, 145px); }
 }

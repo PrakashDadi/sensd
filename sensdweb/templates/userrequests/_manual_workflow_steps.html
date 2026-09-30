@@ -1,0 +1,18 @@
+<nav class="sensd-workflow" aria-label="Sensor Placement manual request progress">
+  <div class="sensd-workflow-heading">
+    <div>
+      <span class="sensd-eyebrow">Sensor Placement manual request</span>
+      <strong>Step {{ current_step }} of 7</strong>
+    </div>
+    <span class="sensd-workflow-request">Request: {{ requestid }}</span>
+  </div>
+  <ol class="sensd-workflow-steps">
+    <li><a class="sensd-workflow-step {% if current_step == 1 %}active{% elif current_step > 1 %}complete{% endif %}" href="{% url 'AllNodes' requestid %}" {% if current_step == 1 %}aria-current="step"{% endif %}><span>1</span>All Nodes</a></li>
+    <li><a class="sensd-workflow-step {% if current_step == 2 %}active{% elif current_step > 2 %}complete{% endif %}" href="{% url 'InitialNodes' requestid %}" {% if current_step == 2 %}aria-current="step"{% endif %}><span>2</span>Initial Nodes</a></li>
+    <li><a class="sensd-workflow-step {% if current_step == 3 %}active{% elif current_step > 3 %}complete{% endif %}" href="{% url 'FinishedGoods' requestid %}" {% if current_step == 3 %}aria-current="step"{% endif %}><span>3</span>Finished Goods</a></li>
+    <li><a class="sensd-workflow-step {% if current_step == 4 %}active{% elif current_step > 4 %}complete{% endif %}" href="{% url 'ARCForm' requestid %}" {% if current_step == 4 %}aria-current="step"{% endif %}><span>4</span>Arcs</a></li>
+    <li><a class="sensd-workflow-step {% if current_step == 5 %}active{% elif current_step > 5 %}complete{% endif %}" href="{% url 'PTMForm' requestid %}" {% if current_step == 5 %}aria-current="step"{% endif %}><span>5</span>Testing Methods</a></li>
+    <li><a class="sensd-workflow-step {% if current_step == 6 %}active{% elif current_step > 6 %}complete{% endif %}" href="{% url 'PTMFNodesForm' requestid %}" {% if current_step == 6 %}aria-current="step"{% endif %}><span>6</span>Method Assignments</a></li>
+    <li><a class="sensd-workflow-step {% if current_step == 7 %}active{% endif %}" href="{% url 'DynamicParameterForm' requestid %}" {% if current_step == 7 %}aria-current="step"{% endif %}><span>7</span>Parameters &amp; Run</a></li>
+  </ol>
+</nav>

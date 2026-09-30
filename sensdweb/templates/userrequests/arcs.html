@@ -35,6 +35,10 @@
     </div>
 </header>
 
+<div class="container mb-4">
+    {% include 'userrequests/_manual_workflow_steps.html' with current_step=4 %}
+</div>
+
 <!-- Arc Form Section -->
 <div class="container mb-5">
     <form method="post" action="{% url 'ARCForm' requestid %}">

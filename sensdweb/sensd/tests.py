@@ -147,3 +147,32 @@ class OptimizationWorkspaceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Sensor Placement Optimization')
         self.assertContains(response, 'Upload optimization workbook')
+
+    def test_manual_request_pages_share_seven_step_navigation(self):
+        request_id = 'Request-navigation-test'
+        workflow_routes = (
+            'AllNodes',
+            'InitialNodes',
+            'FinishedGoods',
+            'ARCForm',
+            'PTMForm',
+            'PTMFNodesForm',
+            'DynamicParameterForm',
+        )
+
+        for step_number, route_name in enumerate(workflow_routes, start=1):
+            with self.subTest(route_name=route_name):
+                response = self.client.get(reverse(route_name, args=[request_id]))
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, 'Sensor Placement manual request progress')
+                self.assertContains(response, f'Step {step_number} of 7')
+                self.assertContains(response, 'aria-current="step"')
+                for workflow_route in workflow_routes:
+                    self.assertContains(response, reverse(workflow_route, args=[request_id]))
+
+    def test_first_manual_request_page_uses_shared_application_shell(self):
+        response = self.client.get(reverse('AllNodes', args=['Request-shell-test']))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'SENSD platform navigation')
+        self.assertContains(response, 'Optimization navigation')

@@ -35,6 +35,10 @@
     </div>
 </header>
 
+<div class="container mb-4">
+    {% include 'userrequests/_manual_workflow_steps.html' with current_step=2 %}
+</div>
+
 <!-- Initial Node Form -->
 <div class="container mb-5">
     <form method="post" action="{% url 'InitialNodes' requestid %}">
