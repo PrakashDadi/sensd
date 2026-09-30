@@ -17,9 +17,9 @@
 
     {% include 'partials/_global_nav.html' with active_workspace='gis' %}
 
-    <nav class="navbar navbar-expand-lg navbar-dark sensd-navbar sticky-top" aria-label="GIS navigation">
+    <nav class="navbar navbar-expand-lg navbar-dark sensd-navbar sticky-top" aria-label="GIS workspace navigation">
         <div class="container-fluid px-lg-4">
-            <a class="navbar-brand" href="{% url 'gis-home' %}">SENSD <span class="fw-normal opacity-75">GIS</span></a>
+            <a class="navbar-brand" href="{% url 'gis-home' %}">GIS <span class="fw-normal opacity-75">Workspace</span></a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#gisNavbar"
                 aria-controls="gisNavbar" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -30,20 +30,15 @@
                     <li class="nav-item">
                         <a class="nav-link {% if request.resolver_match.url_name == 'gis-home' %}active{% endif %}"
                             href="{% url 'gis-home' %}">
-                            <i class="bi bi-house-door me-1"></i>Home
+                            <i class="bi bi-house-door me-1"></i>Overview
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.url_name == 'gis_dashboard' %}active{% endif %}"
-                            href="{% url 'gis_dashboard' %}">
-                            <i class="bi bi-geo-alt me-1"></i>GIS Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.url_name == 'maps_view' %}active{% endif %}"
-                            href="{% url 'maps_view' %}">
-                            <i class="bi bi-map me-1"></i>Maps
-                        </a>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle {% if request.resolver_match.url_name == 'gis_dashboard' or request.resolver_match.url_name == 'maps_view' %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-map me-1"></i>Maps</a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'gis_dashboard' %}">Location and county map</a></li>
+                            <li><a class="dropdown-item" href="{% url 'maps_view' %}">Network and flow map</a></li>
+                        </ul>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if request.resolver_match.url_name == 'flow_analysis' %}active{% endif %}"
@@ -57,17 +52,12 @@
                             <i class="bi bi-bounding-box-circles me-1"></i>Spatial Analysis
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.url_name == 'data_mapping_tool' %}active{% endif %}"
-                            href="{% url 'data_mapping_tool' %}">
-                            <i class="bi bi-upload me-1"></i>Data Mapping
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.url_name == 'grid_view' %}active{% endif %}"
-                            href="{% url 'grid_view' %}">
-                            <i class="bi bi-grid me-1"></i>Analysis Tools
-                        </a>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle {% if request.resolver_match.url_name == 'data_mapping_tool' or request.resolver_match.url_name == 'grid_view' %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-grid me-1"></i>Data &amp; Analysis</a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'data_mapping_tool' %}">Data mapping</a></li>
+                            <li><a class="dropdown-item" href="{% url 'grid_view' %}">Spatial analysis tools</a></li>
+                        </ul>
                     </li>
                 </ul>
             </div>
