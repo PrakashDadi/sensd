@@ -132,6 +132,8 @@ class OptimizationWorkspaceTests(TestCase):
         self.assertContains(response, 'Intelligent Distribution Optimization')
         self.assertContains(response, 'Recent Sensor Placement results')
         self.assertNotContains(response, '<h2>Poultry Dashboard</h2>', html=True)
+        self.assertContains(response, 'navbar-light sensd-navbar')
+        self.assertNotContains(response, 'navbar-dark sensd-navbar')
 
     def test_optimization_navigation_preserves_existing_workflow_routes(self):
         response = self.client.get(reverse('sensd'))

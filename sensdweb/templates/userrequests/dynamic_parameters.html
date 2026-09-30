@@ -75,7 +75,7 @@
                     <th>Max Steps</th>
                     <th>Max Percentage</th>
                     <th>Max Budget</th>
-                    <th>Actions</th>
+                    <th>Status</th>
                 </tr>
             </thead>
             <tbody>
@@ -85,10 +85,7 @@
                     <td>{{ node.maxsteps_k }}</td>
                     <td>{{ node.maxpercentage_alpha }}</td>
                     <td>{{ node.maxbudget_B }}</td>
-                    <td>
-                        <a href="#" class="btn btn-warning btn-sm"><i class="bi bi-pencil"></i></a>
-                        <a href="#" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i></a>
-                    </td>
+                    <td><span class="badge badge-sensor">Saved</span></td>
                 </tr>
                 {% endfor %}
             </tbody>

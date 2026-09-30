@@ -30,3 +30,5 @@ class GisWorkspaceNavigationTests(TestCase):
             response = self.client.get(reverse(route_name))
             self.assertEqual(response.status_code, 200, route_name)
             self.assertContains(response, "GIS workspace navigation")
+            self.assertContains(response, "navbar-light sensd-navbar")
+            self.assertNotContains(response, "navbar-dark sensd-navbar")

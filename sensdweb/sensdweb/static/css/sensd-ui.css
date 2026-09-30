@@ -22,10 +22,11 @@ body.sensd-app { background: var(--sensd-bg); color: var(--sensd-ink); }
 .platform-global-logout:hover { color:#fff; background:var(--sensd-green); border-color:var(--sensd-green); }
 .bd-mode-toggle { display:none !important; }
 body.sensd-app .main-content { height:auto; min-height:calc(100vh - 64px); overflow:visible; padding:0; }
-.sensd-navbar { background: #17251f; min-height: 64px; border-bottom: 1px solid rgba(255,255,255,.1); }
-.sensd-navbar .navbar-brand { font-weight: 700; letter-spacing: .04em; }
-.sensd-navbar .nav-link { color: rgba(255,255,255,.76); border-radius: 7px; padding: .5rem .7rem !important; }
-.sensd-navbar .nav-link:hover, .sensd-navbar .nav-link.active { color: #fff; background: rgba(255,255,255,.1); }
+.sensd-navbar { background:#fff; min-height:64px; border-bottom:1px solid var(--sensd-border); box-shadow:0 4px 14px rgba(24,48,38,.04); }
+.sensd-navbar .navbar-brand { color:var(--sensd-green-dark); font-weight:700; letter-spacing:.04em; }
+.sensd-navbar .navbar-brand:hover { color:var(--sensd-green); }
+.sensd-navbar .nav-link { color:#52615a; border-radius:7px; padding:.5rem .7rem !important; font-weight:600; }
+.sensd-navbar .nav-link:hover, .sensd-navbar .nav-link.active { color:var(--sensd-green-dark); background:var(--sensd-green-soft); }
 .sensd-navbar .dropdown-menu { border: 1px solid var(--sensd-border); box-shadow: var(--sensd-shadow); }
 .sensd-page { max-width: 1320px; margin: 0 auto; padding: 2rem 1.25rem 3rem; }
 .sensd-page-header { display:flex; justify-content:space-between; align-items:flex-end; gap:1rem; margin-bottom:1.5rem; }
