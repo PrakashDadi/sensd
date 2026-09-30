@@ -80,6 +80,19 @@ class PlatformHomeTests(TestCase):
         self.assertContains(response, reverse('gis-home'))
         self.assertContains(response, reverse('sensd'))
         self.assertContains(response, reverse('poultrydashboard:home'))
+        self.assertContains(response, 'SENSD platform navigation')
+
+    def test_global_navigation_is_available_in_each_workspace_shell(self):
+        self.client.force_login(self.user)
+
+        for route_name in ('gis-home', 'poultrydashboard:home'):
+            response = self.client.get(reverse(route_name))
+            self.assertEqual(response.status_code, 200, route_name)
+            self.assertContains(response, 'SENSD platform navigation')
+            self.assertContains(response, reverse('index'))
+            self.assertContains(response, reverse('gis-home'))
+            self.assertContains(response, reverse('sensd'))
+            self.assertContains(response, reverse('poultrydashboard:home'))
 
     def test_anonymous_root_still_uses_existing_login_flow(self):
         response = self.client.get(reverse('index'))

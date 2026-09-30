@@ -1,0 +1,13 @@
+<nav class="platform-global-nav" aria-label="SENSD platform navigation">
+  <a class="platform-global-brand" href="{% url 'index' %}">SENSD</a>
+  <div class="platform-global-links">
+    <a class="platform-global-link {% if active_workspace == 'home' %}active{% endif %}" href="{% url 'index' %}">Home</a>
+    <a class="platform-global-link {% if active_workspace == 'gis' %}active{% endif %}" href="{% url 'gis-home' %}">GIS</a>
+    <a class="platform-global-link {% if active_workspace == 'optimization' %}active{% endif %}" href="{% url 'sensd' %}">Optimization Tools</a>
+    <a class="platform-global-link {% if active_workspace == 'poultry' %}active{% endif %}" href="{% url 'poultrydashboard:home' %}">Poultry Analytics</a>
+  </div>
+  <div class="platform-global-account">
+    <a class="platform-global-link {% if active_workspace == 'account' %}active{% endif %}" href="{% url 'profile' %}">Profile</a>
+    <a class="platform-global-logout" href="{% url 'logout' %}">Log out</a>
+  </div>
+</nav>

@@ -15,6 +15,8 @@
 
 <body class="sensd-app">
 
+    {% include 'partials/_global_nav.html' with active_workspace='gis' %}
+
     <nav class="navbar navbar-expand-lg navbar-dark sensd-navbar sticky-top" aria-label="GIS navigation">
         <div class="container-fluid px-lg-4">
             <a class="navbar-brand" href="{% url 'gis-home' %}">SENSD <span class="fw-normal opacity-75">GIS</span></a>
@@ -67,16 +69,6 @@
                             <i class="bi bi-grid me-1"></i>Analysis Tools
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'poultrydashboard:home' %}">
-                            <i class="bi bi-thermometer-half me-1"></i>Poultry Dashboard
-                        </a>
-                    </li>
-                </ul>
-                <ul class="navbar-nav gap-lg-1">
-                    <li class="nav-item"><a class="nav-link" href="{% url 'sensd' %}">Optimization</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'profile' %}">Profile</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Logout</a></li>
                 </ul>
             </div>
         </div>

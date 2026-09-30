@@ -329,6 +329,9 @@
         />
       </symbol>
     </svg>
+    {% block globalnav %}
+    {% include 'partials/_global_nav.html' with active_workspace='optimization' %}
+    {% endblock %}
     {% block titlebar %}
     {% include 'partials/_titlebar.html' %}
     {% endblock %}

@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}SENSD Platform{% endblock %}
-{% block titlebar %}{% include 'partials/_platform_titlebar.html' %}{% endblock %}
+{% block globalnav %}{% include 'partials/_global_nav.html' with active_workspace='home' %}{% endblock %}
+{% block titlebar %}{% endblock %}
 
 {% block content %}
 <main class="sensd-page">

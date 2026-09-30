@@ -9,6 +9,21 @@ body {
   background: #ffffff;
 }
 
+.platform-global-nav { min-height:48px; display:flex; align-items:center; gap:1rem; padding:.45rem 1.25rem; background:#fff; border-bottom:1px solid #dce3df; position:relative; z-index:50; }
+.platform-global-brand { color:#194333; font-weight:800; letter-spacing:.05em; text-decoration:none; }
+.platform-global-links, .platform-global-account { display:flex; align-items:center; gap:.25rem; }
+.platform-global-links { flex:1; }
+.platform-global-link { color:#52615a; padding:.42rem .65rem; border-radius:7px; font-size:.9rem; font-weight:600; text-decoration:none; white-space:nowrap; }
+.platform-global-link:hover, .platform-global-link.active { color:#194333; background:#e9f1ed; }
+.platform-global-logout { color:#245c46; border:1px solid #dce3df; border-radius:7px; padding:.38rem .7rem; font-size:.86rem; font-weight:600; text-decoration:none; white-space:nowrap; }
+.platform-global-logout:hover { color:#fff; background:#245c46; border-color:#245c46; }
+
+@media (max-width: 767px) {
+  .platform-global-nav { align-items:flex-start; flex-wrap:wrap; gap:.35rem .75rem; padding:.6rem .9rem; }
+  .platform-global-links { order:3; flex:1 0 100%; overflow-x:auto; padding-bottom:.15rem; }
+  .platform-global-account { margin-left:auto; }
+}
+
 .poultry-nav-link {
   display:block;
   border-radius:.5rem;
