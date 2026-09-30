@@ -176,3 +176,28 @@ class OptimizationWorkspaceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'SENSD platform navigation')
         self.assertContains(response, 'Optimization navigation')
+
+    def test_optimization_activity_keeps_tool_workflows_separate(self):
+        response = self.client.get(reverse('user_requests'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Optimization activity sections')
+        self.assertContains(response, 'id="sensor-placement-activity"')
+        self.assertContains(response, 'id="distribution-activity"')
+        self.assertLess(
+            response.content.index(b'id="sensor-placement-activity"'),
+            response.content.index(b'id="distribution-activity"'),
+        )
+        self.assertContains(response, reverse('new_request'))
+        self.assertContains(response, reverse('upload_excel'))
+        self.assertContains(response, reverse('isdrequests_home'))
+        self.assertContains(response, reverse('requests_list'))
+        self.assertContains(response, 'No Sensor Placement requests yet')
+        self.assertContains(response, 'No Intelligent Distribution requests yet')
+
+    def test_distribution_history_links_back_to_combined_activity(self):
+        response = self.client.get(reverse('requests_list'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Detailed request history')
+        self.assertContains(response, f'{reverse("user_requests")}#distribution-activity')

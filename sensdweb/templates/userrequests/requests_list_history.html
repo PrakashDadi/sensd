@@ -1,106 +1,66 @@
 {% extends 'base.html' %}
+{% block title %}Optimization Activity{% endblock %}
 {% block content %}
 <div class="sensd-page">
-    <header class="sensd-page-header">
-        <div><div class="sensd-eyebrow">Optimization</div><h1 class="sensd-page-title">Optimization activity</h1><p class="sensd-page-copy">Review Sensor Placement and Intelligent Distribution requests while keeping each workflow separate.</p></div>
-        <a class="btn btn-outline-sensd" href="{% url 'sensd' %}">Back to dashboard</a>
-    </header>
-
-    <div class="card mb-5">
-        <div class="card-header bg-white"><h2 class="sensd-section-title">Sensor Placement requests</h2></div>
-        <div class="card-body">
-            <table id="request-table" class="table table-bordered table-hover table-striped">
-                <thead class="table-success">
-                    <tr>
-                        <th>Request ID</th>
-                        <th>User Request ID</th>
-                        <th>Created On</th>
-                        <th>Updated On</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for req in requests %}
-                    <tr>
-                        <td>{{ req.request_id }}</td>
-                        <td>{{ req.user_request_id }}</td>
-                        <td>{{ req.created_on }}</td>
-                        <td>{{ req.updated_on }}</td>
-                        <td>
-                            <a href="{% url 'AllNodes' requestid=req.user_request_id %}" class="btn btn-sm btn-warning">Edit</a>
-                            <a href="{% url 'delete_request' requestid=req.user_request_id %}" class="btn btn-sm btn-danger">Delete</a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+  <header class="sensd-page-header">
+    <div>
+      <div class="sensd-eyebrow">Optimization workspace</div>
+      <h1 class="sensd-page-title">Requests and results</h1>
+      <p class="sensd-page-copy">Review activity for each optimization tool without mixing their workflows or results.</p>
     </div>
+    <a class="btn btn-outline-sensd" href="{% url 'sensd' %}">Back to overview</a>
+  </header>
+  {% include 'partials/_messages.html' %}
 
-    <div class="card mb-5">
-        <div class="card-header bg-white d-flex justify-content-between align-items-center"><h2 class="sensd-section-title">Intelligent Distribution requests</h2><a class="btn btn-sm btn-sensd" href="{% url 'isdrequests_home' %}">Upload distribution data</a></div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table id="distribution-request-table" class="table table-bordered table-hover table-striped align-middle">
-                    <thead><tr><th>Request</th><th>Status</th><th>Created</th><th>Updated</th><th>Results</th></tr></thead>
-                    <tbody>
-                    {% for req in distribution_requests %}
-                        <tr><td><span class="badge badge-distribution me-2">Intelligent Distribution</span>#{{ req.id }} — {{ req.title }}</td><td><span class="badge {% if req.status == 'DONE' %}text-bg-success{% elif req.status == 'FAILED' %}text-bg-danger{% elif req.status == 'RUNNING' %}text-bg-warning{% else %}text-bg-secondary{% endif %}">{{ req.status }}</span></td><td>{{ req.created_at }}</td><td>{{ req.updated_at }}</td><td>{% if req.status == 'DONE' %}<a class="btn btn-sm btn-outline-sensd" href="{% url 'results_view' req.id %}">View results</a>{% else %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'requests_list' %}">View status</a>{% endif %}</td></tr>
-                    {% empty %}<tr><td colspan="5" class="sensd-empty">No Intelligent Distribution requests found.</td></tr>{% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+  <nav class="row g-3 mb-4" aria-label="Optimization activity sections">
+    <div class="col-md-6"><a class="sensd-activity-jump" href="#sensor-placement-activity"><span class="sensd-tool-icon"><i class="bi bi-broadcast-pin"></i></span><span><strong>Sensor Placement</strong><small>{{ requests|length }} request{{ requests|length|pluralize }} · {{ results|length }} result{{ results|length|pluralize }}</small></span><i class="bi bi-arrow-down ms-auto" aria-hidden="true"></i></a></div>
+    <div class="col-md-6"><a class="sensd-activity-jump" href="#distribution-activity"><span class="sensd-tool-icon"><i class="bi bi-boxes"></i></span><span><strong>Intelligent Distribution</strong><small>{{ distribution_requests|length }} request{{ distribution_requests|length|pluralize }}</small></span><i class="bi bi-arrow-down ms-auto" aria-hidden="true"></i></a></div>
+  </nav>
 
-    <!-- Result History -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h4 class="text-uppercase text-center">Sensor Placement result history</h4>
-        </div>
-        <div class="card-body">
-            <table id="result-table" class="table table-bordered table-striped">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Result ID</th>
-                        <th>User Result ID</th>
-                        <th>User Request ID</th>
-                        <th>Created On</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for result in results %}
-                    <tr>
-                        <td>{{ result.result_id }}</td>
-                        <td>{{ result.user_result_id }}</td>
-                        <td>{{ result.user_request_id }}</td>
-                        <td>{{ result.created_on }}</td>
-                        <td>
-                            <a href="{% url 'view_results' result.user_result_id %}" class="btn btn-info btn-sm">View Results</a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+  <section class="sensd-panel sensd-activity-section mb-4" id="sensor-placement-activity">
+    <div class="sensd-activity-header">
+      <div><span class="badge badge-sensor mb-2">Sensor Placement</span><h2>Manual and uploaded optimization activity</h2><p>Continue configuring a request or open a completed optimization result.</p></div>
+      <div class="sensd-actions"><a class="btn btn-sensd" href="{% url 'new_request' %}">New manual request</a><a class="btn btn-outline-sensd" href="{% url 'upload_excel' %}">Upload workbook</a></div>
     </div>
+    <div class="sensd-activity-table">
+      <h3>Requests</h3>
+      <div class="table-responsive"><table id="request-table" class="table table-hover align-middle">
+        <thead><tr><th>Request</th><th>Created</th><th>Updated</th><th class="text-end">Actions</th></tr></thead>
+        <tbody>{% for req in requests %}<tr class="activity-data-row"><td><strong>{{ req.user_request_id }}</strong><div class="small text-muted">Internal ID {{ req.request_id }}</div></td><td>{{ req.created_on|date:"M d, Y H:i" }}</td><td>{{ req.updated_on|date:"M d, Y H:i" }}</td><td class="text-end"><a href="{% url 'AllNodes' requestid=req.user_request_id %}" class="btn btn-sm btn-outline-sensd">Continue setup</a> <a href="{% url 'delete_request' requestid=req.user_request_id %}" class="btn btn-sm btn-outline-danger">Delete</a></td></tr>{% empty %}<tr><td colspan="4" class="sensd-empty">No Sensor Placement requests yet. Start manually or upload a workbook.</td></tr>{% endfor %}</tbody>
+      </table></div>
+    </div>
+    <div class="sensd-activity-table">
+      <h3>Results</h3>
+      <div class="table-responsive"><table id="result-table" class="table table-hover align-middle">
+        <thead><tr><th>Result</th><th>Request</th><th>Created</th><th class="text-end">Action</th></tr></thead>
+        <tbody>{% for result in results %}<tr class="activity-data-row"><td><strong>{{ result.user_result_id }}</strong><div class="small text-muted">Internal ID {{ result.result_id }}</div></td><td>{{ result.user_request_id }}</td><td>{{ result.created_on|date:"M d, Y H:i" }}</td><td class="text-end"><a href="{% url 'view_results' result.user_result_id %}" class="btn btn-sm btn-outline-sensd">View results</a></td></tr>{% empty %}<tr><td colspan="4" class="sensd-empty">No Sensor Placement results yet.</td></tr>{% endfor %}</tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <section class="sensd-panel sensd-activity-section" id="distribution-activity">
+    <div class="sensd-activity-header">
+      <div><span class="badge badge-distribution mb-2">Intelligent Distribution</span><h2>Uploaded model activity</h2><p>Track processing status and open visualizations for completed requests.</p></div>
+      <div class="sensd-actions"><a class="btn btn-sensd" href="{% url 'isdrequests_home' %}">Upload distribution data</a><a class="btn btn-outline-sensd" href="{% url 'requests_list' %}">Open detailed history</a></div>
+    </div>
+    <div class="sensd-activity-table">
+      <h3>Requests and results</h3>
+      <div class="table-responsive"><table id="distribution-request-table" class="table table-hover align-middle">
+        <thead><tr><th>Request</th><th>Status</th><th>Created</th><th>Updated</th><th class="text-end">Result</th></tr></thead>
+        <tbody>{% for req in distribution_requests %}<tr class="activity-data-row"><td><strong>#{{ req.id }} &mdash; {{ req.title }}</strong></td><td><span class="badge {% if req.status == 'DONE' %}text-bg-success{% elif req.status == 'FAILED' %}text-bg-danger{% elif req.status == 'RUNNING' %}text-bg-warning{% else %}text-bg-secondary{% endif %}">{{ req.get_status_display }}</span></td><td>{{ req.created_at|date:"M d, Y H:i" }}</td><td>{{ req.updated_at|date:"M d, Y H:i" }}</td><td class="text-end">{% if req.status == 'DONE' %}<a class="btn btn-sm btn-outline-sensd" href="{% url 'results_view' req.id %}">View results</a>{% else %}<span class="small text-muted">Not available yet</span>{% endif %}</td></tr>{% empty %}<tr><td colspan="5" class="sensd-empty">No Intelligent Distribution requests yet.</td></tr>{% endfor %}</tbody>
+      </table></div>
+    </div>
+  </section>
 </div>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    if ($.fn.dataTable.isDataTable('#request-table')) {
-        $('#request-table').DataTable().destroy();
+  ['#request-table', '#result-table', '#distribution-request-table'].forEach(function (selector) {
+    var table = $(selector);
+    if (table.find('tbody .activity-data-row').length && !$.fn.dataTable.isDataTable(selector)) {
+      table.DataTable({dom: 'frtip', pageLength: 10, order: [[0, 'desc']]});
     }
-    $('#request-table').DataTable({
-        dom: 'frtip',
-        pageLength: 10,
-        order: [[0, 'desc']],
-        ordering: true
-    });
-    if ($('#distribution-request-table tbody tr').length > 1 || !$('#distribution-request-table .sensd-empty').length) {
-        $('#distribution-request-table').DataTable({dom: 'frtip', pageLength: 10, order: [[0, 'desc']]});
-    }
+  });
 });
 </script>
 {% endblock %}

@@ -95,6 +95,18 @@ body.sensd-app button:focus-visible { outline:3px solid rgba(36,92,70,.35); outl
 .sensd-workflow-step.complete span { background:var(--sensd-green-soft); color:var(--sensd-green-dark); }
 .sensd-workflow-step.active { color:#fff; background:var(--sensd-green); border-color:var(--sensd-green); }
 .sensd-workflow-step.active span { background:#fff; color:var(--sensd-green-dark); }
+.sensd-activity-jump { height:100%; display:flex; align-items:center; gap:.8rem; padding:1rem; color:var(--sensd-ink); background:#fff; border:1px solid var(--sensd-border); border-radius:var(--sensd-radius); box-shadow:var(--sensd-shadow); text-decoration:none; }
+.sensd-activity-jump:hover { color:var(--sensd-green-dark); border-color:#abc2b7; }
+.sensd-activity-jump strong, .sensd-activity-jump small { display:block; }
+.sensd-activity-jump small { margin-top:.15rem; color:var(--sensd-muted); }
+.sensd-activity-section { scroll-margin-top:8rem; overflow:hidden; }
+.sensd-activity-header { display:flex; align-items:flex-end; justify-content:space-between; gap:1.25rem; padding:1.25rem; border-bottom:1px solid var(--sensd-border); }
+.sensd-activity-header h2 { margin:0; font-size:1.2rem; }
+.sensd-activity-header p { margin:.35rem 0 0; color:var(--sensd-muted); }
+.sensd-activity-header .sensd-actions { display:flex; flex-wrap:wrap; gap:.5rem; }
+.sensd-activity-table + .sensd-activity-table { border-top:1px solid var(--sensd-border); }
+.sensd-activity-table h3 { margin:0; padding:1rem 1.25rem .45rem; font-size:1rem; }
+.sensd-activity-table .table { margin-bottom:0; }
 
 @media (max-width: 991.98px) {
   .sensd-navbar .navbar-collapse { padding: .75rem 0 1rem; }
@@ -111,4 +123,6 @@ body.sensd-app button:focus-visible { outline:3px solid rgba(36,92,70,.35); outl
   .sensd-actions .btn { flex:1 1 100%; }
   .sensd-workflow-heading { align-items:flex-start; flex-direction:column; }
   .sensd-workflow-steps { grid-template-columns:repeat(7, 145px); }
+  .sensd-activity-header { align-items:flex-start; flex-direction:column; }
+  .sensd-activity-header .sensd-actions, .sensd-activity-header .btn { width:100%; }
 }
