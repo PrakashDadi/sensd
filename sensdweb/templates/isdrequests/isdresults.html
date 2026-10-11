@@ -15,6 +15,13 @@
   {% include 'partials/_messages.html' %}
 
   {% if summary %}
+  <div class="sensd-panel mb-3"><div class="card-body"><div class="row g-3">
+    <div class="col-md-3"><strong>Model</strong><br>{{ req.model_version }}</div>
+    <div class="col-md-3"><strong>Solver status</strong><br>{{ req.solver_status }}</div>
+    <div class="col-md-2"><strong>Runtime</strong><br>{{ req.runtime_seconds|floatformat:2 }} s</div>
+    <div class="col-md-2"><strong>Best bound</strong><br>{{ req.best_bound|floatformat:2 }}</div>
+    <div class="col-md-2"><strong>MIP gap</strong><br>{{ req.mip_gap|floatformat:4 }}</div>
+  </div></div></div>
   <!-- TOP ROW: KPI CARDS + CHARTS -->
   <div class="row g-3 mb-4">
     <!-- KPIs -->
@@ -73,10 +80,10 @@
 
         <div class="col-6">
           <div class="card h-100">
-            <div class="card-header">In-Transit Penalty</div>
+            <div class="card-header">Artificial Flow-Time Cost</div>
             <div class="card-body">
-              <h5 class="mb-0">{{ summary.total_intransit_penalty|floatformat:2 }}</h5>
-              <small class="text-muted">Salmonella in-transit penalties</small>
+              <h5 class="mb-0">{{ summary.artificial_cost|floatformat:2 }}</h5>
+              <small class="text-muted">Flow-time term in the current objective</small>
             </div>
           </div>
         </div>
@@ -442,31 +449,41 @@
             </div>
 
             <div class="col-lg-6">
-              <h6>In-Transit (S)</h6>
+              <h6>Node contamination flags (Z)</h6>
               <div class="table-responsive">
                 <table class="table table-striped table-hover table-sm datatable" id="salTransitTable">
                   <thead class="table-light">
                     <tr>
-                      <th>Product In</th>
-                      <th>Node i</th>
-                      <th>Product Out</th>
-                      <th>Node j</th>
-                      <th>Mode</th>
+                      <th>Product</th>
+                      <th>Node</th>
                       <th>Value</th>
                     </tr>
                   </thead>
                   <tbody>
-                  {% for s in salmonella_intransit %}
+                  {% for s in contamination_flags %}
                     <tr>
-                      <td>{{ s.product_in }}</td>
-                      <td>{{ s.node_i }}</td>
-                      <td>{{ s.product_out }}</td>
-                      <td>{{ s.node_j }}</td>
-                      <td>{{ s.mode }}</td>
-                      <td>{{ s.value|floatformat:2 }}</td>
+                      <td>{{ s.product }}</td>
+                      <td>{{ s.node }}</td>
+                      <td>{{ s.value }}</td>
                     </tr>
                   {% empty %}
-                    <tr><td colspan="6" class="text-center text-muted">No in-transit salmonella values</td></tr>
+                    <tr><td colspan="3" class="text-center text-muted">No node flags</td></tr>
+                  {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <h6>In-transit contamination flags (Z in-transit)</h6>
+              <div class="table-responsive">
+                <table class="table table-striped table-hover table-sm datatable" id="inTransitFlagTable">
+                  <thead class="table-light"><tr><th>Product</th><th>Node</th><th>Value</th></tr></thead>
+                  <tbody>
+                  {% for s in intransit_flags %}
+                    <tr><td>{{ s.product }}</td><td>{{ s.node }}</td><td>{{ s.value }}</td></tr>
+                  {% empty %}
+                    <tr><td colspan="3" class="text-center text-muted">No in-transit flags</td></tr>
                   {% endfor %}
                   </tbody>
                 </table>
@@ -533,7 +550,7 @@
         const transportCost  = {{ summary.total_transport_cost|default:0 }};
         const gapCost        = {{ summary.total_gap_cost|default:0 }};
         const excessCost     = {{ summary.total_excess_cost|default:0 }};
-        const inTransitPen   = {{ summary.total_intransit_penalty|default:0 }};
+        const artificialCost = {{ summary.artificial_cost|default:0 }};
         const realProfit     = {{ summary.total_profit|default:0 }};
 
         new Chart(canvas.getContext('2d'), {
@@ -544,7 +561,7 @@
               'Transport Cost',
               'Gap Cost',
               'Excess Cost',
-              'In-Transit Penalty',
+              'Artificial Cost',
               'Real Profit'
             ],
             datasets: [{
@@ -553,7 +570,7 @@
                 transportCost,
                 gapCost,
                 excessCost,
-                inTransitPen,
+                artificialCost,
                 realProfit
               ],
               borderWidth: 1

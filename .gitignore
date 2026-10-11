@@ -74,3 +74,6 @@ nginx-1.26.2/
 CLAUDE.md
 # Source/import archives are local handoff material, not application assets.
 *.zip
+
+# Local updated Intelligent Distribution handoff (inputs/outputs included).
+/updated_Intelligent distribution/

@@ -35,6 +35,14 @@ class Request(TimeStamped):
     original_filename = EncryptedCharField(max_length=255, blank=True, default="")
     note = EncryptedTextField(blank=True, default="", null=True)
     status = models.CharField(max_length=12, choices=STATUS_CHOICES, default="NEW")
+    model_version = models.CharField(max_length=32, default="sensd-midwest-v1")
+    solver_status = models.CharField(max_length=32, blank=True, default="")
+    solver_message = EncryptedTextField(blank=True, default="", null=True)
+    runtime_seconds = EncryptedFloatField(default=0.0, null=True)
+    cpu_seconds = EncryptedFloatField(default=0.0, null=True)
+    best_incumbent_seconds = EncryptedFloatField(default=0.0, null=True)
+    best_bound = EncryptedFloatField(default=0.0, null=True)
+    mip_gap = EncryptedFloatField(default=0.0, null=True)
 
     def __str__(self):
         return f"Req#{self.pk} {self.title} [{self.status}]"
@@ -71,6 +79,10 @@ class arcs1(TimeStamped):
     fixed_cost = EncryptedFloatField(default=0.0)                                # col 8
     unit_cost = EncryptedFloatField(default=0.0)                                 # col 9
     lead_time = EncryptedFloatField(default=0.0)                                 # col 10
+    distance = EncryptedFloatField(default=0.0, null=True)
+    speed = EncryptedFloatField(default=0.0, null=True)
+    travel_time = EncryptedFloatField(default=0.0, null=True)
+    loading_unloading_time = EncryptedFloatField(default=0.0, null=True)
 
 
 class arcs2(TimeStamped):
@@ -85,6 +97,10 @@ class arcs2(TimeStamped):
     fixed_cost = EncryptedFloatField(default=0.0)
     unit_cost = EncryptedFloatField(default=0.0)
     lead_time = EncryptedFloatField(default=0.0)
+    distance = EncryptedFloatField(default=0.0, null=True)
+    speed = EncryptedFloatField(default=0.0, null=True)
+    travel_time = EncryptedFloatField(default=0.0, null=True)
+    loading_unloading_time = EncryptedFloatField(default=0.0, null=True)
 
 
 class arcs3(TimeStamped):
@@ -99,27 +115,10 @@ class arcs3(TimeStamped):
     fixed_cost = EncryptedFloatField(default=0.0)
     unit_cost = EncryptedFloatField(default=0.0)
     lead_time = EncryptedFloatField(default=0.0)
-
-
-class diversion(TimeStamped):
-    request = models.ForeignKey(Request, on_delete=models.CASCADE, related_name="diversion_rows")
-    product = EncryptedCharField(max_length=120, blank=True, default="")
-    node_i = EncryptedCharField(max_length=120, blank=True, default="")
-    product_div = EncryptedCharField(max_length=120, blank=True, default="")
-    node_j = EncryptedCharField(max_length=120, blank=True, default="")
-    mode = EncryptedCharField(max_length=120, blank=True, default="")
-    capacity = EncryptedFloatField(default=0.0)
-    fixed_cost = EncryptedFloatField(default=0.0)
-    unit_cost = EncryptedFloatField(default=0.0)
-    lead_time = EncryptedFloatField(default=0.0)
-
-
-class precedence(TimeStamped):
-    request = models.ForeignKey(Request, on_delete=models.CASCADE, related_name="precedence_rows")
-    product_in = EncryptedCharField(max_length=120, blank=True, default="")
-    node_i = EncryptedCharField(max_length=120, blank=True, default="")
-    product_out = EncryptedCharField(max_length=120, blank=True, default="")
-    node_j = EncryptedCharField(max_length=120, blank=True, default="")
+    distance = EncryptedFloatField(default=0.0, null=True)
+    speed = EncryptedFloatField(default=0.0, null=True)
+    travel_time = EncryptedFloatField(default=0.0, null=True)
+    loading_unloading_time = EncryptedFloatField(default=0.0, null=True)
 
 
 class demand(TimeStamped):
@@ -128,6 +127,7 @@ class demand(TimeStamped):
     product = EncryptedCharField(max_length=120, blank=True, default="")    # col 1
     demand = EncryptedFloatField(default=0.0)                                # col 2
     gap_cost = EncryptedFloatField(default=0.0)                              # col 3
+    population = EncryptedFloatField(default=0.0, null=True)
 
 
 class supply(TimeStamped):
@@ -140,7 +140,9 @@ class salmonella(TimeStamped):
     request = models.ForeignKey(Request, on_delete=models.CASCADE, related_name="salmonella_rows")
     node = EncryptedCharField(max_length=120, blank=True, default="")        # col 0
     product = EncryptedCharField(max_length=120, blank=True, default="")     # col 1
-    level = EncryptedCharField(max_length=120, blank=True, default="NA")       # col 2 (can be number or 'NA')
+    sensor_value = EncryptedFloatField(blank=True, null=True)
+    has_sensor = EncryptedBooleanField(default=False, null=True)
+    fixed_intervention_cost = EncryptedFloatField(default=0.0, null=True)
 
 
 # -----------------------
@@ -155,7 +157,7 @@ class objective_summary(TimeStamped):
     total_transport_cost = EncryptedFloatField(default=0.0, null=True)
     total_gap_cost = EncryptedFloatField(default=0.0, null=True)
     total_excess_cost = EncryptedFloatField(default=0.0, null=True)
-    total_intransit_penalty = EncryptedFloatField(default=0.0, null=True)
+    artificial_cost = EncryptedFloatField(default=0.0, null=True)
     fixed_diversion_cost = EncryptedFloatField(default=0.0, null=True)
     variable_diversion_cost = EncryptedFloatField(default=0.0, null=True)
 
@@ -245,15 +247,16 @@ class salmonella_node_result(TimeStamped):
     value = EncryptedFloatField(default=0.0)
 
 
-class salmonella_intransit_result(TimeStamped):
-    """
-    S[precedence, mode]: in-transit salmonella estimation on arc & mode.
-    """
-    request = models.ForeignKey(Request, on_delete=models.CASCADE, related_name="salmonella_intransit")
-    product_in = EncryptedCharField(max_length=120)
-    node_i = EncryptedCharField(max_length=120)
-    product_out = EncryptedCharField(max_length=120)
-    node_j = EncryptedCharField(max_length=120)
-    mode = EncryptedCharField(max_length=120)
-    value = EncryptedFloatField(default=0.0)
+class contamination_flag_result(TimeStamped):
+    request = models.ForeignKey(Request, on_delete=models.CASCADE, related_name="contamination_flags")
+    product = EncryptedCharField(max_length=120)
+    node = EncryptedCharField(max_length=120)
+    value = EncryptedIntegerField(default=0)
+
+
+class intransit_flag_result(TimeStamped):
+    request = models.ForeignKey(Request, on_delete=models.CASCADE, related_name="intransit_flags")
+    product = EncryptedCharField(max_length=120)
+    node = EncryptedCharField(max_length=120)
+    value = EncryptedIntegerField(default=0)
 

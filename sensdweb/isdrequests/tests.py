@@ -1,3 +1,106 @@
-from django.test import TestCase
+import io
+import os
+from pathlib import Path
+from unittest import skipUnless
 
-# Create your tests here.
+import pandas as pd
+from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import TestCase
+from django.urls import reverse
+
+from .models import Request
+from .optimizer import solve
+from .workbook import WorkbookValidationError, parse_workbook, persist_workbook
+
+
+def workbook_bytes(include_population=True):
+    output = io.BytesIO()
+    arc = pd.DataFrame([{
+        "p": "Raw", "node_i": "Source", "p'": "Raw", "node_j": "Market",
+        "mode": "Truck", "distance_nodes": 10, "mode_capacity": 100,
+        "multiplier": 1, "fixed_sending_cost": 5, "unit_sending_cost": 2,
+        "leadtime_send": 1, "speed": 50, "travel time": .2,
+        "loading + unloading time": .8,
+    }])
+    demand_columns = {"market": ["Market"], "product": ["Raw"], "demand": [20], "gap_cost": [3]}
+    if include_population:
+        demand_columns["population"] = [1000]
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        pd.DataFrame([{
+            "nodes": "Source", "sources": "Source", "processor": "", "warehouse": "",
+            "retailers": "", "foodbanks": "", "markets": "Market", "tmodes": "Truck",
+            "products": "Raw", "salmonella_need": "Raw", "salmonella_noneed": "Cooked",
+        }, {"nodes": "Market"}]).to_excel(writer, sheet_name="sets", index=False)
+        for name in ("arcs1", "arcs2", "arcs3"):
+            arc.to_excel(writer, sheet_name=name, index=False)
+        pd.DataFrame(demand_columns).to_excel(writer, sheet_name="demand", index=False)
+        pd.DataFrame({"available supply": ["Source"], "Raw": [100], "Total": [100], "Justification": [""]}).to_excel(writer, sheet_name="supply", index=False)
+        pd.DataFrame({"node_i": ["Source"], "product": ["Raw"], "salmonella level": [1.5], "fixed_intervention_cost": [25]}).to_excel(writer, sheet_name="salmonella", index=False)
+    return output.getvalue()
+
+
+class WorkbookContractTests(TestCase):
+    def test_current_workbook_contract_parses(self):
+        parsed = parse_workbook(io.BytesIO(workbook_bytes()))
+        self.assertEqual(parsed.frames["arcs1"].shape, (1, 14))
+        self.assertIn("population", parsed.columns["demand"])
+
+    def test_missing_new_field_is_rejected(self):
+        with self.assertRaisesMessage(WorkbookValidationError, "population"):
+            parse_workbook(io.BytesIO(workbook_bytes(include_population=False)))
+
+
+class RequestWorkflowTests(TestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.owner = User.objects.create_user("owner", "owner@example.com", "password")
+        self.other = User.objects.create_user("other", "other@example.com", "password")
+        self.client.force_login(self.owner)
+
+    def test_save_persists_new_fields_and_owner(self):
+        upload = SimpleUploadedFile("midwest.xlsx", workbook_bytes(), content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        response = self.client.post(reverse("save_excel"), {"file": upload})
+        self.assertEqual(response.status_code, 200, response.content)
+        record = Request.objects.get(pk=response.json()["request_id"])
+        self.assertEqual(record.requested_by, self.owner)
+        self.assertEqual(record.model_version, "sensd-midwest-v1")
+        arc = record.arcs1_rows.get()
+        self.assertEqual(arc.distance, 10)
+        self.assertEqual(arc.loading_unloading_time, .8)
+        self.assertEqual(record.demand_rows.get().population, 1000)
+        sensor = record.salmonella_rows.get()
+        self.assertTrue(sensor.has_sensor)
+        self.assertEqual(sensor.fixed_intervention_cost, 25)
+
+    def test_request_history_is_owner_scoped(self):
+        Request.objects.create(requested_by=self.owner, title="Mine", original_filename="mine.xlsx")
+        Request.objects.create(requested_by=self.other, title="Not mine", original_filename="other.xlsx")
+        response = self.client.get(reverse("requests_list"))
+        self.assertContains(response, "Mine")
+        self.assertNotContains(response, "Not mine")
+
+    def test_other_users_result_is_not_accessible(self):
+        record = Request.objects.create(requested_by=self.other, title="Private", original_filename="private.xlsx")
+        self.assertEqual(self.client.get(reverse("results_view", args=[record.pk])).status_code, 404)
+        self.assertEqual(self.client.get(reverse("results_download_excel", args=[record.pk])).status_code, 404)
+
+
+REFERENCE_WORKBOOK = Path(__file__).resolve().parents[2] / "updated_Intelligent distribution" / "Sens-D Midwest Case Data v1.xls"
+
+
+@skipUnless(
+    REFERENCE_WORKBOOK.exists() and os.environ.get("RUN_ISD_REFERENCE") == "1",
+    "Set RUN_ISD_REFERENCE=1 to run the local golden solver regression",
+)
+class ReferenceWorkbookSolveTests(TestCase):
+    def test_reference_workbook_produces_feasible_solution(self):
+        user = get_user_model().objects.create_user("solver", "solver@example.com", "password")
+        record = Request.objects.create(
+            requested_by=user, title="Reference solve", original_filename=REFERENCE_WORKBOOK.name,
+            status="SAVED", model_version="sensd-midwest-v1",
+        )
+        persist_workbook(parse_workbook(REFERENCE_WORKBOOK), record)
+        result = solve(record)
+        self.assertGreater(result["model"].SolCount, 0)
+        self.assertAlmostEqual(result["model"].ObjVal, 353643.959072494, delta=1.0)

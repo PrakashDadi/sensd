@@ -7,19 +7,32 @@
   <div class="card-body">
     <div class="table-responsive">
       <table class="table table-striped align-middle">
-        <thead><tr><th>#</th><th>Title</th><th>Status</th><th>Created</th><th>Updated</th><th>Results</th></tr></thead>
+        <thead><tr><th>#</th><th>Title</th><th>Model</th><th>Status</th><th>Solver</th><th>Created</th><th>Updated</th><th>Results</th></tr></thead>
         <tbody>
         {% for r in rows %}
           <tr>
             <td>{{ r.id }}</td>
             <td>{{ r.title }}</td>
+            <td>{{ r.model_version }}</td>
             <td><span class="badge {% if r.status == 'DONE' %}text-bg-success{% elif r.status == 'FAILED' %}text-bg-danger{% elif r.status == 'RUNNING' %}text-bg-warning{% else %}text-bg-secondary{% endif %}">{{ r.status }}</span></td>
+            <td>{{ r.solver_status|default:"—" }}</td>
             <td>{{ r.created_at|date:"Y-m-d H:i" }}</td>
             <td>{{ r.updated_at|date:"Y-m-d H:i" }}</td>
-            <td>{% if r.status == 'DONE' %}<a class="btn btn-sm btn-outline-success" href="{% url 'results_view' r.id %}">View</a>{% else %}<button class="btn btn-sm btn-outline-secondary" disabled>Not ready</button>{% endif %}</td>
+            <td>
+              {% if r.status == 'DONE' %}
+                <a class="btn btn-sm btn-outline-success" href="{% url 'results_view' r.id %}">View</a>
+              {% elif r.status == 'SAVED' %}
+                <form method="post" action="{% url 'run_isdoptimization' %}">
+                  {% csrf_token %}<input type="hidden" name="request_id" value="{{ r.id }}">
+                  <button class="btn btn-sm btn-sensd" type="submit">Run current model</button>
+                </form>
+              {% else %}
+                <button class="btn btn-sm btn-outline-secondary" disabled>Not ready</button>
+              {% endif %}
+            </td>
           </tr>
         {% empty %}
-          <tr><td colspan="6" class="text-center text-muted">No requests yet.</td></tr>
+          <tr><td colspan="8" class="text-center text-muted">No requests yet.</td></tr>
         {% endfor %}
         </tbody>
       </table>
