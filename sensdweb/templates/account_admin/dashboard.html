@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="sensd-page">
+  <header class="sensd-page-header">
+    <div><div class="sensd-eyebrow">Administration</div><h1 class="sensd-page-title">User Control</h1><p class="sensd-page-copy">Manage encrypted accounts, access roles, and account status.</p></div>
+    <a class="btn btn-sensd" href="{% url 'account_admin_create' %}">Add user</a>
+  </header>
+  {% include 'partials/_messages.html' %}
+  <div class="row g-3 mb-4">
+    <div class="col-md-4"><div class="sensd-panel"><div class="card-body"><div class="text-muted">Total users</div><h3>{{ users|length }}</h3></div></div></div>
+    <div class="col-md-4"><div class="sensd-panel"><div class="card-body"><div class="text-muted">Active users</div><h3>{{ active_count }}</h3></div></div></div>
+    <div class="col-md-4"><div class="sensd-panel"><div class="card-body"><div class="text-muted">Administrators</div><h3>{{ admin_count }}</h3></div></div></div>
+  </div>
+  <div class="sensd-panel sensd-table-card mb-4"><div class="card-body"><div class="table-responsive">
+    <table class="table table-striped align-middle"><thead><tr><th>User</th><th>Email</th><th>Role</th><th>Status</th><th>Last login</th><th class="text-end">Actions</th></tr></thead><tbody>
+    {% for item in users %}<tr>
+      <td><strong>{{ item.username }}</strong><div class="small text-muted">ID {{ item.user.id }}</div></td>
+      <td>{{ item.email }}</td><td>{{ item.role }}</td>
+      <td>{% if item.user.is_active %}<span class="badge text-bg-success">Active</span>{% else %}<span class="badge text-bg-secondary">Inactive</span>{% endif %}</td>
+      <td>{{ item.user.last_login|date:'Y-m-d H:i'|default:'Never' }}</td>
+      <td class="text-end"><div class="d-inline-flex gap-2">
+        <a class="btn btn-sm btn-outline-sensd" href="{% url 'account_admin_edit' item.user.id %}">Edit</a>
+        {% if item.user != request.user %}<form method="post" action="{% url 'account_admin_toggle' item.user.id %}">{% csrf_token %}<button class="btn btn-sm btn-outline-secondary" type="submit">{% if item.user.is_active %}Deactivate{% else %}Activate{% endif %}</button></form>
+        <a class="btn btn-sm btn-outline-danger" href="{% url 'account_admin_delete' item.user.id %}">Delete</a>{% endif %}
+      </div></td>
+    </tr>{% empty %}<tr><td colspan="6" class="text-center text-muted">No users found.</td></tr>{% endfor %}
+    </tbody></table>
+  </div></div></div>
+  <div class="sensd-panel"><div class="card-header bg-white fw-semibold">Recent administration activity</div><div class="card-body"><div class="table-responsive">
+    <table class="table table-sm"><thead><tr><th>Time</th><th>Action</th><th>Actor ID</th><th>Target ID</th><th>Details</th></tr></thead><tbody>
+    {% for row in audit_rows %}<tr><td>{{ row.created_at|date:'Y-m-d H:i' }}</td><td>{{ row.action }}</td><td>{{ row.actor_id|default:'—' }}</td><td>{{ row.target_id|default:'—' }}</td><td>{{ row.details }}</td></tr>{% empty %}<tr><td colspan="5" class="text-muted">No administration actions yet.</td></tr>{% endfor %}
+    </tbody></table>
+  </div></div></div>
+</div>
+{% endblock %}

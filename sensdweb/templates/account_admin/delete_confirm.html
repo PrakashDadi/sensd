@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block content %}<div class="sensd-page">
+<header class="sensd-page-header"><div><div class="sensd-eyebrow">User Control</div><h1 class="sensd-page-title">Delete {{ display_username }}</h1><p class="sensd-page-copy">Permanent deletion may affect records owned by this account. Deactivation is normally safer.</p></div><a class="btn btn-outline-sensd" href="{% url 'account_admin_dashboard' %}">Cancel</a></header>
+<div class="alert alert-danger"><strong>Permanent action.</strong> Account {{ display_email }} and its encryption key will be deleted.</div>
+<div class="sensd-panel"><div class="card-body"><form method="post">{% csrf_token %}{{ form.as_p }}<button class="btn btn-danger" type="submit">Permanently delete user</button></form></div></div>
+</div>{% endblock %}

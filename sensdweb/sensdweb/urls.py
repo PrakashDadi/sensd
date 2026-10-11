@@ -22,6 +22,7 @@ from django.conf import settings
 urlpatterns = [
     path('', include('sensd.urls')),
     path('authentication/', include('authentication.urls')),
+    path('account-admin/', include('authentication.admin_urls')),
     path('requests/', include('sensdrequests.urls')),
     path('mapsapp/', include('mapsapp.urls')),
     path('poultry/', include('poultrydashboard.urls')),

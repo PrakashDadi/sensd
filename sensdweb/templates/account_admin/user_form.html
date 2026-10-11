@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block content %}<div class="sensd-page">
+<header class="sensd-page-header"><div><div class="sensd-eyebrow">User Control</div><h1 class="sensd-page-title">{{ mode }} user{% if display_username %}: {{ display_username }}{% endif %}</h1><p class="sensd-page-copy">Identity fields are encrypted with the account's own key.</p></div><a class="btn btn-outline-sensd" href="{% url 'account_admin_dashboard' %}">Back</a></header>
+{% include 'partials/_messages.html' %}
+<div class="sensd-panel"><div class="card-body"><form method="post" novalidate>{% csrf_token %}
+{% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+{% for field in form %}<div class="mb-3"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}{% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</div>{% endfor %}
+<button class="btn btn-sensd" type="submit">Save user</button></form></div></div>
+</div>{% endblock %}

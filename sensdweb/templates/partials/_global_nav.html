@@ -10,6 +10,7 @@
     <a class="platform-global-link {% if active_workspace == 'poultry' %}active{% endif %}" href="{% url 'poultrydashboard:home' %}">Poultry Analytics</a>
   </div>
   <div class="platform-global-account">
+    {% if request.user.is_superuser %}<a class="platform-global-link {% if active_workspace == 'admin' %}active{% endif %}" href="{% url 'account_admin_dashboard' %}">User Control</a>{% endif %}
     <a class="platform-global-link {% if active_workspace == 'account' %}active{% endif %}" href="{% url 'profile' %}">Profile</a>
     <a class="platform-global-logout" href="{% url 'logout' %}">Log out</a>
   </div>

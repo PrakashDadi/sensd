@@ -35,10 +35,8 @@ logger = logging.getLogger(__name__)
 def index(request):
     return render(request, 'dashboard/platform_home.html')
 
-def adminindex(request):  
-    uservalues = request.session.get('uservalues', None)
-    print("Session uservalues retrieved:", uservalues)
-    return render(request, 'dashboard/adminindex.html', {'uservalues': uservalues})
+def adminindex(request):
+    return redirect('account_admin_dashboard')
 
 def home(request):
     uservalues =  request.session.get('uservalues', None)
@@ -46,7 +44,7 @@ def home(request):
     if uservalues is None:
         messages.error(request, 'Session expired or invalid.')
         return redirect('login')
-    
+
     user_key = UserKey.objects.get(user_id=uservalues['pk'])
     private_key = user_key.private_key
 
@@ -99,7 +97,7 @@ def home(request):
         'distribution_result_count': distribution_requests.filter(status='DONE').count(),
     })
 def add_user(request):
-    return render(request, 'dashboard/add_users.html')
+    return redirect('account_admin_create')
 
 #user actions
 def add_user_request(request):

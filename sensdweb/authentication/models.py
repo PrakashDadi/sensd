@@ -69,6 +69,23 @@ class UserKey(models.Model):
 
         return public_key_pem, private_key_pem
 
+
+class UserAdministrationAudit(models.Model):
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='user_admin_actions',
+    )
+    target = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='user_admin_history',
+    )
+    action = models.CharField(max_length=40)
+    details = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ('-created_at',)
+
 # Create your models here.
 from django.db.models.signals import post_save
 from django.dispatch import receiver
