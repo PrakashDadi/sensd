@@ -280,6 +280,26 @@ DEMO_LOGIN_PASSWORD = os.getenv("POULTRY_DEMO_LOGIN_PASSWORD", "demo")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
+# Long-running optimization is handled by a dedicated single-process Celery
+# worker. Redis must remain private to the host/VPC; it is never exposed by
+# the EC2 security group.
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://127.0.0.1:6379/0")
+CELERY_TASK_IGNORE_RESULT = True
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_ACKS_LATE = True
+CELERY_TASK_REJECT_ON_WORKER_LOST = True
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+CELERY_TASK_ROUTES = {
+    "isdrequests.tasks.run_optimization_task": {"queue": "optimization"},
+}
+
+# One Celery optimization worker plus one Gurobi thread prevents solver jobs
+# from exhausting all CPUs and starving Gunicorn/Nginx.
+GUROBI_THREADS = max(1, int(os.getenv("GUROBI_THREADS", "1")))
+GUROBI_TIME_LIMIT = max(60, int(os.getenv("GUROBI_TIME_LIMIT", "3600")))
+GUROBI_OUTPUT_FLAG = 1 if env_bool("GUROBI_OUTPUT_FLAG", False) else 0
+
 # Trust the Nginx reverse proxy for HTTPS
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 

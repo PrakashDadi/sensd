@@ -7,14 +7,11 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
-from gurobipy import GRB
+from django.utils import timezone
 
-from .models import (
-    Request, contamination_flag_result, cumulative_flow_time_result, excess_result, gap_result,
-    intransit_flag_result, lead_time_result, objective_summary, price_result,
-    salmonella_node_result, shelf_time_result, var_x, var_y,
-)
-from .optimizer import MODEL_VERSION, solve
+from .models import Request
+from .optimizer import MODEL_VERSION
+from .tasks import run_optimization_task
 from .workbook import WorkbookValidationError, parse_workbook, persist_workbook
 
 
@@ -59,93 +56,62 @@ def save_excel(request):
         return JsonResponse({"status": "error", "message": f"The workbook could not be saved: {exc}"}, status=400)
 
 
-def _value(expression):
-    return float(expression.getValue())
-
-
-def _clear_results(record):
-    for model in (var_y, var_x, gap_result, excess_result, objective_summary, lead_time_result,
-                  cumulative_flow_time_result, shelf_time_result, price_result,
-                  salmonella_node_result, contamination_flag_result, intransit_flag_result):
-        model.objects.filter(request=record).delete()
-
-
 @require_http_methods(["POST"])
 def run_optimization(request):
     request_id = request.POST.get("request_id")
     if not request_id:
         messages.error(request, "Save and validate a workbook before running optimization.")
         return redirect("isdrequests_home")
-    record = _owned_request(request, request_id)
-    record.status, record.solver_message = "RUNNING", ""
-    record.save(update_fields=["status", "solver_message", "updated_at"])
-    try:
-        result = solve(record)
-        model = result["model"]
-        status_name = {GRB.OPTIMAL: "OPTIMAL", GRB.TIME_LIMIT: "TIME_LIMIT", GRB.INTERRUPTED: "INTERRUPTED",
-                       GRB.INFEASIBLE: "INFEASIBLE", GRB.INF_OR_UNBD: "INF_OR_UNBD",
-                       GRB.UNBOUNDED: "UNBOUNDED"}.get(model.Status, f"STATUS_{model.Status}")
-        if model.SolCount == 0:
-            record.status, record.solver_status = "FAILED", status_name
-            record.solver_message = "The solver did not produce a feasible solution."
-            record.runtime_seconds = result["metrics"]["runtime_seconds"]
-            record.cpu_seconds = result["metrics"]["cpu_seconds"]
-            record.save()
-            messages.error(request, record.solver_message)
+    with transaction.atomic():
+        record = get_object_or_404(
+            Request.objects.select_for_update(),
+            pk=request_id,
+            requested_by=request.user,
+        )
+        if record.status in {"QUEUED", "RUNNING"}:
+            messages.warning(request, f"Request #{record.pk} is already {record.status.lower()}.")
             return redirect("requests_list")
-
-        with transaction.atomic():
-            _clear_results(record)
-            for (p, mode), variable in result["Y"].items():
-                if variable.X > 0.5:
-                    var_y.objects.create(request=record, product=p[0], node_i=p[1], product_div=p[2], node_j=p[3], mode=mode, value=1)
-            for (p, mode), variable in result["X"].items():
-                if abs(variable.X) > 1e-9:
-                    var_x.objects.create(request=record, product=p[0], node_i=p[1], product_div=p[2], node_j=p[3], mode=mode, quantity=variable.X)
-            for (product, market), variable in result["G"].items():
-                if abs(variable.X) > 1e-9:
-                    gap_result.objects.create(request=record, product=product, market=market, gap=variable.X)
-            for (product, market), variable in result["E"].items():
-                if abs(variable.X) > 1e-9:
-                    excess_result.objects.create(request=record, product=product, market=market, excess=variable.X)
-            for p, variable in result["W"].items():
-                if abs(variable.X) > 1e-9:
-                    lead_time_result.objects.create(request=record, product_in=p[0], node_i=p[1], product_out=p[2], node_j=p[3], lead_time=variable.X)
-            for (product, node), variable in result["F"].items():
-                if abs(variable.X) > 1e-9:
-                    cumulative_flow_time_result.objects.create(request=record, product=product, node=node, flow_time=variable.X)
-            for (product, market), variable in result["T"].items():
-                if abs(variable.X) > 1e-9:
-                    shelf_time_result.objects.create(request=record, product=product, market=market, shelf_time=variable.X)
-            for (product, market), variable in result["price"].items():
-                if abs(variable.X) > 1e-9:
-                    price_result.objects.create(request=record, product=product, market=market, price=variable.X)
-            for (product, node), variable in result["eta"].items():
-                salmonella_node_result.objects.create(request=record, product=product, node=node, value=variable.X)
-            for (product, node), variable in result["Z"].items():
-                contamination_flag_result.objects.create(request=record, product=product, node=node, value=int(round(variable.X)))
-            for (product, node), variable in result["Z_intransit"].items():
-                intransit_flag_result.objects.create(request=record, product=product, node=node, value=int(round(variable.X)))
-            objective_summary.objects.create(
-                request=record, objective_value=model.ObjVal, total_profit=_value(result["real_profit"]),
-                total_revenue=_value(result["revenue"]), total_transport_cost=_value(result["transport_cost"]),
-                total_gap_cost=_value(result["gap_cost"]), total_excess_cost=_value(result["excess_cost"]),
-                artificial_cost=_value(result["artificial_cost"]),
-                fixed_diversion_cost=_value(result["fixed_diversion_cost"]),
-                variable_diversion_cost=_value(result["variable_diversion_cost"]),
-            )
-            record.status, record.solver_status = "DONE", status_name
-            record.runtime_seconds, record.cpu_seconds = result["metrics"]["runtime_seconds"], result["metrics"]["cpu_seconds"]
-            record.best_incumbent_seconds = result["metrics"]["best_seconds"]
-            record.best_bound, record.mip_gap = model.ObjBound, model.MIPGap
-            record.save()
-        messages.success(request, f"Optimization {status_name.lower()} for request #{record.pk}.")
-        return redirect(reverse("results_view", args=[record.pk]))
-    except Exception as exc:
-        record.status, record.solver_status, record.solver_message = "FAILED", "ERROR", str(exc)
-        record.save(update_fields=["status", "solver_status", "solver_message", "updated_at"])
-        messages.error(request, f"Optimization failed: {exc}")
+        if record.status not in {"SAVED", "FAILED", "DONE"}:
+            messages.error(request, "This request must be saved before it can be optimized.")
+            return redirect("requests_list")
+        record.status = "QUEUED"
+        record.solver_status = "QUEUED"
+        record.solver_message = "Waiting for the optimization worker."
+        record.queued_at = timezone.now()
+        record.started_at = None
+        record.finished_at = None
+        record.save(update_fields=[
+            "status", "solver_status", "solver_message", "queued_at",
+            "started_at", "finished_at", "updated_at",
+        ])
+    try:
+        run_optimization_task.delay(record.pk)
+    except Exception:
+        Request.objects.filter(pk=record.pk, status="QUEUED").update(
+            status="FAILED", solver_status="QUEUE_ERROR",
+            solver_message="The optimization worker could not be reached. Please try again.",
+            finished_at=timezone.now(), updated_at=timezone.now(),
+        )
+        messages.error(request, "The optimization queue is unavailable. Please try again shortly.")
         return redirect("requests_list")
+
+    messages.success(request, f"Request #{record.pk} was added to the optimization queue.")
+    return redirect("requests_list")
+
+
+@require_http_methods(["GET"])
+def optimization_status(request, req_id):
+    record = _owned_request(request, req_id)
+    payload = {
+        "request_id": record.pk,
+        "status": record.status,
+        "solver_status": record.solver_status,
+        "message": record.solver_message or "",
+        "terminal": record.status in {"DONE", "FAILED"},
+    }
+    if record.status == "DONE":
+        payload["result_url"] = reverse("results_view", args=[record.pk])
+    return JsonResponse(payload)
 
 
 @require_http_methods(["GET"])

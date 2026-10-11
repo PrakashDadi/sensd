@@ -1,0 +1,19 @@
+[Unit]
+Description=SENS-D single-worker optimization queue
+After=network.target redis-server.service
+Requires=redis-server.service
+
+[Service]
+Type=simple
+User=ubuntu
+Group=www-data
+WorkingDirectory=/srv/sensd/sensdweb
+EnvironmentFile=/etc/sensd.env
+Environment=MPLBACKEND=Agg
+ExecStart=/srv/sensd/.venv/bin/celery -A sensdweb worker --loglevel=INFO --concurrency=1 --queues=optimization --hostname=optimizer@%%h
+Restart=always
+RestartSec=5
+TimeoutStopSec=4200
+
+[Install]
+WantedBy=multi-user.target

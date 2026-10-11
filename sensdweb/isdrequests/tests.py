@@ -2,6 +2,7 @@ import io
 import os
 from pathlib import Path
 from unittest import skipUnless
+from unittest.mock import patch
 
 import pandas as pd
 from django.contrib.auth import get_user_model
@@ -10,7 +11,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from .models import Request
-from .optimizer import solve
+from .services import execute_optimization
 from .workbook import WorkbookValidationError, parse_workbook, persist_workbook
 
 
@@ -85,6 +86,52 @@ class RequestWorkflowTests(TestCase):
         self.assertEqual(self.client.get(reverse("results_view", args=[record.pk])).status_code, 404)
         self.assertEqual(self.client.get(reverse("results_download_excel", args=[record.pk])).status_code, 404)
 
+    @patch("isdrequests.views.run_optimization_task.delay")
+    def test_optimization_is_queued_without_running_in_web_request(self, delay):
+        record = Request.objects.create(
+            requested_by=self.owner, title="Queue me", original_filename="queue.xlsx", status="SAVED",
+        )
+        response = self.client.post(reverse("run_isdoptimization"), {"request_id": record.pk})
+        self.assertRedirects(response, reverse("requests_list"))
+        record.refresh_from_db()
+        self.assertEqual(record.status, "QUEUED")
+        self.assertEqual(record.solver_status, "QUEUED")
+        self.assertIsNotNone(record.queued_at)
+        delay.assert_called_once_with(record.pk)
+
+    @patch("isdrequests.views.run_optimization_task.delay")
+    def test_duplicate_queue_submission_is_ignored(self, delay):
+        record = Request.objects.create(
+            requested_by=self.owner, title="Already queued", original_filename="queue.xlsx", status="QUEUED",
+        )
+        response = self.client.post(reverse("run_isdoptimization"), {"request_id": record.pk})
+        self.assertRedirects(response, reverse("requests_list"))
+        delay.assert_not_called()
+
+    def test_status_endpoint_is_owner_scoped(self):
+        mine = Request.objects.create(
+            requested_by=self.owner, title="Mine", original_filename="mine.xlsx", status="RUNNING",
+        )
+        theirs = Request.objects.create(
+            requested_by=self.other, title="Theirs", original_filename="theirs.xlsx", status="RUNNING",
+        )
+        response = self.client.get(reverse("optimization_status", args=[mine.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "RUNNING")
+        self.assertEqual(self.client.get(reverse("optimization_status", args=[theirs.pk])).status_code, 404)
+
+    @patch("isdrequests.views.run_optimization_task.delay", side_effect=ConnectionError("Redis unavailable"))
+    def test_queue_failure_is_recorded_without_exposing_internal_error(self, _delay):
+        record = Request.objects.create(
+            requested_by=self.owner, title="Queue failure", original_filename="queue.xlsx", status="SAVED",
+        )
+        response = self.client.post(reverse("run_isdoptimization"), {"request_id": record.pk})
+        self.assertRedirects(response, reverse("requests_list"))
+        record.refresh_from_db()
+        self.assertEqual(record.status, "FAILED")
+        self.assertEqual(record.solver_status, "QUEUE_ERROR")
+        self.assertNotIn("Redis", record.solver_message)
+
 
 REFERENCE_WORKBOOK = Path(__file__).resolve().parents[2] / "updated_Intelligent distribution" / "Sens-D Midwest Case Data v1.xls"
 
@@ -101,6 +148,7 @@ class ReferenceWorkbookSolveTests(TestCase):
             status="SAVED", model_version="sensd-midwest-v1",
         )
         persist_workbook(parse_workbook(REFERENCE_WORKBOOK), record)
-        result = solve(record)
-        self.assertGreater(result["model"].SolCount, 0)
-        self.assertAlmostEqual(result["model"].ObjVal, 353643.959072494, delta=1.0)
+        self.assertTrue(execute_optimization(record))
+        record.refresh_from_db()
+        self.assertEqual(record.status, "DONE")
+        self.assertAlmostEqual(record.summary.objective_value, 353643.959072494, delta=1.0)

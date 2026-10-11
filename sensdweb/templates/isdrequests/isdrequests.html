@@ -3,41 +3,53 @@
 <div class="sensd-page">
 <header class="sensd-page-header"><div><div class="sensd-eyebrow">Intelligent Distribution</div><h1 class="sensd-page-title">Detailed request history</h1><p class="sensd-page-copy">Return to completed visualizations or review the status of an uploaded model.</p></div><div class="d-flex flex-wrap gap-2"><a class="btn btn-outline-sensd" href="{% url 'user_requests' %}#distribution-activity">All optimization activity</a><a class="btn btn-sensd" href="{% url 'isdrequests_home' %}">Upload distribution data</a></div></header>
 {% include 'partials/_messages.html' %}
-<div class="sensd-panel sensd-table-card">
-  <div class="card-body">
-    <div class="table-responsive">
-      <table class="table table-striped align-middle">
-        <thead><tr><th>#</th><th>Title</th><th>Model</th><th>Status</th><th>Solver</th><th>Created</th><th>Updated</th><th>Results</th></tr></thead>
-        <tbody>
-        {% for r in rows %}
-          <tr>
-            <td>{{ r.id }}</td>
-            <td>{{ r.title }}</td>
-            <td>{{ r.model_version }}</td>
-            <td><span class="badge {% if r.status == 'DONE' %}text-bg-success{% elif r.status == 'FAILED' %}text-bg-danger{% elif r.status == 'RUNNING' %}text-bg-warning{% else %}text-bg-secondary{% endif %}">{{ r.status }}</span></td>
-            <td>{{ r.solver_status|default:"—" }}</td>
-            <td>{{ r.created_at|date:"Y-m-d H:i" }}</td>
-            <td>{{ r.updated_at|date:"Y-m-d H:i" }}</td>
-            <td>
-              {% if r.status == 'DONE' %}
-                <a class="btn btn-sm btn-outline-success" href="{% url 'results_view' r.id %}">View</a>
-              {% elif r.status == 'SAVED' %}
-                <form method="post" action="{% url 'run_isdoptimization' %}">
-                  {% csrf_token %}<input type="hidden" name="request_id" value="{{ r.id }}">
-                  <button class="btn btn-sm btn-sensd" type="submit">Run current model</button>
-                </form>
-              {% else %}
-                <button class="btn btn-sm btn-outline-secondary" disabled>Not ready</button>
-              {% endif %}
-            </td>
-          </tr>
-        {% empty %}
-          <tr><td colspan="8" class="text-center text-muted">No requests yet.</td></tr>
-        {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
+<div class="sensd-panel sensd-table-card"><div class="card-body"><div class="table-responsive">
+<table class="table table-striped align-middle">
+<thead><tr><th>#</th><th>Title</th><th>Model</th><th>Status</th><th>Solver</th><th>Created</th><th>Updated</th><th>Results</th></tr></thead>
+<tbody>
+{% for r in rows %}
+<tr data-optimization-row data-status-url="{% url 'optimization_status' r.id %}">
+  <td>{{ r.id }}</td><td>{{ r.title }}</td><td>{{ r.model_version }}</td>
+  <td><span data-role="status" class="badge {% if r.status == 'DONE' %}text-bg-success{% elif r.status == 'FAILED' %}text-bg-danger{% elif r.status == 'RUNNING' or r.status == 'QUEUED' %}text-bg-warning{% else %}text-bg-secondary{% endif %}">{{ r.status }}</span></td>
+  <td data-role="solver-status">{{ r.solver_status|default:"—" }}</td>
+  <td>{{ r.created_at|date:"Y-m-d H:i" }}</td><td>{{ r.updated_at|date:"Y-m-d H:i" }}</td>
+  <td>
+    {% if r.status == 'DONE' %}<a class="btn btn-sm btn-outline-success" href="{% url 'results_view' r.id %}">View</a>
+    {% elif r.status == 'SAVED' or r.status == 'FAILED' %}<form method="post" action="{% url 'run_isdoptimization' %}">{% csrf_token %}<input type="hidden" name="request_id" value="{{ r.id }}"><button class="btn btn-sm btn-sensd" type="submit">Run current model</button></form>
+    {% elif r.status == 'QUEUED' or r.status == 'RUNNING' %}<button class="btn btn-sm btn-outline-secondary" disabled>{{ r.status|title }}</button>
+    {% else %}<button class="btn btn-sm btn-outline-secondary" disabled>Not ready</button>{% endif %}
+  </td>
+</tr>
+{% empty %}<tr><td colspan="8" class="text-center text-muted">No requests yet.</td></tr>{% endfor %}
+</tbody></table></div></div></div>
+<script>
+(() => {
+  const active = new Set(["QUEUED", "RUNNING"]);
+  const rows = [...document.querySelectorAll("[data-optimization-row]")];
+  async function refresh(row) {
+    const badge = row.querySelector('[data-role="status"]');
+    if (!active.has(badge.textContent.trim())) return false;
+    try {
+      const response = await fetch(row.dataset.statusUrl, {headers: {"Accept": "application/json"}, credentials: "same-origin"});
+      if (!response.ok) return true;
+      const data = await response.json();
+      badge.textContent = data.status;
+      row.querySelector('[data-role="solver-status"]').textContent = data.solver_status || "—";
+      if (data.terminal) {
+        if (data.status === "DONE" && data.result_url) window.location.assign(data.result_url);
+        else window.location.reload();
+        return false;
+      }
+    } catch (_) { /* A temporary network failure does not alter queue state. */ }
+    return true;
+  }
+  if (rows.some(row => active.has(row.querySelector('[data-role="status"]').textContent.trim()))) {
+    const timer = window.setInterval(async () => {
+      const states = await Promise.all(rows.map(refresh));
+      if (!states.some(Boolean)) window.clearInterval(timer);
+    }, 4000);
+  }
+})();
+</script>
 </div>
 {% endblock %}

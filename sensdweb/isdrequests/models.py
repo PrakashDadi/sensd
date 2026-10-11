@@ -26,6 +26,7 @@ class Request(TimeStamped):
     STATUS_CHOICES = [
         ("NEW", "New"),
         ("SAVED", "Saved"),
+        ("QUEUED", "Queued"),
         ("RUNNING", "Running"),
         ("DONE", "Done"),
         ("FAILED", "Failed"),
@@ -43,6 +44,9 @@ class Request(TimeStamped):
     best_incumbent_seconds = EncryptedFloatField(default=0.0, null=True)
     best_bound = EncryptedFloatField(default=0.0, null=True)
     mip_gap = EncryptedFloatField(default=0.0, null=True)
+    queued_at = models.DateTimeField(blank=True, null=True)
+    started_at = models.DateTimeField(blank=True, null=True)
+    finished_at = models.DateTimeField(blank=True, null=True)
 
     def __str__(self):
         return f"Req#{self.pk} {self.title} [{self.status}]"

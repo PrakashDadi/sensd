@@ -6,6 +6,7 @@ urlpatterns = [
     path("isdrequests/preview/", views.preview_excel, name="preview_excel"),
     path("isdrequests/save/", views.save_excel, name="save_excel"),
     path("isdrequests/optimize/", views.run_optimization, name="run_isdoptimization"),
+    path("isdrequests/<int:req_id>/status/", views.optimization_status, name="optimization_status"),
     path("isdrequests/requests/", views.requests_list, name="requests_list"),
     # path("/isdrequests/requests/<int:req_id>/", views.request_detail, name="request_detail"),
     # path("/isdrequests/requests/<int:req_id>/delete/", views.delete_request, name="delete_request"),

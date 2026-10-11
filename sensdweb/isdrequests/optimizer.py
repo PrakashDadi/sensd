@@ -178,7 +178,11 @@ def solve(request_record):
     objective = revenue - transport_cost - artificial_cost - total_gap_cost - total_excess_cost
     model.setObjective(objective, GRB.MAXIMIZE)
     model.setParam("MIPGap", 0.01)
-    model.setParam("TimeLimit", 3600)
+    from django.conf import settings
+
+    model.setParam("TimeLimit", settings.GUROBI_TIME_LIMIT)
+    model.setParam("Threads", settings.GUROBI_THREADS)
+    model.setParam("OutputFlag", settings.GUROBI_OUTPUT_FLAG)
 
     metrics = {"start_cpu": time.process_time(), "start_wall": time.perf_counter(), "best_obj": -math.inf, "best_seconds": None}
     def callback(active_model, where):
