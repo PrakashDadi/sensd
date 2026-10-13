@@ -1,6 +1,8 @@
 import io
+import threading
 
 import pandas as pd
+from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
 from django.http import HttpResponse, JsonResponse
@@ -85,7 +87,13 @@ def run_optimization(request):
             "started_at", "finished_at", "updated_at",
         ])
     try:
-        run_optimization_task.delay(record.pk)
+        if settings.CELERY_TASK_ALWAYS_EAGER:
+            threading.Thread(
+                target=run_optimization_task.run, args=(record.pk,),
+                name=f"local-optimization-{record.pk}", daemon=True,
+            ).start()
+        else:
+            run_optimization_task.delay(record.pk)
     except Exception:
         Request.objects.filter(pk=record.pk, status="QUEUED").update(
             status="FAILED", solver_status="QUEUE_ERROR",

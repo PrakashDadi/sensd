@@ -300,7 +300,7 @@ CELERY_TASK_ROUTES = {
 # from exhausting all CPUs and starving Gunicorn/Nginx.
 GUROBI_THREADS = max(1, int(os.getenv("GUROBI_THREADS", "1")))
 GUROBI_TIME_LIMIT = max(60, int(os.getenv("GUROBI_TIME_LIMIT", "3600")))
-GUROBI_OUTPUT_FLAG = 1 if env_bool("GUROBI_OUTPUT_FLAG", False) else 0
+GUROBI_OUTPUT_FLAG = 1 if env_bool("GUROBI_OUTPUT_FLAG", DEBUG) else 0
 
 # Trust the Nginx reverse proxy for HTTPS
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

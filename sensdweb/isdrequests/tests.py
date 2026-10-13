@@ -7,7 +7,7 @@ from unittest.mock import patch
 import pandas as pd
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from .models import Request
@@ -52,6 +52,7 @@ class WorkbookContractTests(TestCase):
             parse_workbook(io.BytesIO(workbook_bytes(include_population=False)))
 
 
+@override_settings(CELERY_TASK_ALWAYS_EAGER=False)
 class RequestWorkflowTests(TestCase):
     def setUp(self):
         User = get_user_model()

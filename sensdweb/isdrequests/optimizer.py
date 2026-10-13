@@ -4,6 +4,7 @@ import math
 import time
 
 import gurobipy as gp
+from django.utils import timezone
 from gurobipy import GRB
 
 
@@ -184,13 +185,34 @@ def solve(request_record):
     model.setParam("Threads", settings.GUROBI_THREADS)
     model.setParam("OutputFlag", settings.GUROBI_OUTPUT_FLAG)
 
-    metrics = {"start_cpu": time.process_time(), "start_wall": time.perf_counter(), "best_obj": -math.inf, "best_seconds": None}
+    metrics = {
+        "start_cpu": time.process_time(), "start_wall": time.perf_counter(),
+        "best_obj": -math.inf, "best_seconds": None, "last_progress": 0.0,
+    }
     def callback(active_model, where):
         if where == GRB.Callback.MIP:
+            elapsed = time.perf_counter() - metrics["start_wall"]
             incumbent = active_model.cbGet(GRB.Callback.MIP_OBJBST)
             if incumbent < GRB.INFINITY and incumbent > metrics["best_obj"] + 1e-9:
                 metrics["best_obj"] = incumbent
-                metrics["best_seconds"] = time.perf_counter() - metrics["start_wall"]
+                metrics["best_seconds"] = elapsed
+            if elapsed - metrics["last_progress"] >= 10:
+                metrics["last_progress"] = elapsed
+                bound = active_model.cbGet(GRB.Callback.MIP_OBJBND)
+                nodes = int(active_model.cbGet(GRB.Callback.MIP_NODCNT))
+                has_incumbent = incumbent < GRB.INFINITY
+                gap = abs(incumbent - bound) / max(abs(incumbent), 1e-10) if has_incumbent else None
+                status = f"MIP {gap:.1%}" if gap is not None else "SEARCHING"
+                message = f"Elapsed {elapsed:.0f}s; nodes {nodes:,}; best bound {bound:.4g}"
+                if has_incumbent:
+                    message += f"; incumbent {incumbent:.4g}; gap {gap:.2%}"
+                try:
+                    type(request_record).objects.filter(pk=request_record.pk).update(
+                        solver_status=status, solver_message=message,
+                        best_bound=bound, mip_gap=gap, updated_at=timezone.now(),
+                    )
+                except Exception:
+                    pass
 
     model.optimize(callback)
     metrics["cpu_seconds"] = time.process_time() - metrics["start_cpu"]
