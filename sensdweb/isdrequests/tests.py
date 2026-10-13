@@ -9,9 +9,14 @@ from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from gurobipy import GRB
 
-from .models import Request, salmonella_node_result
-from .services import _solver_value, execute_optimization
+from .models import (
+    Request, contamination_flag_result, cumulative_flow_time_result, excess_result,
+    gap_result, intransit_flag_result, lead_time_result, objective_summary,
+    price_result, salmonella_node_result, shelf_time_result, var_x, var_y,
+)
+from .services import _solver_value, execute_optimization, persist_optimization_result
 from .workbook import WorkbookValidationError, parse_workbook, persist_workbook
 
 
@@ -102,6 +107,71 @@ class RequestWorkflowTests(TestCase):
         )
         row.refresh_from_db()
         self.assertEqual(row.value, 1.25)
+
+    def test_complete_result_generation_without_running_solver(self):
+        class Variable:
+            def __init__(self, value):
+                self.X = value
+
+        class Expression:
+            def __init__(self, value):
+                self.value = value
+
+            def getValue(self):
+                return self.value
+
+        class Model:
+            Status = GRB.OPTIMAL
+            SolCount = 1
+            ObjVal = 125.0
+            ObjBound = 125.0
+            MIPGap = 0.0
+
+        record = Request.objects.create(
+            requested_by=self.owner, title="Persistence test",
+            original_filename="persistence.xlsx", status="RUNNING",
+        )
+        arc = ("Raw", "Source", "Raw", "Market")
+        result = {
+            "model": Model(),
+            "Y": {(arc, "Truck"): Variable(1)},
+            "X": {(arc, "Truck"): Variable(20)},
+            "G": {("Raw", "Market"): Variable(2)},
+            "E": {("Raw", "Market"): Variable(3)},
+            "W": {arc: Variable(4)},
+            "F": {("Raw", "Market"): Variable(5)},
+            "T": {("Raw", "Market"): Variable(6)},
+            "price": {("Raw", "Market"): Variable(7)},
+            "eta": {
+                ("Raw", "Source"): Variable(0),
+                ("Raw", "Market"): Variable(1.5),
+            },
+            "Z": {("Raw", "Market"): Variable(1), ("Raw", "Source"): Variable(0)},
+            "Z_intransit": {("Raw", "Source"): Variable(1), ("Raw", "Market"): Variable(0)},
+            "real_profit": Expression(100), "revenue": Expression(200),
+            "transport_cost": Expression(50), "gap_cost": Expression(10),
+            "excess_cost": Expression(8), "artificial_cost": Expression(2),
+            "fixed_diversion_cost": Expression(4),
+            "variable_diversion_cost": Expression(6),
+            "metrics": {"runtime_seconds": 12, "cpu_seconds": 10, "best_seconds": 5},
+        }
+
+        self.assertTrue(persist_optimization_result(record, result))
+        record.refresh_from_db()
+        self.assertEqual(record.status, "DONE")
+        self.assertEqual(record.solver_status, "OPTIMAL")
+        self.assertEqual(var_y.objects.filter(request=record).count(), 1)
+        self.assertEqual(var_x.objects.filter(request=record).count(), 1)
+        self.assertEqual(gap_result.objects.filter(request=record).count(), 1)
+        self.assertEqual(excess_result.objects.filter(request=record).count(), 1)
+        self.assertEqual(lead_time_result.objects.filter(request=record).count(), 1)
+        self.assertEqual(cumulative_flow_time_result.objects.filter(request=record).count(), 1)
+        self.assertEqual(shelf_time_result.objects.filter(request=record).count(), 1)
+        self.assertEqual(price_result.objects.filter(request=record).count(), 1)
+        self.assertEqual(salmonella_node_result.objects.filter(request=record).count(), 1)
+        self.assertEqual(contamination_flag_result.objects.filter(request=record).count(), 1)
+        self.assertEqual(intransit_flag_result.objects.filter(request=record).count(), 1)
+        self.assertEqual(objective_summary.objects.get(request=record).objective_value, 125.0)
 
     def test_request_history_is_owner_scoped(self):
         Request.objects.create(requested_by=self.owner, title="Mine", original_filename="mine.xlsx")

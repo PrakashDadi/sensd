@@ -37,8 +37,12 @@ def _clear_results(record):
 
 
 def execute_optimization(record):
-    """Solve one saved request and persist the same result rows as the legacy view."""
-    result = solve(record)
+    """Solve one saved request and persist its result rows."""
+    return persist_optimization_result(record, solve(record))
+
+
+def persist_optimization_result(record, result):
+    """Persist an already-solved result without running Gurobi again."""
     model = result["model"]
     status_name = {
         GRB.OPTIMAL: "OPTIMAL", GRB.TIME_LIMIT: "TIME_LIMIT",
@@ -89,9 +93,17 @@ def execute_optimization(record):
                     request=record, product=product, node=node, value=value,
                 )
         for (product, node), variable in result["Z"].items():
-            contamination_flag_result.objects.create(request=record, product=product, node=node, value=int(round(variable.X)))
+            value = int(round(variable.X))
+            if value:
+                contamination_flag_result.objects.create(
+                    request=record, product=product, node=node, value=value,
+                )
         for (product, node), variable in result["Z_intransit"].items():
-            intransit_flag_result.objects.create(request=record, product=product, node=node, value=int(round(variable.X)))
+            value = int(round(variable.X))
+            if value:
+                intransit_flag_result.objects.create(
+                    request=record, product=product, node=node, value=value,
+                )
         objective_summary.objects.create(
             request=record, objective_value=model.ObjVal,
             total_profit=_value(result["real_profit"]), total_revenue=_value(result["revenue"]),
