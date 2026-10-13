@@ -1,3 +1,5 @@
+import math
+
 from django.db import transaction
 from django.utils import timezone
 from gurobipy import GRB
@@ -19,6 +21,14 @@ RESULT_MODELS = (
 
 def _value(expression):
     return float(expression.getValue())
+
+
+def _solver_value(variable):
+    """Return a real Gurobi value, excluding undefined/infinite sentinels."""
+    value = float(variable.X)
+    if not math.isfinite(value) or abs(value) >= GRB.INFINITY:
+        return None
+    return value
 
 
 def _clear_results(record):
@@ -73,7 +83,11 @@ def execute_optimization(record):
             if abs(variable.X) > 1e-9:
                 price_result.objects.create(request=record, product=product, market=market, price=variable.X)
         for (product, node), variable in result["eta"].items():
-            salmonella_node_result.objects.create(request=record, product=product, node=node, value=variable.X)
+            value = _solver_value(variable)
+            if value is not None:
+                salmonella_node_result.objects.create(
+                    request=record, product=product, node=node, value=value,
+                )
         for (product, node), variable in result["Z"].items():
             contamination_flag_result.objects.create(request=record, product=product, node=node, value=int(round(variable.X)))
         for (product, node), variable in result["Z_intransit"].items():

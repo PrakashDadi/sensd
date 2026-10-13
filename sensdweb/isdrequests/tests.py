@@ -11,7 +11,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from .models import Request
-from .services import execute_optimization
+from .services import _solver_value, execute_optimization
 from .workbook import WorkbookValidationError, parse_workbook, persist_workbook
 
 
@@ -42,6 +42,18 @@ def workbook_bytes(include_population=True):
 
 
 class WorkbookContractTests(TestCase):
+    def test_undefined_solver_values_are_not_persistable(self):
+        class Variable:
+            X = float("nan")
+
+        self.assertIsNone(_solver_value(Variable()))
+
+    def test_finite_solver_values_are_persistable(self):
+        class Variable:
+            X = 1.25
+
+        self.assertEqual(_solver_value(Variable()), 1.25)
+
     def test_current_workbook_contract_parses(self):
         parsed = parse_workbook(io.BytesIO(workbook_bytes()))
         self.assertEqual(parsed.frames["arcs1"].shape, (1, 14))
