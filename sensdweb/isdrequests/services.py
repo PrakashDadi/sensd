@@ -24,9 +24,9 @@ def _value(expression):
 
 
 def _solver_value(variable):
-    """Return a real Gurobi value, excluding undefined/infinite sentinels."""
+    """Return a nonzero real value that EncryptedFloatField can persist."""
     value = float(variable.X)
-    if not math.isfinite(value) or abs(value) >= GRB.INFINITY:
+    if not math.isfinite(value) or abs(value) >= GRB.INFINITY or abs(value) <= 1e-9:
         return None
     return value
 

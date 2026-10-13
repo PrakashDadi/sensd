@@ -10,7 +10,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from .models import Request
+from .models import Request, salmonella_node_result
 from .services import _solver_value, execute_optimization
 from .workbook import WorkbookValidationError, parse_workbook, persist_workbook
 
@@ -45,6 +45,12 @@ class WorkbookContractTests(TestCase):
     def test_undefined_solver_values_are_not_persistable(self):
         class Variable:
             X = float("nan")
+
+        self.assertIsNone(_solver_value(Variable()))
+
+    def test_zero_solver_values_are_not_passed_to_encrypted_float_field(self):
+        class Variable:
+            X = 0.0
 
         self.assertIsNone(_solver_value(Variable()))
 
@@ -86,6 +92,16 @@ class RequestWorkflowTests(TestCase):
         sensor = record.salmonella_rows.get()
         self.assertTrue(sensor.has_sensor)
         self.assertEqual(sensor.fixed_intervention_cost, 25)
+
+    def test_nonzero_salmonella_result_survives_encrypted_database_round_trip(self):
+        record = Request.objects.create(
+            requested_by=self.owner, title="Result", original_filename="result.xlsx",
+        )
+        row = salmonella_node_result.objects.create(
+            request=record, product="Raw", node="Market", value=1.25,
+        )
+        row.refresh_from_db()
+        self.assertEqual(row.value, 1.25)
 
     def test_request_history_is_owner_scoped(self):
         Request.objects.create(requested_by=self.owner, title="Mine", original_filename="mine.xlsx")
