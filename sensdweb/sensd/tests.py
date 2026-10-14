@@ -2,6 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from authentication.models import CustomUser, UserKey
+from isdrequests.models import Request as DistributionRequest
 from poultrydashboard.models import PoultryProfile
 
 from .models import UserProfile
@@ -206,3 +207,27 @@ class OptimizationWorkspaceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Detailed request history')
         self.assertContains(response, f'{reverse("user_requests")}#distribution-activity')
+
+    def test_dashboard_and_combined_activity_never_show_another_users_distribution_requests(self):
+        other = CustomUser.objects.create_user(
+            username='other-optimization-user',
+            email='other-optimization@example.test',
+            password='test-password-only',
+        )
+        DistributionRequest.objects.create(
+            requested_by=self.user,
+            title='My private distribution request',
+            original_filename='mine.xlsx',
+        )
+        DistributionRequest.objects.create(
+            requested_by=other,
+            title='Another users private distribution request',
+            original_filename='theirs.xlsx',
+        )
+
+        for route_name in ('sensd', 'user_requests'):
+            with self.subTest(route_name=route_name):
+                response = self.client.get(reverse(route_name))
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, 'My private distribution request')
+                self.assertNotContains(response, 'Another users private distribution request')

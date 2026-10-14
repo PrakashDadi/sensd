@@ -80,11 +80,9 @@ def home(request):
     # requestlists = RequestModel.objects.filter(created_by = uservalues['email'])
     # resultlists = ResultModel.objects.filter(created_by = uservalues['email'])
 
-    distribution_requests = DistributionRequest.objects.order_by('-created_at')
-    if request.user.is_authenticated:
-        owned_distribution_requests = distribution_requests.filter(requested_by=request.user)
-        if owned_distribution_requests.exists():
-            distribution_requests = owned_distribution_requests
+    distribution_requests = DistributionRequest.objects.filter(
+        requested_by=request.user,
+    ).order_by('-created_at')
 
     return render(request, 'dashboard/index.html',{
         'uservalues': uservalues,

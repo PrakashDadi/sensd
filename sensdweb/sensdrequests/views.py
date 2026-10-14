@@ -621,11 +621,9 @@ def user_requests(request):
         except Exception as e:
             print("Decryption failed for a result:", e)
 
-    distribution_requests = DistributionRequest.objects.order_by('-created_at')
-    if request.user.is_authenticated:
-        owned_distribution_requests = distribution_requests.filter(requested_by=request.user)
-        if owned_distribution_requests.exists():
-            distribution_requests = owned_distribution_requests
+    distribution_requests = DistributionRequest.objects.filter(
+        requested_by=request.user,
+    ).order_by('-created_at')
 
     return render(request, 'userrequests/requests_list_history.html', {
         'uservalues': uservalues,
