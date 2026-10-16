@@ -4,7 +4,7 @@
 {% block title %}SENSD - Data Upload & Visualize{% endblock %}
 
 {% block css %}
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<link rel="stylesheet" href="{% static 'mapsapp/vendor/leaflet/leaflet.css' %}?v=1.9.4" />
 <link rel="stylesheet" href="{% static 'css/data_mapping_tool.css' %}">
 {% endblock %}
 
@@ -259,7 +259,7 @@
 {% endblock %}
 
 {% block js %}
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="{% static 'mapsapp/vendor/leaflet/leaflet.js' %}?v=1.9.4"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
 <script src="{% static 'js/data_mapping_tool.js' %}"></script>

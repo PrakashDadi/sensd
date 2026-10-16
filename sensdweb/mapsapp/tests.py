@@ -34,3 +34,18 @@ class GisWorkspaceNavigationTests(TestCase):
             self.assertNotContains(response, "navbar-dark sensd-navbar")
             self.assertContains(response, "platform-global-mark")
             self.assertContains(response, "sensd-ui.css?v=20260930-2")
+
+    def test_map_pages_use_vendored_leaflet_assets(self):
+        for route_name in (
+            "gis_dashboard",
+            "maps_view",
+            "flow_analysis",
+            "data_mapping_tool",
+            "spatial_analysis",
+        ):
+            with self.subTest(route_name=route_name):
+                response = self.client.get(reverse(route_name))
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, "mapsapp/vendor/leaflet/leaflet.css")
+                self.assertContains(response, "mapsapp/vendor/leaflet/leaflet.js")
+                self.assertNotContains(response, "unpkg.com/leaflet")
