@@ -185,6 +185,21 @@ class RequestWorkflowTests(TestCase):
         self.assertEqual(self.client.get(reverse("results_view", args=[record.pk])).status_code, 404)
         self.assertEqual(self.client.get(reverse("results_download_excel", args=[record.pk])).status_code, 404)
 
+    def test_empty_result_tables_are_valid_for_datatables(self):
+        record = Request.objects.create(
+            requested_by=self.owner,
+            title="Empty results",
+            original_filename="empty.xlsx",
+            status="DONE",
+        )
+
+        response = self.client.get(reverse("results_view", args=[record.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="gapTable" data-empty-message="No gap (0 for all)"')
+        self.assertContains(response, "emptyTable: this.dataset.emptyMessage")
+        self.assertNotContains(response, "colspan=")
+
     @patch("isdrequests.views.run_optimization_task.delay")
     def test_optimization_is_queued_without_running_in_web_request(self, delay):
         record = Request.objects.create(
