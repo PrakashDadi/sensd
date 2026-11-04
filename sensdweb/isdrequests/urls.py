@@ -12,6 +12,7 @@ urlpatterns = [
     # path("/isdrequests/requests/<int:req_id>/delete/", views.delete_request, name="delete_request"),
     # path("/isdrequests/requests/<int:req_id>/edit/", views.edit_request, name="edit_request"),
     path("isdrequests/results/<int:req_id>/", views.results_view, name="results_view"),
+    path("isdrequests/results/<int:req_id>/flows.geojson", views.results_flow_geojson, name="results_flow_geojson"),
     # urls.py
     path("requests/<int:req_id>/results/download/", views.results_download_excel, name="results_download_excel"),
 

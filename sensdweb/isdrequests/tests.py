@@ -184,6 +184,69 @@ class RequestWorkflowTests(TestCase):
         record = Request.objects.create(requested_by=self.other, title="Private", original_filename="private.xlsx")
         self.assertEqual(self.client.get(reverse("results_view", args=[record.pk])).status_code, 404)
         self.assertEqual(self.client.get(reverse("results_download_excel", args=[record.pk])).status_code, 404)
+        self.assertEqual(self.client.get(reverse("results_flow_geojson", args=[record.pk])).status_code, 404)
+
+    def test_flow_map_uses_owned_saved_quantities_and_reference_coordinates(self):
+        record = Request.objects.create(
+            requested_by=self.owner,
+            title="Mapped results",
+            original_filename="mapped.xlsx",
+            status="DONE",
+        )
+        var_x.objects.create(
+            request=record,
+            product="Raw",
+            node_i="Farm1",
+            product_div="Raw",
+            node_j="Processor3",
+            mode="Truck",
+            quantity=123.45,
+        )
+
+        response = self.client.get(reverse("results_flow_geojson", args=[record.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["metadata"]["request_id"], record.pk)
+        self.assertEqual(payload["metadata"]["mapped_flows"], 1)
+        feature = payload["features"][0]
+        self.assertEqual(feature["geometry"]["type"], "LineString")
+        self.assertEqual(feature["properties"]["quantity"], 123.45)
+        self.assertEqual(feature["properties"]["from_id"], "Farm1")
+        self.assertEqual(feature["properties"]["to_id"], "Processor3")
+        self.assertEqual(feature["properties"]["mode"], "Truck")
+        self.assertEqual(len(feature["geometry"]["coordinates"]), 2)
+
+        page = self.client.get(reverse("results_view", args=[record.pk]))
+        self.assertContains(page, 'id="distributionFlowMap"')
+        self.assertContains(page, reverse("results_flow_geojson", args=[record.pk]))
+        self.assertContains(page, "mapsapp/vendor/leaflet/leaflet.js")
+
+    def test_flow_map_reports_routes_with_unknown_nodes(self):
+        record = Request.objects.create(
+            requested_by=self.owner,
+            title="Partially mapped results",
+            original_filename="partial.xlsx",
+            status="DONE",
+        )
+        var_x.objects.create(
+            request=record,
+            product="Raw",
+            node_i="UnknownFarm",
+            product_div="Raw",
+            node_j="Processor3",
+            mode="Truck",
+            quantity=25,
+        )
+
+        payload = self.client.get(
+            reverse("results_flow_geojson", args=[record.pk]),
+        ).json()
+
+        self.assertEqual(payload["features"], [])
+        self.assertEqual(payload["metadata"]["total_flows"], 1)
+        self.assertEqual(payload["metadata"]["unmapped_flows"], 1)
+        self.assertEqual(payload["metadata"]["missing_node_ids"], ["UnknownFarm"])
 
     def test_empty_result_tables_are_valid_for_datatables(self):
         record = Request.objects.create(

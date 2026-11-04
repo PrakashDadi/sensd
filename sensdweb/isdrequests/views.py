@@ -12,6 +12,7 @@ from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 
 from .models import Request
+from .flow_map import request_flow_geojson
 from .optimizer import MODEL_VERSION
 from .tasks import run_optimization_task
 from .workbook import WorkbookValidationError, parse_workbook, persist_workbook
@@ -138,6 +139,12 @@ def results_view(request, req_id):
         "salmonella_nodes": record.salmonella_nodes.all(),
         "contamination_flags": record.contamination_flags.all(), "intransit_flags": record.intransit_flags.all(),
     })
+
+
+@require_http_methods(["GET"])
+def results_flow_geojson(request, req_id):
+    record = _owned_request(request, req_id)
+    return JsonResponse(request_flow_geojson(record))
 
 
 def _rows(queryset, fields):
