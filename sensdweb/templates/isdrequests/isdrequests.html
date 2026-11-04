@@ -11,7 +11,14 @@
 <tr data-optimization-row data-status-url="{% url 'optimization_status' r.id %}">
   <td>{{ r.id }}</td><td>{{ r.title }}</td><td>{{ r.model_version }}</td>
   <td><span data-role="status" class="badge {% if r.status == 'DONE' %}text-bg-success{% elif r.status == 'FAILED' %}text-bg-danger{% elif r.status == 'RUNNING' or r.status == 'QUEUED' %}text-bg-warning{% else %}text-bg-secondary{% endif %}">{{ r.status }}</span></td>
-  <td><div data-role="solver-status">{{ r.solver_status|default:"—" }}</div><small class="text-muted" data-role="solver-message">{{ r.solver_message|default:"" }}</small></td>
+  <td>
+    <div data-role="solver-status">{{ r.solver_status|default:"—" }}</div>
+    <div data-role="solver-progress-track" class="progress mt-1{% if r.status != 'RUNNING' and r.status != 'QUEUED' %} d-none{% endif %}" role="progressbar" aria-label="Solver convergence" aria-valuemin="0" aria-valuemax="100" style="height: 0.75rem; min-width: 10rem;">
+      <div data-role="solver-progress" class="progress-bar progress-bar-striped{% if r.status == 'RUNNING' or r.status == 'QUEUED' %} progress-bar-animated{% endif %}" style="width: 0%"></div>
+    </div>
+    <small class="text-muted" data-role="solver-progress-label">{% if r.status == 'QUEUED' or r.status == 'RUNNING' %}Searching for a feasible solution…{% endif %}</small>
+    <small class="text-muted d-block" data-role="solver-message">{{ r.solver_message|default:"" }}</small>
+  </td>
   <td>{{ r.created_at|date:"Y-m-d H:i" }}</td><td>{{ r.updated_at|date:"Y-m-d H:i" }}</td>
   <td>
     {% if r.status == 'DONE' %}<a class="btn btn-sm btn-outline-success" href="{% url 'results_view' r.id %}">View</a>
@@ -26,6 +33,24 @@
 (() => {
   const active = new Set(["QUEUED", "RUNNING"]);
   const rows = [...document.querySelectorAll("[data-optimization-row]")];
+  function updateProgress(row, data) {
+    row.querySelector('[data-role="solver-progress-track"]').classList.remove("d-none");
+    const bar = row.querySelector('[data-role="solver-progress"]');
+    const label = row.querySelector('[data-role="solver-progress-label"]');
+    const gap = Number(data.mip_gap);
+    if (data.mip_gap !== null && data.mip_gap !== undefined && Number.isFinite(gap)) {
+      const gapPercent = Math.max(0, gap * 100);
+      const convergence = Math.max(0, Math.min(100, 100 - gapPercent));
+      bar.style.width = `${convergence}%`;
+      bar.setAttribute("aria-valuenow", convergence.toFixed(2));
+      bar.classList.toggle("bg-success", convergence >= 99.99);
+      label.textContent = `${convergence.toFixed(1)}% converged · GAP ${gapPercent.toFixed(2)}%`;
+    } else {
+      bar.style.width = data.status === "QUEUED" ? "15%" : "35%";
+      bar.removeAttribute("aria-valuenow");
+      label.textContent = data.status === "QUEUED" ? "Waiting in queue…" : "Searching for a feasible solution…";
+    }
+  }
   async function refresh(row) {
     const badge = row.querySelector('[data-role="status"]');
     if (!active.has(badge.textContent.trim())) return false;
@@ -36,6 +61,7 @@
       badge.textContent = data.status;
       row.querySelector('[data-role="solver-status"]').textContent = data.solver_status || "—";
       row.querySelector('[data-role="solver-message"]').textContent = data.message || "";
+      updateProgress(row, data);
       if (data.terminal) {
         if (data.status === "DONE" && data.result_url) window.location.assign(data.result_url);
         else window.location.reload();

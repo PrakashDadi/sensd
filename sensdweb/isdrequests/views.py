@@ -111,11 +111,13 @@ def run_optimization(request):
 @require_http_methods(["GET"])
 def optimization_status(request, req_id):
     record = _owned_request(request, req_id)
+    gap_is_available = record.status == "DONE" or record.solver_status.startswith("MIP ")
     payload = {
         "request_id": record.pk,
         "status": record.status,
         "solver_status": record.solver_status,
         "message": record.solver_message or "",
+        "mip_gap": record.mip_gap if gap_is_available else None,
         "terminal": record.status in {"DONE", "FAILED"},
     }
     if record.status == "DONE":

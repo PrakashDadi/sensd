@@ -295,7 +295,15 @@ class RequestWorkflowTests(TestCase):
         response = self.client.get(reverse("optimization_status", args=[mine.pk]))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["status"], "RUNNING")
+        self.assertIn("mip_gap", response.json())
+        self.assertIsNone(response.json()["mip_gap"])
         self.assertEqual(self.client.get(reverse("optimization_status", args=[theirs.pk])).status_code, 404)
+
+        mine.solver_status = "MIP 25.0%"
+        mine.mip_gap = 0.25
+        mine.save(update_fields=["solver_status", "mip_gap"])
+        response = self.client.get(reverse("optimization_status", args=[mine.pk]))
+        self.assertEqual(response.json()["mip_gap"], 0.25)
 
     @patch("isdrequests.views.run_optimization_task.delay", side_effect=ConnectionError("Redis unavailable"))
     def test_queue_failure_is_recorded_without_exposing_internal_error(self, _delay):
